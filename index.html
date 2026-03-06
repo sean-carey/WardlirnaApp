@@ -1692,7 +1692,7 @@ function saveFuncUrl(){
   window._funcUrl=url;
   showToast('Function URL saved');
 }
-function blobUrl(f){ return `https://${blobCfg.account}.blob.core.windows.net/${blobCfg.container}/${f}${blobCfg.sas}`; }
+function blobUrl(f){ const sas=blobCfg.sas.startsWith('?')?blobCfg.sas:'?'+blobCfg.sas; return `https://${blobCfg.account}.blob.core.windows.net/${blobCfg.container}/${f}${sas}`; }
 function setBlobStatus(state){
   blobOk=state==='ok';
   const label={ok:'☁ Connected',err:'⚡ Not connected',pend:'⏳ Connecting…'}[state];
