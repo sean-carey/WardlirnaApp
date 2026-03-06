@@ -1827,7 +1827,7 @@ function showSyncBanner(msg, type='info'){
                  err:'background:#fef2f2;color:#991b1b;border-bottom:1px solid #fecaca',
                  ok:'background:#f0fdf4;color:#166534;border-bottom:1px solid #bbf7d0'};
   banner.style.cssText+=(colors[type]||colors.info);
-  banner.innerHTML=msg+'<span style="margin-left:auto;cursor:pointer;opacity:.5;font-size:.8rem" onclick="this.parentElement.style.display='none'">✕</span>';
+  banner.innerHTML=msg+'<span style="margin-left:auto;cursor:pointer;opacity:.5;font-size:.8rem" onclick="this.parentElement.remove()">&#x2715;</span>';
   banner.style.display='flex';
   if(type==='ok'||type==='info') setTimeout(()=>{ if(banner) banner.style.display='none'; },6000);
 }
