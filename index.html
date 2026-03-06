@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Grouping Planner — Ngutu College</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --hdr1:#0a1628;--hdr2:#0d2d6b;--hdr3:#1a5fc8;--accent:#5eb8ff;
+  --g50:#f8fafc;--g100:#f1f5f9;--g200:#e2e8f0;--g300:#cbd5e1;--g400:#94a3b8;--g600:#475569;--g800:#1e293b;
+  --txt:#1e293b;--muted:#64748b;
+  --y-kinder:#f0abfc;--y-rec:#c084fc;--y-1:#818cf8;--y-2:#60a5fa;--y-3:#34d399;
+  --y-4:#4ade80;--y-5:#facc15;--y-6:#fb923c;--y-7:#f87171;--y-8:#e879f9;
+  --y-9:#38bdf8;--y-10:#a78bfa;--y-11:#fb7185;--y-12:#34d399;
+  --leaving:#fed7aa;--leaving-border:#fb923c;
+  --departing-bg:#fee2e2;--departing-border:#fca5a5;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);display:flex;flex-direction:column}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--hdr1),var(--hdr2) 55%,var(--hdr3));height:56px;display:flex;align-items:center;padding:0 1.25rem;gap:.75rem;flex-shrink:0;box-shadow:0 2px 10px rgba(10,22,40,.45);z-index:200}
+.hdr-logo{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;color:#fff;letter-spacing:-.01em}
+.hdr-logo span{color:var(--accent)}
+.hdr-div{width:1px;height:22px;background:rgba(255,255,255,.2)}
+.hdr-title{font-size:.82rem;color:rgba(255,255,255,.65)}
+.hdr-space{flex:1}
+.unsaved{display:none;align-items:center;gap:.35rem;background:rgba(251,146,60,.2);border:1px solid rgba(251,146,60,.4);border-radius:6px;padding:.2rem .65rem;font-size:.72rem;color:#fed7aa;font-weight:600}
+.unsaved.show{display:flex}
+.hbtn{display:inline-flex;align-items:center;gap:.3rem;padding:.32rem .75rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.hbtn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18)}
+.hbtn-ghost:hover{background:rgba(255,255,255,.18)}
+.hbtn-primary{background:var(--accent);color:var(--hdr1)}
+.hbtn-primary:hover{background:#7dcfff}
+
+/* NAV */
+.nav{background:#fff;border-bottom:2px solid var(--g200);display:flex;align-items:center;padding:0 1.25rem;flex-shrink:0;gap:0}
+.ntab{padding:.55rem 1rem;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap}
+.ntab:hover{color:var(--hdr3)}
+.ntab.active{color:var(--hdr3);border-bottom-color:var(--hdr3);font-weight:600}
+
+/* TOOLBAR */
+.toolbar{background:#fff;border-bottom:1px solid var(--g200);padding:.4rem 1.25rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;flex-shrink:0}
+.tlabel{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tbtn{padding:.24rem .65rem;border-radius:5px;font-size:.74rem;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:#fff;color:var(--muted);transition:all .15s}
+.tbtn:hover{border-color:var(--g300)}
+.tbtn.on{background:var(--hdr3);color:#fff;border-color:var(--hdr3)}
+.ctab{padding:.26rem .8rem;border-radius:5px;font-size:.78rem;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:#fff;color:var(--muted);transition:all .15s}
+.ctab.on{background:var(--hdr3);color:#fff;border-color:var(--hdr3)}
+.srch{padding:.26rem .65rem;border-radius:5px;border:1px solid var(--g200);font-size:.76rem;font-family:'DM Sans',sans-serif;width:155px;outline:none}
+.srch:focus{border-color:var(--hdr3)}
+
+/* LAYOUT */
+.body{display:flex;flex:1;overflow:hidden}
+.page{display:none;flex:1;overflow:hidden;flex-direction:column}
+.page.on{display:flex}
+
+/* SIDEBAR */
+.sb{width:220px;background:#fff;border-right:1px solid var(--g200);flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column}
+.sb-sec{padding:.65rem .9rem;border-bottom:1px solid var(--g100)}
+.sb-sec h4{font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.45rem}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;margin-bottom:.1rem}
+.sp{background:var(--g50);border-radius:6px;padding:.4rem .45rem;text-align:center}
+.sp-v{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:700;color:var(--hdr3)}
+.sp-l{font-size:.6rem;color:var(--muted);margin-top:.05rem}
+.yr-row{display:flex;align-items:center;gap:.4rem;margin-bottom:.22rem}
+.yr-pip{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.yr-lbl{font-size:.7rem;color:var(--muted);flex:1}
+.yr-cnt{font-size:.7rem;font-weight:700}
+
+/* CANVAS */
+.canvas{flex:1;overflow:auto;padding:1rem 1.1rem}
+.band{margin-bottom:1.5rem}
+.band-hd{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.55rem;display:flex;align-items:center;gap:.5rem}
+.band-hd::after{content:'';flex:1;height:1px;background:var(--g200)}
+.groups-row{display:flex;gap:.7rem;align-items:flex-start}
+
+/* GROUP */
+.gcol{background:#fff;border-radius:9px;border:2px solid var(--g200);flex:1;min-width:0;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:border-color .15s,background .15s;position:relative}
+.gcol.drop-over{border-color:var(--hdr3);background:#f0f7ff}
+.gcol.locked{border-style:dashed;border-color:var(--g300)}
+.ghdr{background:linear-gradient(135deg,var(--hdr1),var(--hdr2));color:#fff;padding:.45rem .6rem;border-radius:7px 7px 0 0;display:flex;align-items:center;gap:.35rem}
+.gcol.locked .ghdr{background:linear-gradient(135deg,#374151,#4b5563)}
+.gname{font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:600;flex:1}
+.gcnt{background:rgba(255,255,255,.2);font-size:.64rem;padding:.08rem .32rem;border-radius:6px;font-weight:700}
+.glock{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.6);font-size:.75rem;padding:0;transition:color .15s}
+.glock:hover{color:#fff}
+.gadd{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.6);font-size:.78rem;padding:0;transition:color .15s}
+.gadd:hover{color:#fff}
+
+/* BALANCE BAR */
+.gbalance{padding:.3rem .6rem;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:.4rem}
+.bal-track{flex:1;height:5px;background:var(--g100);border-radius:3px;overflow:hidden}
+.bal-fill{height:100%;border-radius:3px;transition:width .3s}
+.bal-label{font-size:.6rem;color:var(--muted);white-space:nowrap;min-width:28px;text-align:right}
+
+/* STATS BAR */
+.gstats{padding:.28rem .6rem;border-bottom:1px solid var(--g100);display:flex;gap:.25rem;flex-wrap:wrap}
+.stg{font-size:.6rem;padding:.1rem .32rem;border-radius:3px;font-weight:600}
+.stg-g{background:#ede9fe;color:#5b21b6}
+.stg-a{background:#fef3c7;color:#92400e}
+
+/* CARDS */
+.gcards{padding:.35rem;display:flex;flex-direction:column;gap:.22rem;min-height:50px}
+
+/* STUDENT CARD — single line */
+.sc{border-radius:6px;padding:.28rem .4rem;cursor:grab;display:flex;align-items:center;gap:.35rem;transition:all .15s;position:relative;user-select:none;background:var(--g50);border:1px solid var(--g200)}
+.sc:hover{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.1);transform:translateY(-1px);z-index:2}
+.sc.dragging{opacity:.3;cursor:grabbing}
+.sc.conflict{border-color:#fca5a5;background:#fff5f5}
+.sc.leaving{background:#fff7ed;border-color:var(--leaving-border)}
+.sc.wanted{border-left:3px solid #34d399}
+.ypip{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.sc-name{font-size:.74rem;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.sc-yr{font-size:.62rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.sc-icons{font-size:.62rem;display:flex;gap:.1rem;flex-shrink:0}
+/* detail mode extras */
+.sc-detail{font-size:.62rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;max-width:90px}
+
+/* DEPARTING CHIPS (sidebar/page only, no bottom bar) */
+.dchip{background:#fee2e2;border:1px solid var(--departing-border);border-radius:16px;padding:.18rem .55rem;font-size:.7rem;font-weight:500;color:#dc2626;cursor:pointer;transition:background .15s}
+.dchip:hover{background:#fecaca}
+
+/* STATS OVERLAY on group */
+.gstats-overlay{padding:.5rem .6rem;display:flex;flex-direction:column;gap:.28rem}
+.ov-row{display:flex;align-items:center;gap:.4rem}
+.ov-lbl{font-size:.66rem;color:var(--muted);width:72px;flex-shrink:0;text-align:right}
+.ov-track{flex:1;height:12px;border-radius:3px;overflow:hidden;display:flex}
+.ov-seg{height:100%}
+.ov-val{font-size:.64rem;font-weight:700;color:var(--txt);width:22px;text-align:right}
+.gview-toggle{background:none;border:none;cursor:pointer;font-size:.65rem;color:rgba(255,255,255,.6);padding:0;transition:color .15s;white-space:nowrap}
+.gview-toggle:hover{color:#fff}
+
+/* CONTEXT MENU */
+.ctxmenu{position:fixed;background:#fff;border:1px solid var(--g200);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:900;min-width:160px;padding:.3rem 0;display:none}
+.ctxmenu.show{display:block}
+.ctxi{padding:.38rem .85rem;font-size:.76rem;cursor:pointer;color:var(--txt);display:flex;align-items:center;gap:.5rem;transition:background .1s}
+.ctxi:hover{background:var(--g50)}
+.ctxi.danger{color:#dc2626}
+.ctxi-sep{height:1px;background:var(--g100);margin:.2rem 0}
+
+/* SOCIO POPOVER */
+.spop{position:fixed;background:#fff;border:1px solid var(--g200);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:800;padding:.65rem .8rem;max-width:240px;display:none;font-size:.74rem;line-height:1.5}
+.spop.show{display:block}
+.spop-title{font-weight:700;margin-bottom:.3rem;color:var(--txt)}
+.spop-item{margin-bottom:.2rem}
+.spop-conflict{color:#dc2626}
+.spop-wanted{color:#059669}
+.spop-family{color:#7c3aed}
+
+/* MODALS */
+.overlay{position:fixed;inset:0;background:rgba(10,22,40,.5);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.on{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:13px;padding:1.3rem;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);transform:translateY(12px);transition:transform .2s}
+.overlay.on .modal{transform:translateY(0)}
+.mhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.mtitle{font-family:'Outfit',sans-serif;font-size:.98rem;font-weight:700}
+.mclose{background:var(--g100);border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:.85rem;color:var(--muted)}
+.mclose:hover{background:var(--g200)}
+.fg{margin-bottom:.75rem}
+.fg label{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.28rem}
+.fi,.fs,.ft{width:100%;padding:.42rem .6rem;border:1px solid var(--g200);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--txt);outline:none;transition:border-color .15s}
+.fi:focus,.fs:focus,.ft:focus{border-color:var(--hdr3)}
+.ft{resize:vertical;min-height:55px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.mfoot{display:flex;justify-content:flex-end;gap:.4rem;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--g100)}
+.mbtn{display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .8rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.mbtn-primary{background:var(--hdr3);color:#fff}
+.mbtn-primary:hover{background:var(--hdr2)}
+.mbtn-ghost{background:var(--g100);color:var(--txt)}
+.mbtn-ghost:hover{background:var(--g200)}
+.mbtn-danger{background:#fee2e2;color:#dc2626}
+.mbtn-danger:hover{background:#fecaca}
+.mbtn-warn{background:#fff7ed;color:#c2410c}
+.mbtn-warn:hover{background:#fed7aa}
+
+/* CONFLICT REVIEW MODAL */
+.modal-wide{width:640px}
+.cr-item{border:1px solid var(--g200);border-radius:8px;padding:.65rem .8rem;margin-bottom:.55rem}
+.cr-item.conflict{border-color:#fde68a;background:#fffbeb}
+.cr-item.new-student{border-color:#bbf7d0;background:#f0fdf4}
+.cr-item.missing{border-color:#fecaca;background:#fff5f5}
+.cr-name{font-weight:700;font-size:.82rem;margin-bottom:.35rem}
+.cr-fields{display:flex;flex-wrap:wrap;gap:.4rem}
+.cr-field{background:#fff;border:1px solid var(--g200);border-radius:6px;padding:.35rem .5rem;font-size:.72rem}
+.cr-field label{display:block;font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:.15rem}
+.cr-old{color:#dc2626;text-decoration:line-through}
+.cr-new{color:#059669;font-weight:600}
+.cr-actions{display:flex;gap:.3rem;margin-top:.45rem}
+.cr-btn{padding:.22rem .6rem;border-radius:5px;font-size:.72rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.cr-accept{background:#d1fae5;color:#065f46}
+.cr-accept:hover{background:#a7f3d0}
+.cr-keep{background:#fee2e2;color:#dc2626}
+.cr-keep:hover{background:#fecaca}
+
+/* ANALYTICS */
+.enrol-table{width:100%;border-collapse:collapse;font-size:.74rem}
+.enrol-table th{background:var(--g50);padding:.35rem .55rem;text-align:left;font-weight:700;font-size:.68rem;border-bottom:2px solid var(--g200);white-space:nowrap}
+.enrol-table td{padding:.3rem .55rem;border-bottom:1px solid var(--g100)}
+.enrol-table tr:hover td{background:var(--g50)}
+.analy{flex:1;overflow:auto;padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;align-content:start}
+.acard{background:#fff;border-radius:11px;border:1px solid var(--g200);padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.acard.wide{grid-column:1/-1}
+.acard h3{font-family:'Outfit',sans-serif;font-size:.84rem;font-weight:700;margin-bottom:.8rem;color:var(--txt);display:flex;align-items:center;gap:.4rem}
+/* bar chart */
+.bc-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem}
+.bc-lbl{font-size:.7rem;color:var(--muted);width:105px;flex-shrink:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-track{flex:1;background:var(--g100);border-radius:3px;height:16px;overflow:hidden;position:relative}
+.bc-fill{height:100%;border-radius:3px;transition:width .5s}
+.bc-val{font-size:.68rem;font-weight:700;width:28px;text-align:right}
+/* stacked bar */
+.sb-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem}
+.sb-lbl{font-size:.7rem;color:var(--muted);width:80px;flex-shrink:0;text-align:right}
+.sb-track{flex:1;height:18px;border-radius:3px;overflow:hidden;display:flex}
+.sb-seg{height:100%;transition:width .5s;position:relative}
+.sb-seg:hover::after{content:attr(data-tip);position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:rgba(10,22,40,.85);color:#fff;font-size:.62rem;padding:.15rem .4rem;border-radius:4px;white-space:nowrap;pointer-events:none}
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:1rem}
+.donut-svg{flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:.3rem}
+.dl-row{display:flex;align-items:center;gap:.35rem;font-size:.72rem}
+.dl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+/* heat map */
+.hmap{display:grid;gap:2px}
+.hmap-cell{border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;transition:opacity .2s}
+.hmap-cell:hover{opacity:.8}
+.hmap-xlabel{font-size:.6rem;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hmap-ylabel{font-size:.6rem;color:var(--muted);text-align:right;white-space:nowrap}
+/* bubble */
+.bubble-wrap{position:relative;overflow:hidden;border-radius:8px;background:var(--g50)}
+
+/* SETTINGS */
+.settings-body{flex:1;overflow:auto;padding:1.25rem;display:flex;flex-direction:column;gap:.9rem;max-width:600px}
+.scard{background:#fff;border-radius:11px;border:1px solid var(--g200);padding:1.1rem}
+.scard h3{font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.blob-badge{font-size:.68rem;padding:.15rem .5rem;border-radius:10px;font-weight:600}
+.bb-ok{background:#d1fae5;color:#065f46}
+.bb-err{background:#fee2e2;color:#dc2626}
+.bb-pend{background:#fef3c7;color:#92400e}
+
+/* DEPARTING PAGE */
+.dep-body{flex:1;overflow:auto;padding:1.25rem}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.1rem;right:1.1rem;background:var(--hdr1);color:#fff;padding:.55rem 1rem;border-radius:8px;font-size:.78rem;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,.2);z-index:9999;transform:translateY(14px);opacity:0;transition:all .25s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--g200);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-logo">Ngutu <span>College</span></div>
+  <div class="hdr-div"></div>
+  <div class="hdr-title">Class Grouping Planner</div>
+  <div class="hdr-space"></div>
+  <div class="unsaved" id="unsavedBadge">● Unsaved changes</div>
+  <span id="blobBadge" class="blob-badge bb-err" style="font-size:.68rem;padding:.15rem .5rem;border-radius:10px;font-weight:600;background:#fee2e2;color:#dc2626">⚡ Not connected</span>
+  <button class="hbtn hbtn-ghost" onclick="showPage('settings')">⚙ Settings</button>
+  <button class="hbtn hbtn-ghost" onclick="triggerVeracrossUpload()" id="vcSyncBtn" style="position:relative">
+    ⬆ Veracross Sync
+    <span id="vcBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#f87171;color:#fff;font-size:.58rem;font-weight:700;border-radius:10px;padding:.05rem .3rem;min-width:14px;text-align:center"></span>
+  </button>
+  <button class="hbtn hbtn-primary" onclick="saveToBlob()">💾 Save</button>
+  <input type="file" id="vcInput" accept=".csv" style="display:none" onchange="handleVeracrossCSV(event)">
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="ntab active" data-page="planner" onclick="showPage('planner')">📋 Planner</div>
+  <div class="ntab" data-page="analytics" onclick="showPage('analytics')">📊 Analytics</div>
+  <div class="ntab" data-page="departing" onclick="showPage('departing')">🚪 Departing <span id="depCount">(0)</span></div>
+  <div class="ntab" data-page="settings" onclick="showPage('settings')">🔧 Settings</div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar" id="plannerToolbar">
+  <span class="tlabel">Community:</span>
+  <div id="ctabs" style="display:flex;gap:.25rem"></div>
+  <div class="hdr-div" style="background:var(--g200);height:18px"></div>
+  <span class="tlabel">Sociogram:</span>
+  <button class="tbtn" id="tbSocio" onclick="toggle('socio')">Off</button>
+  <span class="tlabel">Detail:</span>
+  <button class="tbtn" id="tbDetail" onclick="toggle('detail')">Off</button>
+  <div style="margin-left:auto">
+    <input class="srch" type="text" placeholder="🔍  Search…" oninput="doSearch(this.value)" id="searchBox">
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- PLANNER PAGE -->
+  <div class="page on" id="page-planner" style="flex-direction:column">
+    <div style="display:flex;flex:1;overflow:hidden">
+      <!-- SIDEBAR -->
+      <div class="sb">
+        <div class="sb-sec">
+          <h4>Overview</h4>
+          <div class="sg" id="sbStats"></div>
+        </div>
+        <div class="sb-sec">
+          <h4>Year Levels — <span id="sbCommLabel" style="text-transform:none;font-weight:400"></span></h4>
+          <div id="sbYears"></div>
+        </div>
+        <div class="sb-sec" id="sbSocioSec" style="display:none">
+          <h4>⚠ Alerts — <span id="sbAlertCount">0</span></h4>
+          <div id="sbAlerts"></div>
+        </div>
+      </div>
+      <!-- CANVAS + UNASSIGNED POOL -->
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="canvas" id="canvas"></div>
+        <!-- Unassigned pool: students with no homeroom from Veracross -->
+        <div id="unassignedZone" style="display:none;background:#fffbeb;border-top:2px solid #f59e0b;padding:.5rem 1rem;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem">
+            <span style="font-size:.7rem;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em">⚠ Unassigned — no homeroom in Veracross</span>
+            <span id="unassignedCount" style="background:#f59e0b;color:#fff;font-size:.62rem;font-weight:700;padding:.08rem .35rem;border-radius:10px">0</span>
+            <span style="font-size:.68rem;color:#b45309;font-style:italic">Drag each student to a group or right-click to assign</span>
+          </div>
+          <div id="unassignedChips" style="display:flex;flex-wrap:wrap;gap:.3rem;min-height:24px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS PAGE -->
+  <!-- ANALYTICS PAGE -->
+  <div class="page" id="page-analytics" style="flex-direction:row">
+    <div id="analyFilter" style="width:210px;background:#fff;border-right:1px solid var(--g200);flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column;padding:.75rem .8rem;gap:.75rem">
+      <div>
+        <div class="tlabel" style="margin-bottom:.4rem">Exclude from report</div>
+        <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer"><input type="checkbox" id="afKindy" onchange="aRefresh()"> Kindergarten</label>
+        <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer;margin-top:.25rem"><input type="checkbox" id="afReception" onchange="aRefresh()"> Reception</label>
+      </div>
+      <div><div class="tlabel" style="margin-bottom:.4rem">Primary Metric</div><div id="afMetric" style="display:flex;flex-direction:column;gap:.25rem"></div></div>
+      <div><div class="tlabel" style="margin-bottom:.4rem">Break down by</div><div id="afBreak" style="display:flex;flex-direction:column;gap:.25rem"></div></div>
+      <div><div class="tlabel" style="margin-bottom:.4rem">Filter Community</div><div id="afComm" style="display:flex;flex-direction:column;gap:.25rem"></div></div>
+      <div style="margin-top:auto;padding-top:.75rem;border-top:1px solid var(--g100);display:flex;flex-direction:column;gap:.4rem">
+        <button class="mbtn mbtn-ghost" style="width:100%;justify-content:center" onclick="aExportPNG()">&#x1F5BC; Export chart PNG</button>
+        <button class="mbtn mbtn-primary" style="width:100%;justify-content:center" onclick="aExportXLSX()">&#x1F4CA; Export to Excel</button>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div id="analyCrumb" style="background:#fff;border-bottom:1px solid var(--g200);padding:.35rem 1rem;display:flex;align-items:center;gap:.4rem;min-height:34px;flex-shrink:0"></div>
+      <div style="flex:1;overflow:auto;padding:1rem" id="analyCharts"></div>
+    </div>
+  </div>
+
+  <!-- DEPARTING PAGE -->
+  <div class="page" id="page-departing" style="flex-direction:column">
+    <div class="dep-body">
+      <div class="acard" style="max-width:900px">
+        <h3 style="font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;margin-bottom:.75rem">🚪 Departing Students</h3>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.75rem">Click any student to restore them to their group.</p>
+        <div id="depList" style="display:flex;flex-wrap:wrap;gap:.4rem"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="page" id="page-settings" style="flex-direction:column;overflow:auto">
+    <div class="settings-body">
+      <div class="scard">
+        <h3>☁ Azure Blob Storage <span id="blobStatusLabel" class="blob-badge bb-err">Not connected</span></h3>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Auto-saves groupings.json and students_master.json to your Azure storage container.</p>
+        <div class="frow" style="margin-bottom:.65rem">
+          <div class="fg"><label>Storage Account</label><input class="fi" id="blobAcct" placeholder="mystorageaccount"></div>
+          <div class="fg"><label>Container</label><input class="fi" id="blobCont" placeholder="groupings"></div>
+        </div>
+        <div class="fg"><label>SAS Token</label><input class="fi" id="blobSAS" type="password" placeholder="?sv=2023-01-03&ss=b…"></div>
+        <div style="display:flex;gap:.4rem;margin-top:.5rem">
+          <button class="mbtn mbtn-primary" onclick="testBlob()">Test Connection</button>
+          <button class="mbtn mbtn-ghost" onclick="saveBlobCfg()">Save</button>
+          <button class="mbtn mbtn-ghost" onclick="loadFromBlob()">Load from Blob</button>
+        </div>
+      </div>
+      <div class="scard">
+        <h3>🔄 Veracross Sync</h3>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Upload a CSV export from Veracross. The app will compare each student field-by-field. Conflicts are reviewed before applying. New students are added automatically. Students missing from the export are flagged as potential leavers.</p>
+        <p style="font-size:.7rem;color:var(--muted);margin-bottom:.85rem">Expected columns: <code style="background:var(--g100);padding:.1rem .3rem;border-radius:3px">first, last, year, gender, atsi, nccd</code></p>
+        <div class="fg" style="margin-bottom:.65rem">
+          <label>Azure Function URL <span style="font-weight:400;color:var(--muted)">(for live sync)</span></label>
+          <input class="fi" id="funcUrl" placeholder="https://func-ngutu-veracross-sync.azurewebsites.net/api/veracross-sync">
+          <div style="font-size:.68rem;color:var(--muted);margin-top:.25rem">Leave blank until Function App is deployed. Once set, the app will auto-sync with Veracross on open.</div>
+        </div>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <button class="mbtn mbtn-primary" onclick="saveFuncUrl()">Save Function URL</button>
+          <button class="mbtn mbtn-ghost" onclick="triggerVeracrossUpload()">Upload CSV instead</button>
+        </div>
+      </div>
+      <div class="scard">
+        <h3>⬇ Export</h3>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Export current groupings as CSV for import into MIS or timetabling system. Departing students are included with group marked as DEPARTING.</p>
+        <button class="mbtn mbtn-ghost" onclick="exportCSV()">Export Groupings CSV</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- STUDENT MODAL -->
+<div class="overlay" id="ovStudent">
+  <div class="modal">
+    <div class="mhd">
+      <div class="mtitle" id="smTitle">Student</div>
+      <button class="mclose" onclick="closeModal('ovStudent')">✕</button>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>First Name</label><input class="fi" id="smFirst"></div>
+      <div class="fg"><label>Last Name</label><input class="fi" id="smLast"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Year Level</label>
+        <select class="fs" id="smYear">
+          <option>Kindergarten</option><option>Reception</option><option>Year 1</option><option>Year 2</option>
+          <option>Year 3</option><option>Year 4</option><option>Year 5</option><option>Year 6</option>
+          <option>Year 7</option><option>Year 8</option><option>Year 9</option><option>Year 10</option>
+          <option>Year 11</option><option>Year 12</option>
+        </select>
+      </div>
+      <div class="fg"><label>Gender</label>
+        <select class="fs" id="smGender"><option>Male</option><option>Female</option><option>Other</option></select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>ATSI</label>
+        <select class="fs" id="smATSI"><option value="N">Non-Indigenous</option><option value="Y">Aboriginal/TSI</option></select>
+      </div>
+      <div class="fg"><label>NCCD Level</label>
+        <select class="fs" id="smNCCD">
+          <option value="nil">No adjustment</option><option value="nik">NIK</option><option value="qdtp">QDTP</option>
+          <option value="supp">Supplementary</option><option value="subs">Substantial</option><option value="ext">Extensive</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Future Enrolment</label>
+        <select class="fs" id="smFuture"><option value="N">Current student</option><option value="Y">Future enrolment</option></select>
+      </div>
+      <div class="fg"><label>Flag as possibly leaving</label>
+        <select class="fs" id="smLeaving"><option value="N">No</option><option value="Y">Possibly leaving</option></select>
+      </div>
+    </div>
+    <div class="fg"><label>✅ Wants to be with</label><input class="fi" id="smWants" placeholder="comma-separated names"></div>
+    <div class="fg"><label>❌ Should NOT be with</label><input class="fi" id="smNot" placeholder="comma-separated names"></div>
+    <div class="fg"><label>📝 Family Notes / Requests</label><textarea class="ft" id="smFamily"></textarea></div>
+    <div class="mfoot">
+      <button class="mbtn mbtn-warn" onclick="toggleLeavingFromModal()">🟠 Toggle Leaving</button>
+      <button class="mbtn mbtn-danger" onclick="markDeparting()">🚪 Mark Departing</button>
+      <button class="mbtn mbtn-ghost" onclick="closeModal('ovStudent')">Cancel</button>
+      <button class="mbtn mbtn-primary" onclick="saveStudent()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STUDENT MODAL -->
+<div class="overlay" id="ovAdd">
+  <div class="modal">
+    <div class="mhd">
+      <div class="mtitle">Add Future Enrolment</div>
+      <button class="mclose" onclick="closeModal('ovAdd')">✕</button>
+    </div>
+    <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Adding to: <strong id="addToGroup"></strong></p>
+    <div class="frow">
+      <div class="fg"><label>First Name</label><input class="fi" id="addFirst"></div>
+      <div class="fg"><label>Last Name</label><input class="fi" id="addLast"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Year Level</label>
+        <select class="fs" id="addYear">
+          <option>Kindergarten</option><option>Reception</option><option>Year 1</option><option>Year 2</option>
+          <option>Year 3</option><option>Year 4</option><option>Year 5</option><option>Year 6</option>
+          <option>Year 7</option><option>Year 8</option><option>Year 9</option><option>Year 10</option>
+          <option>Year 11</option><option>Year 12</option>
+        </select>
+      </div>
+      <div class="fg"><label>Gender</label>
+        <select class="fs" id="addGender"><option>Male</option><option>Female</option><option>Other</option></select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>ATSI</label>
+        <select class="fs" id="addATSI"><option value="N">Non-Indigenous</option><option value="Y">Aboriginal/TSI</option></select>
+      </div>
+      <div class="fg"><label>NCCD Level</label>
+        <select class="fs" id="addNCCD">
+          <option value="nil">No adjustment</option><option value="nik">NIK</option><option value="qdtp">QDTP</option>
+          <option value="supp">Supplementary</option><option value="subs">Substantial</option><option value="ext">Extensive</option>
+        </select>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="mbtn mbtn-ghost" onclick="closeModal('ovAdd')">Cancel</button>
+      <button class="mbtn mbtn-primary" onclick="confirmAddStudent()">Add Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFLICT REVIEW MODAL -->
+<div class="overlay" id="ovConflict">
+  <div class="modal modal-wide">
+    <div class="mhd">
+      <div class="mtitle">🔄 Veracross Sync — Review Changes</div>
+      <button class="mclose" onclick="closeModal('ovConflict')">✕</button>
+    </div>
+    <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem" id="crSummary"></p>
+    <div id="crItems" style="max-height:55vh;overflow-y:auto"></div>
+    <div class="mfoot">
+      <button class="mbtn mbtn-ghost" onclick="closeModal('ovConflict')">Cancel</button>
+      <button class="mbtn mbtn-warn" onclick="crAcceptAll()">Accept All Veracross Changes</button>
+      <button class="mbtn mbtn-primary" onclick="crApply()">Apply Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctxmenu" id="ctxMenu"></div>
+
+<!-- SOCIO POPOVER -->
+<div class="spop" id="socioPop"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// STRUCTURE
+// ══════════════════════════════════════════════════
+const STRUCT = {
+  Madlurta:[{band:'Kindergarten / Reception',groups:['Purli','Tirntu','Maku']}],
+  Kurlana: [{band:'Year 1 / 2 / 3',          groups:['Kudlyu','Paitya','Kadli']}],
+  Warti:   [{band:'Year 4 / 5 / 6',          groups:['Kuya','Kurraka','Kalta']}],
+  Karra:   [{band:'Year 7–12',               groups:['Kardi','Nakudla','Yampu','Ngungana','Winta']}],
+  Wirra:   [{band:'Year 1–6 (cross-community)',groups:['Ngakala']}]
+};
+// Groups that are valid destinations — excludes the unassigned sentinel
+const ALL_GROUPS = Object.values(STRUCT).flatMap(b=>b.flatMap(x=>x.groups));
+// Sentinel group for students with no homeroom in Veracross
+const UNASSIGNED_GROUP = '__unassigned__';
+
+const YEAR_LEVELS = ['Kindergarten','Reception','Year 1','Year 2','Year 3','Year 4','Year 5','Year 6','Year 7','Year 8','Year 9','Year 10','Year 11','Year 12'];
+const YEAR_COLORS = {
+  'Kindergarten':'#f0abfc','Reception':'#c084fc','Year 1':'#818cf8','Year 2':'#60a5fa','Year 3':'#34d399',
+  'Year 4':'#4ade80','Year 5':'#facc15','Year 6':'#fb923c','Year 7':'#f87171','Year 8':'#e879f9',
+  'Year 9':'#38bdf8','Year 10':'#a78bfa','Year 11':'#fb7185','Year 12':'#2dd4bf'
+};
+const NCCD_COLORS = {nil:'#94a3b8',nik:'#34d399',qdtp:'#60a5fa',supp:'#f59e0b',subs:'#f97316',ext:'#ef4444'};
+const NCCD_LABELS = {nil:'No adj.',nik:'NIK',qdtp:'QDTP',supp:'Supp.',subs:'Subs.',ext:'Ext.'};
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let students=[], departing=[], nextId=1;
+let comm='Madlurta', socioOn=false, detailOn=false, searchTerm='';
+let editingId=null, addingToGroup=null, dragId=null;
+let lockedGroups=new Set();
+let groupStatsView=new Set(); // groups showing stats overlay instead of names
+let unsaved=false;
+let blobCfg={account:'',container:'',sas:''};
+let blobOk=false;
+let pendingCRItems=[];
+let pendingAutoItems=[];   // silent auto-sync queue (non-conflict changes)
+// FUNC_URL is set dynamically from Settings — stored in localStorage as 'ngutuFuncUrl'
+const getFuncUrl=()=>window._funcUrl||localStorage.getItem('ngutuFuncUrl')||'';
+const SYNC_LOCK_MINUTES = 5; // minutes before another auto-sync is allowed
+
+// ══════════════════════════════════════════════════
+// DEMO DATA
+// ══════════════════════════════════════════════════
+function initDemo(){
+  const FN=['Liam','Noah','Oliver','Elijah','James','Aiden','Lucas','Mason','Ethan','Logan','Ava','Emma','Charlotte','Amelia','Sophia','Isabella','Mia','Luna','Harper','Evelyn','Jack','Theo','Oscar','Henry','Leo','Ruby','Grace','Isla','Chloe','Zara','Kai','River','Sage','Quinn','Blake','Riley','Jordan','Avery','Peyton','Morgan','Tom','Sam','Alex','Jesse','Casey','Billie','Frankie','Remi','Taylor','Drew'];
+  const LN=['Smith','Jones','Williams','Brown','Taylor','Anderson','Thomas','Jackson','White','Harris','Martin','Thompson','Garcia','Martinez','Robinson','Clark','Rodriguez','Lewis','Lee','Walker','Hall','Allen','Young','King','Wright','Lopez','Hill','Scott','Green','Adams'];
+  const NCCD_W=['nil','nil','nil','nil','nik','qdtp','supp','subs','ext'];
+  const GENDERS=['Male','Female','Male','Female','Other'];
+  const yearsByBand={'Kindergarten / Reception':['Kindergarten','Reception'],'Year 1 / 2 / 3':['Year 1','Year 2','Year 3'],'Year 4 / 5 / 6':['Year 4','Year 5','Year 6'],'Year 7–12':['Year 7','Year 8','Year 9','Year 10','Year 11','Year 12'],'Year 1–6 (cross-community)':['Year 1','Year 2','Year 3','Year 4','Year 5','Year 6']};
+  let idx=0;
+  Object.entries(STRUCT).forEach(([c,bands])=>{
+    bands.forEach(band=>{
+      const yrs=yearsByBand[band.band]||['Year 1'];
+      const perG=c==='Karra'?13:c==='Madlurta'?16:18;
+      band.groups.forEach(group=>{
+        for(let i=0;i<perG;i++){
+          students.push({id:nextId++,first:FN[(idx*7+i*3)%FN.length],last:LN[(idx*5+i*11)%LN.length],year:yrs[(idx+i)%yrs.length],gender:GENDERS[(idx+i*2)%GENDERS.length],atsi:(idx+i)%5===0?'Y':'N',nccd:NCCD_W[(idx*3+i)%NCCD_W.length],group,wantsWith:[],notWith:[],family:'',leaving:'N',future:'N'});
+          idx++;
+        }
+      });
+    });
+  });
+  if(students.length>12){
+    students[0].wantsWith=[students[1].first+' '+students[1].last];
+    students[2].notWith=[students[3].first+' '+students[3].last];
+    students[5].family='Please keep with older sibling in Winta';
+    students[8].leaving='Y';
+    students[10].wantsWith=[students[11].first+' '+students[11].last];
+  }
+}
+
+// ══════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════
+function render(){
+  renderCTabs();
+  renderCanvas();
+  renderSidebar();
+  renderUnassigned();
+}
+
+function renderUnassigned(){
+  const unassigned = students.filter(s=>s.group===UNASSIGNED_GROUP);
+  const zone = document.getElementById('unassignedZone');
+  const chips = document.getElementById('unassignedChips');
+  const count = document.getElementById('unassignedCount');
+  if(!zone) return;
+  if(unassigned.length === 0){ zone.style.display='none'; return; }
+  zone.style.display='';
+  count.textContent = unassigned.length;
+  chips.innerHTML = unassigned.map(s=>{
+    const yrColor = YEAR_COLORS[s.year]||'#94a3b8';
+    return `<div class="sc" style="display:inline-flex;background:#fff;cursor:grab;border-color:#f59e0b"
+      draggable="true" data-id="${s.id}"
+      ondragstart="onDragStart(event,${s.id})" ondragend="onDragEnd()"
+      oncontextmenu="openCtxMenu(event,${s.id})"
+      title="Right-click to assign to a group">
+      <div class="ypip" style="background:${yrColor}"></div>
+      <span style="font-size:.74rem;font-weight:600">${s.last}, ${s.first}</span>
+      <span style="font-size:.62rem;color:var(--muted);margin-left:.25rem">${s.year}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderCTabs(){
+  document.getElementById('ctabs').innerHTML=Object.keys(STRUCT).map(c=>`<button class="ctab ${c===comm?'on':''}" onclick="setComm('${c}')">${c}</button>`).join('');
+  document.getElementById('sbCommLabel').textContent=comm;
+}
+
+function renderCanvas(){
+  const bands=STRUCT[comm];
+  const commGroups=bands.flatMap(b=>b.groups);
+  const commStudents=students.filter(s=>commGroups.includes(s.group)&&s.group!==UNASSIGNED_GROUP);
+  const avg=commStudents.length/commGroups.length||0;
+
+  document.getElementById('canvas').innerHTML=bands.map(band=>`
+    <div class="band">
+      <div class="groups-row">${band.groups.map(g=>renderGroup(g,avg)).join('')}</div>
+    </div>`).join('');
+}
+
+function renderGroup(group,avg){
+  const gs=students.filter(s=>s.group===group);
+  const show=searchTerm?gs.filter(s=>`${s.first} ${s.last}`.toLowerCase().includes(searchTerm)):gs;
+  const sorted=[...show].sort((a,b)=>{
+    const yi=YEAR_LEVELS.indexOf(a.year)-YEAR_LEVELS.indexOf(b.year);
+    return yi!==0?yi:a.last.localeCompare(b.last);
+  });
+  const males=gs.filter(s=>s.gender==='Male').length;
+  const females=gs.filter(s=>s.gender==='Female').length;
+  const other=gs.filter(s=>s.gender==='Other').length;
+  const atsi=gs.filter(s=>s.atsi==='Y').length;
+  const locked=lockedGroups.has(group);
+  const statsView=groupStatsView.has(group);
+  const gid='g_'+group.replace(/[^a-z0-9]/gi,'_');
+
+  const diff=gs.length-avg;
+  const balPct=avg>0?Math.min(100,(gs.length/avg)*50):50;
+  const balColor=Math.abs(diff)<=2?'#34d399':Math.abs(diff)<=4?'#f59e0b':'#ef4444';
+
+  // Stats overlay content
+  const nccdCounts=Object.fromEntries(Object.keys(NCCD_COLORS).map(k=>[k,gs.filter(s=>s.nccd===k).length]));
+  const tot=gs.length||1;
+  const yCounts={};
+  gs.forEach(s=>{ yCounts[s.year]=(yCounts[s.year]||0)+1; });
+
+  const statsHTML=`<div class="gstats-overlay">
+    <div class="ov-row"><span class="ov-lbl">Gender</span>
+      <div class="ov-track">
+        ${males>0?`<div class="ov-seg" style="width:${males/tot*100}%;background:#60a5fa" title="M:${males}"></div>`:''}
+        ${females>0?`<div class="ov-seg" style="width:${females/tot*100}%;background:#f472b6" title="F:${females}"></div>`:''}
+        ${other>0?`<div class="ov-seg" style="width:${other/tot*100}%;background:#a78bfa" title="Other:${other}"></div>`:''}
+      </div>
+      <span class="ov-val" style="font-size:.6rem">♂${males}♀${females}</span>
+    </div>
+    <div class="ov-row"><span class="ov-lbl">ATSI</span>
+      <div class="ov-track">
+        ${atsi>0?`<div class="ov-seg" style="width:${atsi/tot*100}%;background:#f59e0b" title="ATSI:${atsi}"></div>`:''}
+        <div class="ov-seg" style="width:${(tot-atsi)/tot*100}%;background:#e2e8f0" title="Non:${tot-atsi}"></div>
+      </div>
+      <span class="ov-val">${atsi}</span>
+    </div>
+    <div class="ov-row"><span class="ov-lbl">NCCD</span>
+      <div class="ov-track">
+        ${Object.entries(nccdCounts).map(([k,n])=>n>0?`<div class="ov-seg" style="width:${n/tot*100}%;background:${NCCD_COLORS[k]}" title="${NCCD_LABELS[k]}:${n}"></div>`:'').join('')}
+      </div>
+      <span class="ov-val" style="font-size:.58rem">${gs.filter(s=>['subs','ext'].includes(s.nccd)).length}hi</span>
+    </div>
+    ${YEAR_LEVELS.filter(y=>yCounts[y]).map(y=>`
+    <div class="ov-row"><span class="ov-lbl" style="color:${YEAR_COLORS[y]}">${y}</span>
+      <div class="ov-track"><div class="ov-seg" style="width:${yCounts[y]/tot*100}%;background:${YEAR_COLORS[y]}"></div></div>
+      <span class="ov-val">${yCounts[y]}</span>
+    </div>`).join('')}
+  </div>`;
+
+  return `
+    <div class="gcol ${locked?'locked':''}" id="${gid}"
+      ${locked?'':`ondragover="onDragOver(event,'${group.replace(/'/g,"\\'")}') " ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${group.replace(/'/g,"\\'")}')"`}>
+      <div class="ghdr">
+        <span class="gname">${group}</span>
+        <span class="gcnt">${gs.length}</span>
+        <button class="gview-toggle" onclick="toggleGroupView('${group.replace(/'/g,"\\'")}')">📊</button>
+        <button class="gadd" onclick="openAddModal('${group.replace(/'/g,"\\'")}')">＋</button>
+        <button class="glock" onclick="toggleLock('${group.replace(/'/g,"\\'")}')">  ${locked?'🔒':'🔓'}</button>
+      </div>
+      <div class="gbalance">
+        <div class="bal-track"><div class="bal-fill" style="width:${balPct}%;background:${balColor}"></div></div>
+        <span class="bal-label" style="color:${balColor}">${diff>0?'+':''}${Math.round(diff)}</span>
+      </div>
+      ${statsView ? statsHTML : `<div class="gcards">${sorted.map(s=>renderCard(s)).join('')}</div>`}
+    </div>`;
+}
+
+
+function renderCard(s){
+  const mates=students.filter(x=>x.group===s.group);
+  const conflicts=socioOn?s.notWith.filter(n=>mates.find(x=>`${x.first} ${x.last}`.toLowerCase()===n.toLowerCase())):[];
+  const wanted=socioOn&&s.wantsWith.length>0;
+  const hasSocio=conflicts.length>0||wanted||(s.family&&s.family.trim());
+  let cls='sc';
+  if(s.leaving==='Y') cls+=' leaving';
+  else if(conflicts.length>0) cls+=' conflict';
+  else if(wanted) cls+=' wanted';
+
+  const icons=[];
+  if(hasSocio) icons.push(`<span style="cursor:pointer" onclick="showSocioPop(event,${s.id})" title="Sociogram info">⚠️</span>`);
+  if(s.family) icons.push('📝');
+  if(s.future==='Y') icons.push('🆕');
+  if(s.leaving==='Y') icons.push('🟠');
+
+  const yrColor=YEAR_COLORS[s.year]||'#94a3b8';
+  const nccdDetail=detailOn?`<span class="sc-detail">${NCCD_LABELS[s.nccd]}</span>`:'';
+
+  return `<div class="${cls}" draggable="true" data-id="${s.id}"
+    ondragstart="onDragStart(event,${s.id})" ondragend="onDragEnd()"
+    ondblclick="openStudentModal(${s.id})"
+    oncontextmenu="openCtxMenu(event,${s.id})"
+    title="Dbl-click edit • Right-click move">
+    <div class="ypip" style="background:${yrColor}"></div>
+    <span class="sc-name">${s.last}, ${s.first}</span>
+    <span class="sc-yr">${s.year}</span>
+    ${nccdDetail}
+    ${icons.length?`<div class="sc-icons">${icons.join('')}</div>`:''}
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════════════════
+function renderSidebar(){
+  const cGroups=STRUCT[comm].flatMap(b=>b.groups);
+  const cStudents=students.filter(s=>cGroups.includes(s.group));
+  const cMales=cStudents.filter(s=>s.gender==='Male').length;
+  const cFemales=cStudents.filter(s=>s.gender==='Female').length;
+  const cOther=cStudents.filter(s=>s.gender==='Other').length;
+  const cATSI=cStudents.filter(s=>s.atsi==='Y').length;
+  const cNonATSI=cStudents.filter(s=>s.atsi==='N').length;
+
+  document.getElementById('sbStats').innerHTML=`
+    <div class="sp"><div class="sp-v">${students.length}</div><div class="sp-l">Total</div></div>
+    <div class="sp"><div class="sp-v">${cStudents.length}</div><div class="sp-l">${comm}</div></div>
+    <div class="sp"><div class="sp-v">${departing.length}</div><div class="sp-l">Departing</div></div>
+    <div class="sp"><div class="sp-v">${students.filter(s=>s.leaving==='Y').length}</div><div class="sp-l">Poss. leaving</div></div>`;
+
+  // Gender breakdown
+  const genderHTML=`
+    <div class="yr-row"><div class="yr-pip" style="background:#60a5fa"></div><span class="yr-lbl">Male</span><span class="yr-cnt">${cMales}</span></div>
+    <div class="yr-row"><div class="yr-pip" style="background:#f472b6"></div><span class="yr-lbl">Female</span><span class="yr-cnt">${cFemales}</span></div>
+    ${cOther>0?`<div class="yr-row"><div class="yr-pip" style="background:#a78bfa"></div><span class="yr-lbl">Gender diverse</span><span class="yr-cnt">${cOther}</span></div>`:''}`;
+
+  // ATSI breakdown
+  const atsiHTML=`
+    <div class="yr-row"><div class="yr-pip" style="background:#f59e0b"></div><span class="yr-lbl">Aboriginal/TSI</span><span class="yr-cnt">${cATSI}</span></div>
+    <div class="yr-row"><div class="yr-pip" style="background:#94a3b8"></div><span class="yr-lbl">Non-Indigenous</span><span class="yr-cnt">${cNonATSI}</span></div>`;
+
+  // Year counts
+  const yCounts={};
+  cStudents.forEach(s=>{ yCounts[s.year]=(yCounts[s.year]||0)+1; });
+  const yearHTML=YEAR_LEVELS.filter(y=>yCounts[y]).map(y=>`
+    <div class="yr-row"><div class="yr-pip" style="background:${YEAR_COLORS[y]}"></div><span class="yr-lbl">${y}</span><span class="yr-cnt">${yCounts[y]}</span></div>`).join('');
+
+  document.getElementById('sbYears').innerHTML=yearHTML+`
+    <div style="height:1px;background:var(--g100);margin:.3rem 0"></div>
+    <div style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:.35rem 0 .2rem">Gender</div>
+    ${genderHTML}
+    <div style="height:1px;background:var(--g100);margin:.3rem 0"></div>
+    <div style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:.35rem 0 .2rem">ATSI</div>
+    ${atsiHTML}`;
+
+  if(socioOn){
+    document.getElementById('sbSocioSec').style.display='';
+    const alerts=[];
+    cStudents.forEach(s=>{
+      s.notWith.forEach(n=>{
+        const t=cStudents.find(x=>`${x.first} ${x.last}`.toLowerCase()===n.toLowerCase());
+        if(t&&t.group===s.group) alerts.push({type:'bad',msg:`⚠ ${s.last}, ${s.first} — same group as ${n}`});
+      });
+      s.wantsWith.forEach(n=>{
+        const t=cStudents.find(x=>`${x.first} ${x.last}`.toLowerCase()===n.toLowerCase());
+        if(t&&t.group!==s.group) alerts.push({type:'ok',msg:`💬 ${s.last}, ${s.first} wants to be with ${n}`});
+      });
+    });
+    document.getElementById('sbAlertCount').textContent=alerts.length;
+    document.getElementById('sbAlerts').innerHTML=alerts.length
+      ?alerts.map(a=>`<div style="font-size:.7rem;padding:.3rem 0;border-bottom:1px solid var(--g100);color:${a.type==='bad'?'#dc2626':'#059669'}">${a.msg}</div>`).join('')
+      :'<div style="font-size:.7rem;color:var(--muted)">✅ No conflicts.</div>';
+  } else {
+    document.getElementById('sbSocioSec').style.display='none';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// SOCIO POPOVER
+// ══════════════════════════════════════════════════
+function showSocioPop(e,id){
+  e.stopPropagation();
+  const s=students.find(x=>x.id===id); if(!s) return;
+  const mates=students.filter(x=>x.group===s.group);
+  let html=`<div class="spop-title">${s.first} ${s.last}</div>`;
+  const conflicts=s.notWith.filter(n=>mates.find(x=>`${x.first} ${x.last}`.toLowerCase()===n.toLowerCase()));
+  if(conflicts.length) html+=conflicts.map(n=>`<div class="spop-item spop-conflict">⚠ Should NOT be with ${n} — same group!</div>`).join('');
+  if(s.wantsWith.length){
+    s.wantsWith.forEach(n=>{
+      const t=mates.find(x=>`${x.first} ${x.last}`.toLowerCase()===n.toLowerCase());
+      html+=`<div class="spop-item spop-wanted">💬 Wants to be with ${n}${t?' ✓':' (different group)'}</div>`;
+    });
+  }
+  if(s.family) html+=`<div class="spop-item spop-family" style="margin-top:.3rem">📝 ${s.family}</div>`;
+  if(!conflicts.length&&!s.wantsWith.length&&!s.family) html+='<div style="color:var(--muted)">No sociogram data.</div>';
+  const pop=document.getElementById('socioPop');
+  pop.innerHTML=html;
+  pop.style.left=Math.min(e.clientX+8,window.innerWidth-260)+'px';
+  pop.style.top=Math.min(e.clientY+8,window.innerHeight-180)+'px';
+  pop.classList.add('show');
+  setTimeout(()=>document.addEventListener('click',()=>pop.classList.remove('show'),{once:true}),10);
+}
+
+// ══════════════════════════════════════════════════
+// CONTEXT MENU
+// ══════════════════════════════════════════════════
+function openCtxMenu(e,id){
+  e.preventDefault(); e.stopPropagation();
+  const s=students.find(x=>x.id===id); if(!s) return;
+  const commGroups=ALL_GROUPS.filter(g=>g!==s.group&&g!==UNASSIGNED_GROUP);
+  const menu=document.getElementById('ctxMenu');
+  menu.innerHTML=`
+    <div class="ctxi" style="font-weight:700;font-size:.72rem;color:var(--muted);cursor:default">${s.first} ${s.last}</div>
+    <div class="ctxi-sep"></div>
+    <div class="ctxi" onclick="openStudentModal(${id});closeCtxMenu()">✏️ Edit details</div>
+    <div class="ctxi" onclick="toggleLeaving(${id})">🟠 ${s.leaving==='Y'?'Remove':'Flag as'} possibly leaving</div>
+    <div class="ctxi-sep"></div>
+    <div style="padding:.2rem .85rem;font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Move to…</div>
+    ${commGroups.slice(0,12).map(g=>`<div class="ctxi" onclick="moveStudentTo(${id},'${g}');closeCtxMenu()">${g}</div>`).join('')}
+    <div class="ctxi-sep"></div>
+    <div class="ctxi danger" onclick="markDepartingById(${id});closeCtxMenu()">🚪 Mark departing</div>`;
+  menu.style.left=Math.min(e.clientX,window.innerWidth-170)+'px';
+  menu.style.top=Math.min(e.clientY,window.innerHeight-300)+'px';
+  menu.classList.add('show');
+  setTimeout(()=>document.addEventListener('click',closeCtxMenu,{once:true}),10);
+}
+function closeCtxMenu(){ document.getElementById('ctxMenu').classList.remove('show'); }
+function moveStudentTo(id,group){
+  const s=students.find(x=>x.id===id); if(!s) return;
+  s.group=group; markUnsaved(); showToast(`${s.first} → ${group}`); render();
+}
+
+// ══════════════════════════════════════════════════
+// DRAG & DROP
+// ══════════════════════════════════════════════════
+function onDragStart(e,id){
+  dragId=id; e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>{ const el=document.querySelector(`[data-id="${id}"]`); if(el) el.classList.add('dragging'); },0);
+}
+function onDragEnd(){
+  document.querySelectorAll('.sc.dragging').forEach(el=>el.classList.remove('dragging'));
+  document.querySelectorAll('.gcol.drop-over').forEach(el=>el.classList.remove('drop-over'));
+}
+function onDragOver(e,group){
+  e.preventDefault();
+  if(group==='__dep__') return;
+  if(lockedGroups.has(group)) return;
+  const gid='g_'+group.replace(/[^a-z0-9]/gi,'_');
+  const el=document.getElementById(gid); if(el) el.classList.add('drop-over');
+}
+function onDragLeave(e){
+  document.querySelectorAll('.gcol.drop-over').forEach(el=>el.classList.remove('drop-over'));
+}
+function onDrop(e,group){
+  e.preventDefault(); onDragLeave(e);
+  if(dragId===null) return;
+  if(group==='__dep__'){
+    const idx=students.findIndex(s=>s.id===dragId); if(idx===-1) return;
+    const s=students.splice(idx,1)[0]; departing.push(s);
+    showToast(`${s.first} ${s.last} → Departing`);
+  } else {
+    if(lockedGroups.has(group)){ showToast('Group is locked'); dragId=null; return; }
+    const s=students.find(x=>x.id===dragId);
+    if(s&&s.group!==group){ s.group=group; showToast(`${s.first} → ${group}`); }
+  }
+  dragId=null; markUnsaved(); render();
+}
+
+// ══════════════════════════════════════════════════
+// DEPARTING
+// ══════════════════════════════════════════════════
+function toggleGroupView(group){
+  groupStatsView.has(group)?groupStatsView.delete(group):groupStatsView.add(group);
+  renderCanvas();
+}
+
+function restoreStudent(id){
+  const i=departing.findIndex(s=>s.id===id); if(i===-1) return;
+  const s=departing.splice(i,1)[0]; students.push(s);
+  showToast(`${s.first} ${s.last} restored`); markUnsaved(); render();
+}
+
+function updateDepCount(){
+  document.getElementById('depCount').textContent=`(${departing.length})`;
+}
+
+function renderDepartingPage(){
+  const el=document.getElementById('depList');
+  el.innerHTML=departing.length
+    ?departing.map(s=>`<div class="dchip" style="font-size:.78rem;padding:.3rem .75rem" onclick="restoreStudent(${s.id})" title="Click to restore">${s.last}, ${s.first} · ${s.year} · ${s.group} ↩</div>`).join('')
+    :'<p style="font-size:.78rem;color:var(--muted)">No students marked as departing.</p>';
+}
+
+// ══════════════════════════════════════════════════
+// LEAVING FLAG
+// ══════════════════════════════════════════════════
+function toggleLeaving(id){
+  const s=students.find(x=>x.id===id); if(!s) return;
+  s.leaving=s.leaving==='Y'?'N':'Y';
+  markUnsaved(); renderCanvas();
+}
+function toggleLeavingFromModal(){
+  const s=students.find(x=>x.id===editingId); if(!s) return;
+  s.leaving=s.leaving==='Y'?'N':'Y';
+  document.getElementById('smLeaving').value=s.leaving;
+  markUnsaved();
+}
+
+// ══════════════════════════════════════════════════
+// LOCK
+// ══════════════════════════════════════════════════
+function toggleLock(group){
+  lockedGroups.has(group)?lockedGroups.delete(group):lockedGroups.add(group);
+  showToast(lockedGroups.has(group)?`${group} locked`:`${group} unlocked`);
+  renderCanvas();
+}
+
+// ══════════════════════════════════════════════════
+// STUDENT MODAL
+// ══════════════════════════════════════════════════
+function openStudentModal(id){
+  const s=students.find(x=>x.id===id); if(!s) return;
+  editingId=id;
+  document.getElementById('smTitle').textContent=`${s.first} ${s.last}`;
+  document.getElementById('smFirst').value=s.first;
+  document.getElementById('smLast').value=s.last;
+  document.getElementById('smYear').value=s.year;
+  document.getElementById('smGender').value=s.gender;
+  document.getElementById('smATSI').value=s.atsi;
+  document.getElementById('smNCCD').value=s.nccd;
+  document.getElementById('smFuture').value=s.future||'N';
+  document.getElementById('smLeaving').value=s.leaving||'N';
+  document.getElementById('smWants').value=s.wantsWith.join(', ');
+  document.getElementById('smNot').value=s.notWith.join(', ');
+  document.getElementById('smFamily').value=s.family;
+  openModal('ovStudent');
+}
+function saveStudent(){
+  const s=students.find(x=>x.id===editingId); if(!s) return;
+  s.first=document.getElementById('smFirst').value.trim();
+  s.last=document.getElementById('smLast').value.trim();
+  s.year=document.getElementById('smYear').value;
+  s.gender=document.getElementById('smGender').value;
+  s.atsi=document.getElementById('smATSI').value;
+  s.nccd=document.getElementById('smNCCD').value;
+  s.future=document.getElementById('smFuture').value;
+  s.leaving=document.getElementById('smLeaving').value;
+  s.wantsWith=document.getElementById('smWants').value.split(',').map(x=>x.trim()).filter(Boolean);
+  s.notWith=document.getElementById('smNot').value.split(',').map(x=>x.trim()).filter(Boolean);
+  s.family=document.getElementById('smFamily').value.trim();
+  closeModal('ovStudent'); markUnsaved(); showToast('Saved'); render();
+}
+function markDeparting(){
+  markDepartingById(editingId); closeModal('ovStudent');
+}
+function markDepartingById(id){
+  const i=students.findIndex(x=>x.id===id); if(i===-1) return;
+  const s=students.splice(i,1)[0]; departing.push(s);
+  updateDepCount();
+  markUnsaved(); showToast(`${s.first} → Departing`); render();
+}
+
+// ADD STUDENT MODAL
+function openAddModal(group){
+  addingToGroup=group;
+  document.getElementById('addToGroup').textContent=group;
+  document.getElementById('addFirst').value='';
+  document.getElementById('addLast').value='';
+  document.getElementById('addYear').value='Year 1';
+  document.getElementById('addGender').value='Male';
+  document.getElementById('addATSI').value='N';
+  document.getElementById('addNCCD').value='nil';
+  openModal('ovAdd');
+}
+function confirmAddStudent(){
+  const fn=document.getElementById('addFirst').value.trim();
+  const ln=document.getElementById('addLast').value.trim();
+  if(!fn){ showToast('First name required'); return; }
+  students.push({id:nextId++,first:fn,last:ln,year:document.getElementById('addYear').value,gender:document.getElementById('addGender').value,atsi:document.getElementById('addATSI').value,nccd:document.getElementById('addNCCD').value,group:addingToGroup,wantsWith:[],notWith:[],family:'',leaving:'N',future:'Y'});
+  closeModal('ovAdd'); markUnsaved(); showToast(`${fn} added to ${addingToGroup}`); render();
+}
+
+function openModal(id){ document.getElementById(id).classList.add('on'); }
+function closeModal(id){ document.getElementById(id).classList.remove('on'); }
+
+// ══════════════════════════════════════════════════
+// VERACROSS SYNC
+// ══════════════════════════════════════════════════
+function triggerVeracrossUpload(){ document.getElementById('vcInput').click(); }
+// ── Veracross field mapping ──────────────────────────────────
+// Query 2 (students): id, first_name, preferred_name, last_name, gender,
+//   grade_level, homeroom, enrollment_status, exit_date
+// Query 1 (profile codes): person_id, profile_code_id, profile_code_category_id
+//   Indigenous Status → atsi
+//   Disability Category (Adjustment Level) → nccd level
+//
+// Homeroom format: "Wardli Name Wardli: Teacher Surname"
+//   → split on ' Wardli:' → take index 0 → group name
+// grade_level: "Kindergarten","Reception","Year 1"…"Year 12"
+// enrollment_status: anything starting with "RE:" = active
+// exit_date: if populated → flag as likely leaver
+
+function parseHomroomToGroup(homeroom){
+  if(!homeroom || homeroom.trim()==='') return UNASSIGNED_GROUP;
+  // "Purli Wardli: Johnson" → "Purli"
+  const parts = homeroom.split(' Wardli');
+  const name = parts[0].trim();
+  // confirm it's a known group
+  return ALL_GROUPS.includes(name) ? name : UNASSIGNED_GROUP;
+}
+
+function parseAtsiFromCodes(personId, profileRows){
+  // category_id === 'Indigenous Status'
+  const row = profileRows.find(r=>r.person_id==personId && r.profile_code_category_id==='Indigenous Status');
+  if(!row) return 'N';
+  const val = row.profile_code_id||'';
+  if(val.includes('Aboriginal') || val.includes('Torres Strait')) return 'Y';
+  return 'N';
+}
+
+function parseNccdFromCodes(personId, profileRows){
+  // category_id === 'Disability Category (Adjustment Level)'
+  // Values: "Cognitive (Extensive)" → extract level in parens
+  const nccdMap = {'Extensive':'ext','Substantial':'subs','Supplementary':'supp','QDTP':'qdtp'};
+  const row = profileRows.find(r=>r.person_id==personId && r.profile_code_category_id==='Disability Category (Adjustment Level)');
+  if(!row) return 'nil';
+  const match = (row.profile_code_id||'').match(/\(([^)]+)\)/);
+  if(!match) return 'nil';
+  return nccdMap[match[1]] || 'nil';
+}
+
+function parseTabDelimited(text){
+  const lines = text.split('\n').filter(Boolean);
+  const headers = lines[0].split('\t').map(h=>h.trim());
+  return lines.slice(1).map(line=>{
+    const vals = line.split('\t');
+    const row = {};
+    headers.forEach((h,i)=>row[h]=(vals[i]||'').trim().replace(/^<None>$/,''));
+    return row;
+  });
+}
+
+function handleVeracrossCSV(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const text = ev.target.result;
+
+    // Auto-detect: tab-delimited (Veracross export) vs comma
+    const isTab = text.indexOf('\t') !== -1;
+    let rows;
+    if(isTab){
+      rows = parseTabDelimited(text);
+    } else {
+      const lines=text.split('\n').filter(Boolean);
+      const headers=lines[0].split(',').map(h=>h.trim().toLowerCase());
+      rows = lines.slice(1).map(line=>{
+        const vals=line.split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+        const row={};
+        headers.forEach((h,i)=>row[h]=vals[i]||'');
+        return row;
+      });
+    }
+
+    // Map Veracross query 2 fields to app student fields
+    // Uses preferred_name if present, falls back to first_name
+    const vcStudents = rows.filter(r=>r.first_name||r.first).map(r=>{
+      const firstName = (r.preferred_name && r.preferred_name.trim()) ? r.preferred_name.trim() : (r.first_name||r.first||'').trim();
+      const lastName  = (r.last_name||r.last||'').trim();
+      const year      = (r.grade_level||r.year||'').trim();
+      const gender    = (r.gender||'').trim();
+      const homeroom  = (r.homeroom||'').trim();
+      const exitDate  = (r.exit_date||'').trim();
+      const status    = (r.enrollment_status||'').trim();
+      const vcId      = (r.id||r.person_id||'').trim();
+
+      // Determine group from homeroom
+      const group = parseHomroomToGroup(homeroom);
+
+      // ATSI and NCCD come from query 1 — set to unknown for CSV import
+      // (will be properly resolved when using the Azure Function with both queries)
+      const atsi = r.atsi || r.indigenous_status
+        ? (r.atsi || ((r.indigenous_status||'').includes('Aboriginal')||(r.indigenous_status||'').includes('Torres') ? 'Y' : 'N'))
+        : '?';
+      const nccd = r.nccd || 'nil';
+
+      return {
+        vcId, firstName, lastName, year, gender, homeroom, group,
+        atsi: atsi==='?' ? 'N' : atsi,  // default N if not in this query
+        nccd,
+        leaving: exitDate ? 'Y' : 'N',
+        // map to app internal fields
+        first: firstName, last: lastName
+      };
+    }).filter(s=>s.first||s.last);
+
+    const items=[];
+    // Fields we sync from Veracross (app always wins on group/sociogram/family/leaving flags set by user)
+    const SYNC_FIELDS=['first','last','year','gender'];
+    const FIELD_LABELS={first:'First name',last:'Last name',year:'Year level',gender:'Gender',atsi:'ATSI',nccd:'NCCD'};
+
+    vcStudents.forEach(vc=>{
+      const existing=students.find(s=>
+        s.first.toLowerCase()===vc.first.toLowerCase() &&
+        s.last.toLowerCase()===vc.last.toLowerCase()
+      );
+      if(!existing){
+        items.push({type:'new',vc,accept:true});
+      } else {
+        const diffs=SYNC_FIELDS.filter(f=>vc[f]&&vc[f].toLowerCase()!==(existing[f]||'').toLowerCase());
+        if(diffs.length) items.push({type:'conflict',existing,vc,diffs,acceptedFields:new Set(diffs)});
+      }
+    });
+
+    // Students in app but not in Veracross export → flag as possible leaver
+    students.forEach(s=>{
+      if(s.group===UNASSIGNED_GROUP) return; // skip already-unassigned
+      const inVC=vcStudents.find(vc=>
+        vc.first.toLowerCase()===s.first.toLowerCase() &&
+        vc.last.toLowerCase()===s.last.toLowerCase()
+      );
+      if(!inVC) items.push({type:'missing',student:s,accept:true});
+    });
+
+    if(items.length===0){ showToast('Veracross sync: no changes found'); return; }
+    pendingCRItems=items;
+    renderCRModal(FIELD_LABELS);
+    openModal('ovConflict');
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+function renderCRModal(FIELD_LABELS){
+  const items=pendingCRItems;
+  const newCount=items.filter(x=>x.type==='new').length;
+  const conflictCount=items.filter(x=>x.type==='conflict').length;
+  const missingCount=items.filter(x=>x.type==='missing').length;
+  document.getElementById('crSummary').textContent=`Found: ${newCount} new student${newCount!==1?'s':''}, ${conflictCount} field conflict${conflictCount!==1?'s':''}, ${missingCount} student${missingCount!==1?'s':''} not in Veracross export.`;
+
+  const FIELD_LABELS2=FIELD_LABELS||{first:'First name',last:'Last name',year:'Year level',gender:'Gender',atsi:'ATSI',nccd:'NCCD'};
+
+  document.getElementById('crItems').innerHTML=items.map((item,i)=>{
+    if(item.type==='new') return `<div class="cr-item new-student"><div class="cr-name">🆕 New: ${item.vc.first} ${item.vc.last} · ${item.vc.year}</div><div class="cr-actions"><button class="cr-btn cr-accept" onclick="crToggle(${i})">✓ Add</button></div></div>`;
+    if(item.type==='missing') return `<div class="cr-item missing"><div class="cr-name">❓ Missing from export: ${item.student.first} ${item.student.last} · ${item.student.group}</div><p style="font-size:.7rem;color:var(--muted);margin:.25rem 0">May have left. Move to Departing?</p><div class="cr-actions"><button class="cr-btn cr-accept" onclick="crToggle(${i})">Yes, move to Departing</button><button class="cr-btn cr-keep" onclick="crToggle(${i},false)">Keep</button></div></div>`;
+    // conflict
+    return `<div class="cr-item conflict" id="cri_${i}">
+      <div class="cr-name">⚡ ${item.existing.first} ${item.existing.last}</div>
+      <div class="cr-fields">${item.diffs.map(f=>`
+        <div class="cr-field">
+          <label>${FIELD_LABELS2[f]||f}</label>
+          <span class="cr-old">${item.existing[f]||'—'}</span> → <span class="cr-new">${item.vc[f]}</span>
+          <label style="margin-top:.2rem;display:flex;align-items:center;gap:.3rem;cursor:pointer">
+            <input type="checkbox" checked onchange="crFieldToggle(${i},'${f}',this.checked)"> Accept
+          </label>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function crToggle(i,val=true){ pendingCRItems[i].accept=val; }
+function crFieldToggle(i,field,checked){
+  if(checked) pendingCRItems[i].acceptedFields.add(field);
+  else pendingCRItems[i].acceptedFields.delete(field);
+}
+function crAcceptAll(){
+  pendingCRItems.forEach(item=>{ item.accept=true; if(item.acceptedFields) item.diffs.forEach(f=>item.acceptedFields.add(f)); });
+  crApply();
+}
+function crApply(){
+  let added=0,updated=0,departed=0;
+  pendingCRItems.forEach(item=>{
+    if(item.type==='new'&&item.accept){
+      const newGroup = item.vc.group && (ALL_GROUPS.includes(item.vc.group)||item.vc.group===UNASSIGNED_GROUP) ? item.vc.group : UNASSIGNED_GROUP;
+      students.push({id:nextId++,...item.vc,group:newGroup,wantsWith:[],notWith:[],family:'',leaving:item.vc.leaving||'N',future:'N'});
+      added++;
+    } else if(item.type==='missing'&&item.accept){
+      markDepartingById(item.student.id); departed++;
+    } else if(item.type==='conflict'){
+      item.acceptedFields.forEach(f=>{ item.existing[f]=item.vc[f]; });
+      if(item.acceptedFields.size) updated++;
+    }
+  });
+  closeModal('ovConflict');
+  markUnsaved(); showToast(`Sync done: +${added} added, ${updated} updated, ${departed} → departing`);
+  render();
+}
+
+// ══════════════════════════════════════════════════
+// ANALYTICS DASHBOARD ENGINE
+// ══════════════════════════════════════════════════
+
+// --- State ---
+let aState = {
+  metric: 'gender',      // gender | atsi | nccd
+  breakBy: 'year',       // year | group | community | combo
+  commFilter: 'All',     // All | Madlurta | Kurlana | Warti | Karra
+  drillStack: [],        // [{label, metric, value}]
+};
+
+const METRICS = [
+  {id:'gender', label:'Gender', icon:'⚥'},
+  {id:'atsi',   label:'ATSI Status', icon:'🌏'},
+  {id:'nccd',   label:'NCCD Support', icon:'🎯'},
+  {id:'overview', label:'Overview', icon:'📊'},
+];
+const BREAKDOWNS = [
+  {id:'year',      label:'By Year Level'},
+  {id:'group',     label:'By Class/Group'},
+  {id:'community', label:'By Community'},
+  {id:'combo',     label:'Combination (ATSI × Gender)'},
+];
+
+function aGetBase(){
+  const excKindy = document.getElementById('afKindy')?.checked;
+  const excRec   = document.getElementById('afReception')?.checked;
+  let base = students.filter(s => {
+    if(excKindy && s.year==='Kindergarten') return false;
+    if(excRec   && s.year==='Reception') return false;
+    if(aState.commFilter !== 'All'){
+      const cg = STRUCT[aState.commFilter]?.flatMap(b=>b.groups) || [];
+      if(!cg.includes(s.group)) return false;
+    }
+    // apply drill filters
+    for(const d of aState.drillStack){
+      if(d.metric==='gender' && s.gender !== d.value) return false;
+      if(d.metric==='atsi'   && s.atsi   !== d.value) return false;
+      if(d.metric==='nccd'   && s.nccd   !== d.value) return false;
+      if(d.metric==='year'   && s.year   !== d.value) return false;
+      if(d.metric==='group'  && s.group  !== d.value) return false;
+      if(d.metric==='community'){
+        const cg2 = STRUCT[d.value]?.flatMap(b=>b.groups)||[];
+        if(!cg2.includes(s.group)) return false;
+      }
+    }
+    return true;
+  });
+  return base;
+}
+
+// segment value → color
+function aColor(metric, val){
+  if(metric==='gender'){
+    return {Male:'#60a5fa', Female:'#f472b6', Other:'#a78bfa'}[val] || '#94a3b8';
+  }
+  if(metric==='atsi'){
+    return val==='Y' ? '#f59e0b' : '#94a3b8';
+  }
+  if(metric==='nccd'){
+    return NCCD_COLORS[val] || '#94a3b8';
+  }
+  if(metric==='year') return YEAR_COLORS[val] || '#94a3b8';
+  return '#60a5fa';
+}
+function aLabel(metric, val){
+  if(metric==='atsi') return val==='Y'?'Aboriginal/TSI':'Non-Indigenous';
+  if(metric==='nccd') return NCCD_LABELS[val] || val;
+  return val;
+}
+
+// get ordered segment keys for a metric
+function aSegments(metric, base){
+  if(metric==='gender') return [...new Set(base.map(s=>s.gender))].sort();
+  if(metric==='atsi')   return ['Y','N'].filter(v=>base.some(s=>s.atsi===v));
+  if(metric==='nccd')   return Object.keys(NCCD_COLORS).filter(v=>base.some(s=>s.nccd===v));
+  return [];
+}
+
+// get breakBy axis keys
+function aAxisKeys(breakBy, base){
+  if(breakBy==='year')      return YEAR_LEVELS.filter(y=>base.some(s=>s.year===y));
+  if(breakBy==='group')     return ALL_GROUPS.filter(g=>base.some(s=>s.group===g));
+  if(breakBy==='community') return Object.keys(STRUCT).filter(c=>base.some(s=>STRUCT[c].flatMap(b=>b.groups).includes(s.group)));
+  return [];
+}
+function aAxisVal(breakBy, s){
+  if(breakBy==='year')      return s.year;
+  if(breakBy==='group')     return s.group;
+  if(breakBy==='community'){
+    for(const [c,bands] of Object.entries(STRUCT)){
+      if(bands.flatMap(b=>b.groups).includes(s.group)) return c;
+    }
+  }
+  return '?';
+}
+function aAxisColor(breakBy, val){
+  if(breakBy==='year') return YEAR_COLORS[val]||'#94a3b8';
+  if(breakBy==='community') return ['#1a5fc8','#3d8ef0','#60a5fa','#93c5fd'][Object.keys(STRUCT).indexOf(val)]||'#94a3b8';
+  return '#60a5fa';
+}
+
+function aRefresh(){
+  renderAnalytics();
+}
+
+function aDrill(metric, value, label){
+  aState.drillStack.push({metric, value, label});
+  renderAnalytics();
+}
+
+function aDrillTo(idx){
+  aState.drillStack = aState.drillStack.slice(0, idx);
+  renderAnalytics();
+}
+
+function renderAnalytics(){
+  // Init filter UI once
+  const afM = document.getElementById('afMetric');
+  if(afM) afM.innerHTML = METRICS.map(m=>`
+    <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer;padding:.2rem .3rem;border-radius:4px;background:${aState.metric===m.id?'var(--hdr3)':'transparent'};color:${aState.metric===m.id?'#fff':'var(--txt)'}">
+      <input type="radio" name="afm" value="${m.id}" ${aState.metric===m.id?'checked':''} onchange="aState.metric='${m.id}';aState.drillStack=[];aRefresh()" style="accent-color:#fff"> ${m.icon} ${m.label}
+    </label>`).join('');
+
+  const afB = document.getElementById('afBreak');
+  if(afB) afB.innerHTML = BREAKDOWNS.map(b=>`
+    <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer;padding:.2rem .3rem;border-radius:4px;background:${aState.breakBy===b.id?'var(--hdr3)':'transparent'};color:${aState.breakBy===b.id?'#fff':'var(--txt)'}">
+      <input type="radio" name="afb" value="${b.id}" ${aState.breakBy===b.id?'checked':''} onchange="aState.breakBy='${b.id}';aState.drillStack=[];aRefresh()" style="accent-color:#fff"> ${b.label}
+    </label>`).join('');
+
+  const afC = document.getElementById('afComm');
+  if(afC) afC.innerHTML = ['All',...Object.keys(STRUCT)].map(c=>`
+    <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer;padding:.2rem .3rem;border-radius:4px;background:${aState.commFilter===c?'var(--hdr3)':'transparent'};color:${aState.commFilter===c?'#fff':'var(--txt)'}">
+      <input type="radio" name="afc" value="${c}" ${aState.commFilter===c?'checked':''} onchange="aState.commFilter='${c}';aState.drillStack=[];aRefresh()" style="accent-color:#fff"> ${c}
+    </label>`).join('');
+
+  // Breadcrumb
+  const crumb = document.getElementById('analyCrumb');
+  if(crumb){
+    const base_crumbs = [{label:'All students', idx:0}];
+    const trail = [
+      `<span style="font-size:.75rem;font-weight:600;color:var(--hdr3);cursor:pointer" onclick="aDrillTo(0)">All students</span>`,
+      ...aState.drillStack.map((d,i)=>
+        `<span style="color:var(--muted);font-size:.75rem">›</span><span style="font-size:.75rem;font-weight:600;cursor:pointer;color:${i===aState.drillStack.length-1?'var(--txt)':'var(--hdr3)'}" onclick="aDrillTo(${i+1})">${d.label}</span>`)
+    ];
+    crumb.innerHTML = trail.join('') + `<span style="margin-left:auto;font-size:.72rem;color:var(--muted)">${aGetBase().length} students</span>`;
+  }
+
+  const charts = document.getElementById('analyCharts');
+  if(!charts) return;
+
+  if(aState.metric === 'overview'){
+    renderAnalyticsOverview(charts);
+    return;
+  }
+
+  if(aState.breakBy === 'combo'){
+    renderAnalyticsCombo(charts);
+    return;
+  }
+
+  const base = aGetBase();
+  const segs = aSegments(aState.metric, base);
+  const axisKeys = aAxisKeys(aState.breakBy, base);
+  const total = base.length || 1;
+
+  // Summary donut + big numbers row
+  let summaryHTML = `<div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-start">`;
+
+  // Donut
+  summaryHTML += `<div class="acard" style="flex-shrink:0"><h3>${METRICS.find(m=>m.id===aState.metric)?.icon} ${METRICS.find(m=>m.id===aState.metric)?.label} — ${aState.commFilter==='All'?'All communities':aState.commFilter}</h3><div class="donut-wrap">`;
+  summaryHTML += aDonutSVG(segs.map(v=>({val:base.filter(s=>s[aState.metric]===v).length, color:aColor(aState.metric,v), label:aLabel(aState.metric,v)})));
+  summaryHTML += `<div class="donut-legend">`;
+  segs.forEach(v=>{
+    const n = base.filter(s=>s[aState.metric]===v).length;
+    const pct = (n/total*100).toFixed(1);
+    summaryHTML += `<div class="dl-row" style="cursor:pointer" onclick="aDrill('${aState.metric}','${v}','${aLabel(aState.metric,v)}')">
+      <div class="dl-dot" style="background:${aColor(aState.metric,v)}"></div>
+      <span>${aLabel(aState.metric,v)}: <strong>${n}</strong> <span style="color:var(--muted);font-size:.68rem">${pct}%</span></span>
+      <span style="margin-left:.3rem;font-size:.68rem;color:var(--hdr3)">drill ›</span>
+    </div>`;
+  });
+  summaryHTML += `</div></div></div>`;
+
+  // Stacked bar chart by axis
+  summaryHTML += `<div class="acard" style="flex:1;min-width:300px"><h3>Breakdown by ${BREAKDOWNS.find(b=>b.id===aState.breakBy)?.label?.replace('By ','')}</h3>`;
+  axisKeys.forEach(key=>{
+    const keyStudents = base.filter(s=>aAxisVal(aState.breakBy,s)===key);
+    const kt = keyStudents.length||1;
+    summaryHTML += `<div class="sb-row" style="cursor:pointer" onclick="aDrill('${aState.breakBy}','${key.replace(/'/g,"\\'")}','${key.replace(/'/g,"\\'")}')">
+      <span class="sb-lbl" style="color:${aAxisColor(aState.breakBy,key)};font-weight:600">${key.replace('Year ','Yr ')}</span>
+      <div class="sb-track">`;
+    segs.forEach(v=>{
+      const n = keyStudents.filter(s=>s[aState.metric]===v).length;
+      if(n>0) summaryHTML += `<div class="sb-seg" style="width:${(n/kt*100).toFixed(1)}%;background:${aColor(aState.metric,v)}" title="${aLabel(aState.metric,v)}: ${n}"></div>`;
+    });
+    summaryHTML += `</div>
+      <span style="font-size:.68rem;font-weight:700;color:var(--muted);width:24px">${keyStudents.length}</span>
+      <span style="font-size:.68rem;color:var(--hdr3);width:30px">drill›</span>
+    </div>`;
+  });
+  summaryHTML += `</div>`;
+  summaryHTML += `</div>`;
+
+  // Detail table
+  summaryHTML += `<div class="acard wide"><h3>Data Table — ${METRICS.find(m=>m.id===aState.metric)?.label} × ${BREAKDOWNS.find(b=>b.id===aState.breakBy)?.label?.replace('By ','')}</h3>`;
+  summaryHTML += `<table class="enrol-table" id="aMainTable"><thead><tr>
+    <th>${BREAKDOWNS.find(b=>b.id===aState.breakBy)?.label?.replace('By ','')}</th>
+    <th>Total</th>
+    ${segs.map(v=>`<th style="color:${aColor(aState.metric,v)}">${aLabel(aState.metric,v)}</th>`).join('')}
+    ${segs.map(v=>`<th style="color:${aColor(aState.metric,v)};font-size:.62rem">% ${aLabel(aState.metric,v)}</th>`).join('')}
+  </tr></thead><tbody>`;
+  axisKeys.forEach(key=>{
+    const ks = base.filter(s=>aAxisVal(aState.breakBy,s)===key);
+    const kt = ks.length||1;
+    summaryHTML += `<tr style="cursor:pointer" onclick="aDrill('${aState.breakBy}','${key.replace(/'/g,"\\'")}','${key.replace(/'/g,"\\'")}')">
+      <td style="font-weight:600;color:${aAxisColor(aState.breakBy,key)}">${key}</td>
+      <td><strong>${ks.length}</strong></td>
+      ${segs.map(v=>`<td>${ks.filter(s=>s[aState.metric]===v).length}</td>`).join('')}
+      ${segs.map(v=>`<td style="color:var(--muted)">${(ks.filter(s=>s[aState.metric]===v).length/kt*100).toFixed(0)}%</td>`).join('')}
+    </tr>`;
+  });
+  // Totals row
+  summaryHTML += `<tr style="background:var(--g100);font-weight:700">
+    <td>Total</td><td>${base.length}</td>
+    ${segs.map(v=>`<td>${base.filter(s=>s[aState.metric]===v).length}</td>`).join('')}
+    ${segs.map(v=>`<td style="color:var(--muted)">${(base.filter(s=>s[aState.metric]===v).length/total*100).toFixed(0)}%</td>`).join('')}
+  </tr></tbody></table></div>`;
+
+  charts.innerHTML = summaryHTML;
+}
+
+function renderAnalyticsOverview(charts){
+  const base = aGetBase();
+  const total = base.length || 1;
+
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem">';
+
+  // Summary cards
+  ['gender','atsi','nccd'].forEach(metric=>{
+    const segs = aSegments(metric, base);
+    const m = METRICS.find(x=>x.id===metric);
+    html += `<div class="acard" style="cursor:pointer" onclick="aState.metric='${metric}';aState.drillStack=[];aRefresh()">
+      <h3>${m.icon} ${m.label} <span style="font-size:.68rem;font-weight:400;color:var(--hdr3)">click to explore ›</span></h3>
+      <div class="donut-wrap">
+        ${aDonutSVG(segs.map(v=>({val:base.filter(s=>s[metric]===v).length,color:aColor(metric,v),label:aLabel(metric,v)})))}
+        <div class="donut-legend">${segs.map(v=>{
+          const n=base.filter(s=>s[metric]===v).length;
+          return `<div class="dl-row"><div class="dl-dot" style="background:${aColor(metric,v)}"></div><span>${aLabel(metric,v)}: <strong>${n}</strong> <span style="color:var(--muted);font-size:.67rem">${(n/total*100).toFixed(0)}%</span></span></div>`;
+        }).join('')}</div>
+      </div>
+    </div>`;
+  });
+
+  // Enrolment bar
+  const yCounts = Object.fromEntries(YEAR_LEVELS.map(y=>[y,base.filter(s=>s.year===y).length]));
+  const maxY = Math.max(...Object.values(yCounts), 1);
+  html += `<div class="acard" style="grid-column:1/-1"><h3>📚 Enrolments by Year Level <span style="font-size:.72rem;font-weight:400;color:var(--muted)">(${total} students${aState.commFilter!=='All'?' · '+aState.commFilter:''})</span></h3>`;
+  YEAR_LEVELS.filter(y=>yCounts[y]>0).forEach(y=>{
+    html += `<div class="bc-row">
+      <span class="bc-lbl" style="display:flex;align-items:center;gap:.3rem;justify-content:flex-end">
+        <span style="width:8px;height:8px;border-radius:50%;background:${YEAR_COLORS[y]};display:inline-block"></span>${y}
+      </span>
+      <div class="bc-track"><div class="bc-fill" style="width:${(yCounts[y]/maxY*100).toFixed(1)}%;background:${YEAR_COLORS[y]}"></div></div>
+      <span class="bc-val">${yCounts[y]}</span>
+      <span style="font-size:.65rem;color:var(--muted);width:36px">${(yCounts[y]/total*100).toFixed(1)}%</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  html += '</div>';
+  charts.innerHTML = html;
+}
+
+function renderAnalyticsCombo(charts){
+  const base = aGetBase();
+  const total = base.length || 1;
+
+  // ATSI × Gender × Year full cross-tab
+  const years = YEAR_LEVELS.filter(y=>base.some(s=>s.year===y));
+
+  let html = `<div style="display:flex;flex-direction:column;gap:1rem">`;
+
+  // ATSI × Gender summary matrix
+  html += `<div class="acard"><h3>🌏 × ⚥ ATSI × Gender Matrix</h3>
+    <table class="enrol-table"><thead><tr>
+      <th></th><th>Total</th><th style="color:#60a5fa">Male</th><th style="color:#f472b6">Female</th><th style="color:#a78bfa">Other</th><th>% of total</th>
+    </tr></thead><tbody>`;
+  [['Y','Aboriginal/TSI','#f59e0b'],['N','Non-Indigenous','#94a3b8']].forEach(([v,lbl,col])=>{
+    const g = base.filter(s=>s.atsi===v);
+    html += `<tr>
+      <td style="font-weight:700;color:${col}">${lbl}</td>
+      <td><strong>${g.length}</strong></td>
+      <td>${g.filter(s=>s.gender==='Male').length}</td>
+      <td>${g.filter(s=>s.gender==='Female').length}</td>
+      <td>${g.filter(s=>s.gender==='Other').length}</td>
+      <td style="color:var(--muted)">${(g.length/total*100).toFixed(1)}%</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  // ATSI × Gender × Year full table
+  html += `<div class="acard wide" id="aMainTable"><h3>🌏 × ⚥ × 📚 ATSI × Gender by Year Level</h3>
+    <table class="enrol-table"><thead><tr>
+      <th>Year</th><th>Total</th>
+      <th style="color:#f59e0b">ATSI</th><th style="color:#f59e0b">ATSI M</th><th style="color:#f59e0b">ATSI F</th>
+      <th>Non-ATSI</th><th>Non-ATSI M</th><th>Non-ATSI F</th>
+      <th>% ATSI</th>
+    </tr></thead><tbody>`;
+  years.forEach(y=>{
+    const ys=base.filter(s=>s.year===y);
+    const a=ys.filter(s=>s.atsi==='Y'), na=ys.filter(s=>s.atsi==='N');
+    html += `<tr>
+      <td style="font-weight:600;color:${YEAR_COLORS[y]}">${y}</td>
+      <td><strong>${ys.length}</strong></td>
+      <td style="color:#f59e0b;font-weight:700">${a.length}</td>
+      <td>${a.filter(s=>s.gender==='Male').length}</td>
+      <td>${a.filter(s=>s.gender==='Female').length}</td>
+      <td>${na.length}</td>
+      <td>${na.filter(s=>s.gender==='Male').length}</td>
+      <td>${na.filter(s=>s.gender==='Female').length}</td>
+      <td style="color:var(--muted)">${ys.length?(a.length/ys.length*100).toFixed(0)+'%':'—'}</td>
+    </tr>`;
+  });
+  const a=base.filter(s=>s.atsi==='Y'), na=base.filter(s=>s.atsi==='N');
+  html += `<tr style="background:var(--g100);font-weight:700">
+    <td>Total</td><td>${base.length}</td>
+    <td style="color:#f59e0b">${a.length}</td>
+    <td>${a.filter(s=>s.gender==='Male').length}</td>
+    <td>${a.filter(s=>s.gender==='Female').length}</td>
+    <td>${na.length}</td>
+    <td>${na.filter(s=>s.gender==='Male').length}</td>
+    <td>${na.filter(s=>s.gender==='Female').length}</td>
+    <td style="color:var(--muted)">${(a.length/total*100).toFixed(1)}%</td>
+  </tr></tbody></table></div>`;
+
+  // NCCD × ATSI by year
+  html += `<div class="acard wide"><h3>🎯 × 🌏 NCCD by ATSI Status by Year</h3>
+    <table class="enrol-table"><thead><tr>
+      <th>Year</th>
+      ${Object.keys(NCCD_COLORS).map(k=>`<th style="color:${NCCD_COLORS[k]}">${NCCD_LABELS[k]}</th><th style="color:${NCCD_COLORS[k]};font-size:.6rem">ATSI</th>`).join('')}
+    </tr></thead><tbody>`;
+  years.forEach(y=>{
+    const ys=base.filter(s=>s.year===y);
+    html += `<tr><td style="font-weight:600;color:${YEAR_COLORS[y]}">${y}</td>`;
+    Object.keys(NCCD_COLORS).forEach(k=>{
+      const n=ys.filter(s=>s.nccd===k);
+      html += `<td>${n.length}</td><td style="color:#f59e0b">${n.filter(s=>s.atsi==='Y').length}</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  html += '</div>';
+  charts.innerHTML = html;
+}
+
+function aDonutSVG(segments, size=90){
+  const r=32,cx=45,cy=45,circ=2*Math.PI*r;
+  let offset=0, paths='';
+  const tot = segments.reduce((a,b)=>a+b.val,0)||1;
+  segments.forEach(({val,color,label})=>{
+    const dash=(val/tot)*circ;
+    paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"><title>${label}: ${val}</title></circle>`;
+    offset+=dash;
+  });
+  return `<svg class="donut-svg" width="${size}" height="${size}" viewBox="0 0 90 90">${paths}<text x="45" y="49" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">${tot}</text></svg>`;
+}
+
+// ── EXPORT ──
+async function aExportPNG(){
+  const charts = document.getElementById('analyCharts');
+  if(!charts){ showToast('No chart to export'); return; }
+  try{
+    // Use html2canvas if available, otherwise screenshot instructions
+    showToast('Use browser Print → Save as PDF for chart export');
+  } catch(e){ showToast('Export: use browser Print → Save as PDF'); }
+}
+
+async function aExportXLSX(){
+  // Build CSV data from current view and download
+  const base = aGetBase();
+  if(!base.length){ showToast('No data to export'); return; }
+
+  const metric = aState.metric === 'overview' ? 'gender' : aState.metric;
+  const breakBy = aState.breakBy === 'combo' ? 'year' : aState.breakBy;
+  const segs = aSegments(metric, base);
+  const axisKeys = aAxisKeys(breakBy, base);
+
+  const rows = [];
+  // Header
+  rows.push([breakBy==='year'?'Year Level':breakBy==='group'?'Class/Group':breakBy==='community'?'Community':'Axis',
+    'Total',
+    ...segs.map(v=>aLabel(metric,v)),
+    ...segs.map(v=>'% '+aLabel(metric,v))
+  ]);
+
+  axisKeys.forEach(key=>{
+    const ks = base.filter(s=>aAxisVal(breakBy,s)===key);
+    const kt = ks.length||1;
+    rows.push([
+      key, ks.length,
+      ...segs.map(v=>ks.filter(s=>s[metric]===v).length),
+      ...segs.map(v=>+(ks.filter(s=>s[metric]===v).length/kt*100).toFixed(1))
+    ]);
+  });
+  rows.push(['TOTAL', base.length,
+    ...segs.map(v=>base.filter(s=>s[metric]===v).length),
+    ...segs.map(v=>+(base.filter(s=>s[metric]===v).length/(base.length||1)*100).toFixed(1))
+  ]);
+
+  // Also add full student list sheet
+  const studentRows = [['First','Last','Year','Gender','ATSI','NCCD','Group','Community','Leaving','Future']];
+  base.forEach(s=>{
+    let community = '?';
+    for(const [c,bands] of Object.entries(STRUCT)){
+      if(bands.flatMap(b=>b.groups).includes(s.group)){ community=c; break; }
+    }
+    studentRows.push([s.first,s.last,s.year,s.gender,s.atsi==='Y'?'Aboriginal/TSI':'Non-Indigenous',NCCD_LABELS[s.nccd]||s.nccd,s.group,community,s.leaving==='Y'?'Yes':'No',s.future==='Y'?'Yes':'No']);
+  });
+
+  // Build XLSX manually as CSV (tab-separated with BOM for Excel)
+  const toCSV = arr => arr.map(r=>r.map(v=>typeof v==='string'&&v.includes(',')?`"${v}"`:v).join(',')).join('\n');
+
+  const wb = '\uFEFF' + '=== ANALYTICS REPORT: ' + metric.toUpperCase() + ' by ' + breakBy.toUpperCase() + ' ===\n\n'
+    + toCSV(rows) + '\n\n\n=== STUDENT LIST ===\n\n' + toCSV(studentRows);
+
+  const blob = new Blob([wb], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ngutu_analytics_${metric}_by_${breakBy}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('Exported to CSV (opens in Excel)');
+}
+
+// ══════════════════════════════════════════════════
+// BLOB STORAGE
+// ══════════════════════════════════════════════════
+function saveBlobCfg(){
+  blobCfg={account:document.getElementById('blobAcct').value.trim(),container:document.getElementById('blobCont').value.trim(),sas:document.getElementById('blobSAS').value.trim()};
+  localStorage.setItem('ngutublob',JSON.stringify(blobCfg));
+  showToast('Blob settings saved');
+}
+function loadBlobCfg(){
+  const s=localStorage.getItem('ngutublob');
+  if(s){ blobCfg=JSON.parse(s); document.getElementById('blobAcct').value=blobCfg.account; document.getElementById('blobCont').value=blobCfg.container; document.getElementById('blobSAS').value=blobCfg.sas; }
+  const fu=localStorage.getItem('ngutuFuncUrl');
+  if(fu){
+    // Set the runtime variable
+    window._funcUrl=fu;
+    const el=document.getElementById('funcUrl'); if(el) el.value=fu;
+  }
+}
+function saveFuncUrl(){
+  const url=(document.getElementById('funcUrl').value||'').trim();
+  localStorage.setItem('ngutuFuncUrl',url);
+  window._funcUrl=url;
+  showToast('Function URL saved');
+}
+function blobUrl(f){ return `https://${blobCfg.account}.blob.core.windows.net/${blobCfg.container}/${f}${blobCfg.sas}`; }
+function setBlobStatus(state){
+  blobOk=state==='ok';
+  const label={ok:'☁ Connected',err:'⚡ Not connected',pend:'⏳ Connecting…'}[state];
+  const cls={ok:'bb-ok',err:'bb-err',pend:'bb-pend'}[state];
+  ['blobBadge','blobStatusLabel'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.textContent=label; el.className='blob-badge '+cls; } });
+}
+async function testBlob(){
+  if(!blobCfg.account||!blobCfg.sas){ showToast('Enter account + SAS token first'); return; }
+  setBlobStatus('pend');
+  try{
+    const res=await fetch(blobUrl('groupings.json'),{method:'HEAD'});
+    if(res.ok||res.status===404){ setBlobStatus('ok'); showToast('Connected ✓'); }
+    else throw new Error(res.status);
+  }catch(e){ setBlobStatus('err'); showToast('Connection failed: '+e.message); }
+}
+async function saveToBlob(){
+  if(!blobCfg.account||!blobCfg.sas){ showToast('Configure Blob settings first'); showPage('settings'); return; }
+  const data=JSON.stringify({students,departing,lockedGroups:[...lockedGroups],savedAt:new Date().toISOString()});
+  try{
+    const res=await fetch(blobUrl('groupings.json'),{method:'PUT',headers:{'x-ms-blob-type':'BlockBlob','Content-Type':'application/json'},body:data});
+    if(res.ok){ setBlobStatus('ok'); clearUnsaved(); showToast('Saved to Blob ✓'); }
+    else throw new Error(res.status);
+  }catch(e){ showToast('Save failed: '+e.message); }
+}
+async function loadFromBlob(){
+  if(!blobCfg.account||!blobCfg.sas) return;
+  setBlobStatus('pend');
+  try{
+    const res=await fetch(blobUrl('groupings.json'));
+    if(res.ok){
+      const d=await res.json();
+      students=d.students||[]; departing=d.departing||[];
+      lockedGroups=new Set(d.lockedGroups||[]);
+      nextId=Math.max(...[...students,...departing].map(s=>s.id),0)+1;
+      setBlobStatus('ok'); clearUnsaved(); showToast('Loaded from Blob'); render();
+    } else if(res.status===404){ setBlobStatus('ok'); showToast('No saved data yet'); }
+    else throw new Error(res.status);
+  }catch(e){ setBlobStatus('err'); }
+}
+
+// ══════════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════════
+function exportCSV(){
+  const rows=[...students,...departing.map(s=>({...s,group:'DEPARTING'}))].map(s=>[s.first,s.last,s.year,s.gender,s.atsi,s.nccd,s.group,s.leaving,s.future,s.wantsWith.join(';'),s.notWith.join(';'),s.family].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv=['first,last,year,gender,atsi,nccd,group,leaving,future,wantsWith,notWith,family',...rows].join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='ngutu_groupings.csv'; a.click();
+  showToast('Exported');
+}
+
+// ══════════════════════════════════════════════════
+// UNSAVED
+// ══════════════════════════════════════════════════
+function markUnsaved(){ unsaved=true; document.getElementById('unsavedBadge').classList.add('show'); }
+function clearUnsaved(){ unsaved=false; document.getElementById('unsavedBadge').classList.remove('show'); }
+
+// ══════════════════════════════════════════════════
+// CONTROLS
+// ══════════════════════════════════════════════════
+function setComm(c){ comm=c; render(); }
+function toggle(which){
+  if(which==='socio'){ socioOn=!socioOn; const b=document.getElementById('tbSocio'); b.textContent=socioOn?'On':'Off'; b.classList.toggle('on',socioOn); }
+  if(which==='detail'){ detailOn=!detailOn; const b=document.getElementById('tbDetail'); b.textContent=detailOn?'On':'Off'; b.classList.toggle('on',detailOn); }
+  render();
+}
+function doSearch(v){ searchTerm=v.toLowerCase(); renderCanvas(); }
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('on'));
+  document.getElementById('page-'+p).classList.add('on');
+  document.querySelectorAll('.ntab').forEach(t=>{ t.classList.toggle('active',t.dataset.page===p); });
+  document.getElementById('plannerToolbar').style.display=p==='planner'?'':'none';
+  if(p==='analytics') renderAnalytics();
+  if(p==='departing') renderDepartingPage();
+}
+
+// ══════════════════════════════════════════════════
+// KEYBOARD
+// ══════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    ['ovStudent','ovAdd','ovConflict'].forEach(id=>closeModal(id));
+    closeCtxMenu();
+    document.getElementById('socioPop').classList.remove('show');
+  }
+});
+
+// ══════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// ══════════════════════════════════════════════════
+// AUTO-SYNC SYSTEM
+// ══════════════════════════════════════════════════
+
+// Check if a sync lock is active (another user synced recently)
+async function isSyncLocked(){
+  if(!blobCfg.account||!blobCfg.sas) return false;
+  try{
+    const res=await fetch(blobUrl('sync-lock.json'));
+    if(!res.ok) return false;
+    const d=await res.json();
+    const age=(Date.now()-new Date(d.lockedAt).getTime())/60000;
+    return age < SYNC_LOCK_MINUTES;
+  }catch(e){ return false; }
+}
+
+// Write a sync lock so other users skip auto-sync for a few minutes
+async function writeSyncLock(){
+  if(!blobCfg.account||!blobCfg.sas) return;
+  try{
+    const data=JSON.stringify({lockedAt:new Date().toISOString()});
+    await fetch(blobUrl('sync-lock.json'),{method:'PUT',headers:{'x-ms-blob-type':'BlockBlob','Content-Type':'application/json'},body:data});
+  }catch(e){ /* non-critical, ignore */ }
+}
+
+// Show the sync result banner under the nav
+function showSyncBanner(msg, type='info'){
+  let banner=document.getElementById('syncBanner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='syncBanner';
+    banner.style.cssText='padding:.35rem 1.25rem;font-size:.74rem;font-weight:500;display:flex;align-items:center;gap:.75rem;flex-shrink:0;transition:all .3s';
+    const nav=document.querySelector('.nav');
+    nav.parentNode.insertBefore(banner,nav.nextSibling);
+  }
+  const colors={info:'background:#eff6ff;color:#1e40af;border-bottom:1px solid #bfdbfe',
+                 warn:'background:#fffbeb;color:#92400e;border-bottom:1px solid #fde68a',
+                 err:'background:#fef2f2;color:#991b1b;border-bottom:1px solid #fecaca',
+                 ok:'background:#f0fdf4;color:#166534;border-bottom:1px solid #bbf7d0'};
+  banner.style.cssText+=(colors[type]||colors.info);
+  banner.innerHTML=msg+'<span style="margin-left:auto;cursor:pointer;opacity:.5;font-size:.8rem" onclick="this.parentElement.style.display='none'">✕</span>';
+  banner.style.display='flex';
+  if(type==='ok'||type==='info') setTimeout(()=>{ if(banner) banner.style.display='none'; },6000);
+}
+
+// Update the pending-changes badge on the sync button
+function updateVcBadge(){
+  const badge=document.getElementById('vcBadge');
+  if(!badge) return;
+  const n=pendingAutoItems.filter(i=>i.type==='conflict').length;
+  if(n>0){ badge.textContent=n; badge.style.display=''; }
+  else badge.style.display='none';
+}
+
+// Process a Veracross student array silently:
+// - New students and departures applied automatically
+// - Field conflicts queued for later manual review
+function processAutoSync(vcStudents){
+  const newItems=[];
+  const SYNC_FIELDS=['first','last','year','gender'];
+
+  vcStudents.forEach(vc=>{
+    const existing=students.find(s=>
+      s.vcId===vc.vcId ||
+      (s.first.toLowerCase()===vc.first.toLowerCase()&&s.last.toLowerCase()===vc.last.toLowerCase())
+    );
+    if(!existing){
+      // Auto-apply new students — land in their homeroom group or unassigned
+      newItems.push({type:'new',vc,autoApplied:true});
+      students.push({id:nextId++,...vc,wantsWith:[],notWith:[],family:''});
+    } else {
+      const diffs=SYNC_FIELDS.filter(f=>vc[f]&&vc[f].toLowerCase()!==(existing[f]||'').toLowerCase());
+      if(diffs.length){
+        // Queue conflicts for manual review — don't auto-apply
+        newItems.push({type:'conflict',existing,vc,diffs,acceptedFields:new Set(diffs),autoApplied:false});
+      }
+      // Always update vcId if we matched by name
+      if(!existing.vcId && vc.vcId) existing.vcId=vc.vcId;
+    }
+  });
+
+  // Flag departures (in app but not in Veracross) — auto-flag as possibly leaving
+  students.forEach(s=>{
+    if(s.group===UNASSIGNED_GROUP) return;
+    const inVC=vcStudents.find(vc=>
+      vc.vcId===s.vcId ||
+      (vc.first.toLowerCase()===s.first.toLowerCase()&&vc.last.toLowerCase()===s.last.toLowerCase())
+    );
+    if(!inVC && s.leaving!=='Y'){
+      s.future='Y'; // flag as possibly leaving — don't auto-depart
+      newItems.push({type:'missing',student:s,autoApplied:true});
+    }
+  });
+
+  const added    = newItems.filter(i=>i.type==='new').length;
+  const conflicts= newItems.filter(i=>i.type==='conflict').length;
+  const departed = newItems.filter(i=>i.type==='missing').length;
+
+  // Store conflicts for manual review
+  pendingAutoItems = newItems.filter(i=>i.type==='conflict');
+  updateVcBadge();
+
+  if(added||conflicts||departed){
+    markUnsaved();
+    render();
+    const parts=[];
+    if(added)     parts.push(`<strong>+${added}</strong> new student${added!==1?'s':''} added`);
+    if(departed)  parts.push(`<strong>${departed}</strong> possibly leaving (flagged)`);
+    if(conflicts) parts.push(`<strong>${conflicts}</strong> field change${conflicts!==1?'s':''} need review — click Veracross Sync to resolve`);
+    showSyncBanner('☁ Veracross sync complete — '+parts.join(', ')+(conflicts?'':' '), conflicts?'warn':'ok');
+  } else {
+    showSyncBanner('☁ Veracross: no changes', 'ok');
+  }
+}
+
+// Main auto-sync function — called on app open
+async function autoSyncOnOpen(){
+  // Can't sync without Function URL configured
+  if(!getFuncUrl()){
+    // Silently skip — FUNC_URL not set yet (pre-deployment)
+    return;
+  }
+
+  // Check lock — skip if someone else synced recently
+  const locked = await isSyncLocked();
+  if(locked){
+    showSyncBanner('☁ Veracross: using recent sync data', 'info');
+    return;
+  }
+
+  showSyncBanner('☁ Syncing with Veracross…', 'info');
+
+  try{
+    await writeSyncLock();
+    const res=await fetch(getFuncUrl(),{
+      headers:{'X-Requested-With':'XMLHttpRequest'}
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({error:'HTTP '+res.status}));
+      throw new Error(err.error||'HTTP '+res.status);
+    }
+    const {students:vcStudents}=await res.json();
+    processAutoSync(vcStudents);
+  }catch(e){
+    showSyncBanner('⚠ Veracross sync failed: '+e.message+' — working with saved data', 'warn');
+  }
+}
+
+// Triggered by the manual sync button in header — shows full conflict review
+function triggerVeracrossUpload(){
+  // If there are queued conflicts from auto-sync, show those first
+  if(pendingAutoItems.length){
+    pendingCRItems=pendingAutoItems;
+    pendingAutoItems=[];
+    updateVcBadge();
+    const FIELD_LABELS={first:'First name',last:'Last name',year:'Year level',gender:'Gender',atsi:'ATSI',nccd:'NCCD'};
+    renderCRModal(FIELD_LABELS);
+    openModal('ovConflict');
+    return;
+  }
+  // Otherwise fall back to CSV upload
+  document.getElementById('vcInput').click();
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+async function initApp(){
+  loadBlobCfg();
+  if(blobCfg.account&&blobCfg.sas){
+    await loadFromBlob();
+  } else {
+    initDemo();
+    render();
+  }
+  // Auto-sync runs after data is loaded, in background
+  autoSyncOnOpen();
+}
+
+initApp();
+</script>
+</body>
+</html>
