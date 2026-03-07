@@ -11,7 +11,7 @@
  */
 
 const { getAccessToken } = require('../shared/veracrossAuth');
-const { fetchStudents } = require('../shared/veracrossApi');
+const { fetchStudents, fetchProfileCodes } = require('../shared/veracrossApi');
 const { mapStudents } = require('../shared/studentMapper');
 
 module.exports = async function (context, req) {
@@ -75,9 +75,10 @@ module.exports = async function (context, req) {
     context.log('veracross-sync: fetching students');
     const rawStudents = await fetchStudents(token);
 
-    context.log(`veracross-sync: fetched ${rawStudents.length} students, mapping`);
-    // Profile codes (ATSI, NCCD) not yet implemented — skipping fetchProfileCodes for now
-    const students = mapStudents(rawStudents);
+    context.log(`veracross-sync: fetched ${rawStudents.length} students, fetching profile codes`);
+    const { records: profileRecords, valueLists } = await fetchProfileCodes(token);
+    context.log(`veracross-sync: fetched ${profileRecords.length} profile code rows, mapping`);
+    const students = mapStudents(rawStudents, profileRecords, valueLists);
 
     context.log(`veracross-sync: returning ${students.length} mapped students`);
     context.res = {
