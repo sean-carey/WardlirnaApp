@@ -1,3 +1,11 @@
+/**
+ * studentMapper.js
+ * Maps raw Veracross student records to the field names expected by the Wardlirna planner frontend.
+ *
+ * Frontend expects:
+ *   vcId, first, last, year, gender, group, atsi, nccd
+ */
+
 const HOMEROOM_MAP = {
   484: "Kudlyu Wardli",
   485: "Paitya Wardli",
@@ -19,14 +27,10 @@ const HOMEROOM_MAP = {
 
 function mapGender(code) {
   switch (code) {
-    case 1:
-      return "Male";
-    case 2:
-      return "Female";
-    case 3:
-      return "Non-binary";
-    default:
-      return "";
+    case 1: return "Male";
+    case 2: return "Female";
+    case 3: return "Non-binary";
+    default: return "";
   }
 }
 
@@ -38,49 +42,29 @@ function mapGradeLevel(code) {
 }
 
 function mapHomeroom(code) {
-  return HOMEROOM_MAP[code] || "";
+  return HOMEROOM_MAP[code] || "Unassigned";
 }
 
 function mapStudent(row) {
   if (!row || typeof row !== "object") return null;
 
-  const firstName = row.first_name || "";
-  const lastName = row.last_name || "";
-  const preferredName = row.preferred_name || firstName;
+  // Use preferred name if available, fall back to first_name
+  const first = row.preferred_name || row.first_name || "";
+  const last  = row.last_name || "";
 
   return {
-    id: row.id ?? null,
-
-    firstName,
-    lastName,
-    preferredName,
-    fullName: [preferredName, lastName].filter(Boolean).join(" ").trim(),
-
-    genderCode: row.gender ?? null,
+    vcId:   row.id ?? null,           // Veracross person ID — used for matching in frontend
+    first,
+    last,
+    year:   mapGradeLevel(row.grade_level),
     gender: mapGender(row.gender),
-
-    gradeCode: row.grade_level ?? null,
-    grade: mapGradeLevel(row.grade_level),
-
-    homeroomCode: row.homeroom ?? null,
-    homeroom: mapHomeroom(row.homeroom),
-
-    enrollmentStatusCode: row.enrollment_status ?? null,
-
-    householdId: row.household_id ?? null,
-    schoolLevel: row.school_level ?? null,
-    graduationYear: row.graduation_year ?? null,
-    homeroomTeacher: row.homeroom_teacher ?? null,
-    advisor: row.advisor ?? null,
-    campus: row.campus ?? null,
-    username: row.username ?? null,
-    entryDate: row.entry_date ?? null,
-    exitDate: row.exit_date ?? null,
-    birthday: row.birthday ?? null,
-    roles: Array.isArray(row.roles) ? row.roles : [],
-    lastModifiedDate: row.last_modified_date ?? null,
-    house: row.house ?? null,
-    email: row.email_1 ?? null
+    group:  mapHomeroom(row.homeroom), // Maps homeroom ID → Wardli group name
+    atsi:   "",                        // Not available from /students — requires profile codes
+    nccd:   "",                        // Not available from /students — requires profile codes
+    // Extra fields retained for potential future use (not used by frontend)
+    enrollmentStatus: row.enrollment_status ?? null,
+    entryDate:        row.entry_date ?? null,
+    exitDate:         row.exit_date ?? null,
   };
 }
 
@@ -89,11 +73,4 @@ function mapStudents(rows) {
   return rows.map(mapStudent).filter(Boolean);
 }
 
-module.exports = {
-  HOMEROOM_MAP,
-  mapGender,
-  mapGradeLevel,
-  mapHomeroom,
-  mapStudent,
-  mapStudents
-};
+module.exports = { mapStudents, mapStudent, HOMEROOM_MAP, mapGender, mapGradeLevel, mapHomeroom };
