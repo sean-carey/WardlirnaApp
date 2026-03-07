@@ -18,6 +18,8 @@ const VERACROSS_API_REVISION =
   process.env.VERACROSS_API_REVISION ||
   '';
 
+const VERACROSS_PAGE_SIZE = Number(process.env.VERACROSS_PAGE_SIZE || 1000);
+
 const DEBUG_STUDENTS =
   String(process.env.VERACROSS_DEBUG_STUDENTS || '').toLowerCase() === '1' ||
   String(process.env.VERACROSS_DEBUG_STUDENTS || '').toLowerCase() === 'true';
@@ -51,7 +53,7 @@ function buildUrl(endpointPath, query = {}) {
   return url.toString();
 }
 
-async function fetchEndpoint(endpointPath, query = {}) {
+async function fetchEndpoint(endpointPath, query = {}, options = {}) {
   const accessToken = await getVeracrossAccessToken();
   const url = buildUrl(endpointPath, query);
 
@@ -62,6 +64,14 @@ async function fetchEndpoint(endpointPath, query = {}) {
 
   if (VERACROSS_API_REVISION) {
     headers['X-API-Revision'] = VERACROSS_API_REVISION;
+  }
+
+  if (options.pageNumber) {
+    headers['X-Page-Number'] = String(options.pageNumber);
+  }
+
+  if (options.pageSize) {
+    headers['X-Page-Size'] = String(options.pageSize);
   }
 
   const response = await fetch(url, {
@@ -103,31 +113,11 @@ function logStudentPreview(students) {
 
   const preview = students.slice(0, 3).map((student, index) => ({
     index,
-    id:
-      student.student_id ??
-      student.id ??
-      student.person_id ??
-      student.personID ??
-      null,
-    first_name:
-      student.first_name ??
-      student.firstname ??
-      student.firstName ??
-      null,
-    last_name:
-      student.last_name ??
-      student.lastname ??
-      student.lastName ??
-      null,
-    grade_level:
-      student.grade_level ??
-      student.grade ??
-      student.current_grade ??
-      null,
-    enrollment_status:
-      student.enrollment_status ??
-      student.enrollmentStatus ??
-      null,
+    id: student.id ?? student.person_id ?? null,
+    first_name: student.first_name ?? student.firstName ?? null,
+    last_name: student.last_name ?? student.lastName ?? null,
+    grade_level: student.grade_level ?? student.gradeLevel ?? null,
+    enrollment_status: student.enrollment_status ?? student.enrollmentStatus ?? null,
     keys: Object.keys(student).slice(0, 30)
   }));
 
@@ -144,8 +134,34 @@ function logStudentPreview(students) {
   );
 }
 
+async function fetchAllPages(endpointPath, query = {}) {
+  const allRows = [];
+  let pageNumber = 1;
+
+  while (true) {
+    const rows = await fetchEndpoint(endpointPath, query, {
+      pageNumber,
+      pageSize: VERACROSS_PAGE_SIZE
+    });
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      break;
+    }
+
+    allRows.push(...rows);
+
+    if (rows.length < VERACROSS_PAGE_SIZE) {
+      break;
+    }
+
+    pageNumber += 1;
+  }
+
+  return allRows;
+}
+
 async function fetchStudents() {
-  const students = await fetchEndpoint('students');
+  const students = await fetchAllPages('students');
 
   if (!Array.isArray(students)) {
     console.warn(
@@ -166,5 +182,6 @@ async function fetchProfileCodes() {
 module.exports = {
   fetchEndpoint,
   fetchStudents,
-  fetchProfileCodes
+  fetchProfileCodes,
+  fetchAllPages
 };
