@@ -561,7 +561,14 @@ let editingId=null, addingToGroup=null, dragId=null;
 let lockedGroups=new Set();
 let groupStatsView=new Set(); // groups showing stats overlay instead of names
 let unsaved=false;
-let blobCfg={account:'',container:'',sas:''};
+// Pre-configured Blob Storage defaults — no manual setup required for staff
+const BLOB_DEFAULTS = {
+  account: 'stwardlirnaplanner',
+  container: 'groupings',
+  sas: 'sv=2024-11-04&ss=b&srt=o&sp=rwdltfx&se=2027-03-07T07:32:57Z&st=2026-03-06T23:17:57Z&spr=https&sig=RDmwzqio0%2F2fk7ArExjte%2FfK6F9k%2BdiRf5u%2FrVL%2FKdg%3D'
+};
+const FUNC_DEFAULT = 'https://func-wardlirna-veracross-sync-ckfmevczfub0aeb5.australiaeast-01.azurewebsites.net/api/veracross-sync';
+let blobCfg={...BLOB_DEFAULTS};
 let blobOk=false;
 let pendingCRItems=[];
 let pendingAutoItems=[];   // silent auto-sync queue (non-conflict changes)
@@ -1678,13 +1685,16 @@ function saveBlobCfg(){
 }
 function loadBlobCfg(){
   const s=localStorage.getItem('ngutublob');
-  if(s){ blobCfg=JSON.parse(s); document.getElementById('blobAcct').value=blobCfg.account; document.getElementById('blobCont').value=blobCfg.container; document.getElementById('blobSAS').value=blobCfg.sas; }
-  const fu=localStorage.getItem('ngutuFuncUrl');
-  if(fu){
-    // Set the runtime variable
-    window._funcUrl=fu;
-    const el=document.getElementById('funcUrl'); if(el) el.value=fu;
-  }
+  // Use saved config if available, otherwise fall back to pre-configured defaults
+  if(s){ blobCfg=JSON.parse(s); } else { blobCfg={...BLOB_DEFAULTS}; }
+  // Populate Settings fields if they exist in the DOM
+  const acct=document.getElementById('blobAcct'); if(acct) acct.value=blobCfg.account;
+  const cont=document.getElementById('blobCont'); if(cont) cont.value=blobCfg.container;
+  const sas=document.getElementById('blobSAS'); if(sas) sas.value=blobCfg.sas;
+  // Function URL — use saved, then default
+  const fu=localStorage.getItem('ngutuFuncUrl')||FUNC_DEFAULT;
+  window._funcUrl=fu;
+  const el=document.getElementById('funcUrl'); if(el) el.value=fu;
 }
 function saveFuncUrl(){
   const url=(document.getElementById('funcUrl').value||'').trim();
