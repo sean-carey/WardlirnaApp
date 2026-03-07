@@ -42,7 +42,10 @@ function mapGradeLevel(code) {
 }
 
 function mapHomeroom(code) {
-  return HOMEROOM_MAP[code] || "Unassigned";
+  const full = HOMEROOM_MAP[code];
+  if (!full) return "__unassigned__";
+  // Strip " Wardli" suffix to match frontend STRUCT group names
+  return full.replace(/ Wardli$/, '');
 }
 
 function mapStudent(row) {
