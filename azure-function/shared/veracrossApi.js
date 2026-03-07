@@ -1,107 +1,94 @@
-const SCHOOL_ROUTE = process.env.VERACROSS_SCHOOL_ROUTE || "ngutu_college";
-const BASE_URL = `https://api.veracross.com/${SCHOOL_ROUTE}/v3`;
-const DEFAULT_PAGE_SIZE = 1000;
+/**
+ * shared/veracrossApi.js
+ *
+ * Fetches data from the Veracross Data API v3.
+ *
+ * Students endpoint:
+ *   GET /v3/students
+ *
+ * Profile codes endpoint:
+ *   GET /v3/person_profile_codes?X-API-Value-Lists=include
+ *   Returns profile_code_id and profile_code_category_id per person,
+ *   plus value_lists with human-readable descriptions.
+ */
 
-function extractRows(payload, endpoint) {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
+const https = require('https');
 
-  if (payload && Array.isArray(payload.data)) {
-    return payload.data;
-  }
+const BASE_URL = `https://api.veracross.au/${process.env.VERACROSS_SCHOOL_ROUTE}/v3`;
 
-  throw new Error(
-    `Expected array-like response from Veracross for ${endpoint}, received keys: ${JSON.stringify(
-      payload ? Object.keys(payload) : null
-    )}`
-  );
+function fetchPage(token, path, extraHeaders = {}) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        ...extraHeaders
+      }
+    };
+
+    const url = `${BASE_URL}${path}`;
+
+    https.get(url, options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode === 401) { reject(new Error('Veracross 401 — check credentials')); return; }
+        if (res.statusCode === 403) { reject(new Error('Veracross 403 — check OAuth scopes')); return; }
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(`Veracross HTTP ${res.statusCode} — ${data.slice(0, 200)}`)); return;
+        }
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject(new Error(`Failed to parse response: ${data.slice(0, 200)}`));
+        }
+      });
+    }).on('error', reject);
+  });
 }
 
-async function fetchEndpoint(endpoint, accessToken, options = {}) {
-  const {
-    pageNumber,
-    pageSize,
-    extraHeaders = {}
-  } = options;
-
-  const headers = {
-    Authorization: `Bearer ${accessToken}`,
-    Accept: "application/json",
-    ...extraHeaders
-  };
-
-  if (pageNumber != null) {
-    headers["X-Page-Number"] = String(pageNumber);
-  }
-
-  if (pageSize != null) {
-    headers["X-Page-Size"] = String(pageSize);
-  }
-
-  const response = await fetch(`${BASE_URL}/${endpoint}`, { headers });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(
-      `Veracross API request failed: ${response.status} ${response.statusText} - ${text}`
-    );
-  }
-
-  return response.json();
-}
-
-async function fetchAllPages(endpoint, accessToken, pageSize = DEFAULT_PAGE_SIZE) {
-  const allRows = [];
-  let pageNumber = 1;
+async function fetchAllPages(token, path, extraHeaders = {}) {
+  const allRecords = [];
+  let pageNum = 1;
+  const pageSize = 1000;
+  let valueLists = null;
 
   while (true) {
-    const payload = await fetchEndpoint(endpoint, accessToken, {
-      pageNumber,
-      pageSize
+    const separator = path.includes('?') ? '&' : '?';
+    const fullPath = `${path}${separator}`;
+    const json = await fetchPage(token, fullPath, {
+      'X-Page-Number': String(pageNum),
+      'X-Page-Size': String(pageSize),
+      ...extraHeaders
     });
 
-    const pageRows = extractRows(payload, endpoint);
-    allRows.push(...pageRows);
-
-    if (pageRows.length < pageSize) {
-      break;
+    const records = json.data || [];
+    
+    // Capture value_lists from first page (they're the same on all pages)
+    if (pageNum === 1 && json.value_lists) {
+      valueLists = json.value_lists;
     }
 
-    pageNumber += 1;
+    allRecords.push(...records);
+
+    if (records.length < pageSize) break;
+    pageNum++;
   }
 
-  return allRows;
+  return { records: allRecords, valueLists };
 }
 
-async function fetchStudents(accessToken) {
-  const students = await fetchAllPages("students", accessToken, DEFAULT_PAGE_SIZE);
-
-  console.log(
-    "veracrossApi.fetchStudents debug preview:",
-    JSON.stringify(
-      {
-        totalReturned: students.length,
-        preview: students.slice(0, 3).map((s, index) => ({
-          index,
-          id: s.id,
-          first_name: s.first_name,
-          last_name: s.last_name,
-          grade_level: s.grade_level,
-          enrollment_status: s.enrollment_status,
-          keys: Object.keys(s)
-        }))
-      },
-      null,
-      2
-    )
-  );
-
-  return students;
+async function fetchStudents(token) {
+  const { records } = await fetchAllPages(token, '/students');
+  return records;
 }
 
-module.exports = {
-  fetchEndpoint,
-  fetchAllPages,
-  fetchStudents
-};
+async function fetchProfileCodes(token) {
+  // Use X-API-Value-Lists: include to get human-readable descriptions
+  const { records, valueLists } = await fetchAllPages(token, '/person_profile_codes', {
+    'X-API-Value-Lists': 'include'
+  });
+  return { records, valueLists };
+}
+
+module.exports = { fetchStudents, fetchProfileCodes };
