@@ -1,5 +1,3 @@
-const fetch = require("node-fetch");
-
 const SCHOOL_ROUTE = process.env.VERACROSS_SCHOOL_ROUTE || "ngutu_college";
 const BASE_URL = `https://api.veracross.com/${SCHOOL_ROUTE}/v3`;
 const DEFAULT_PAGE_SIZE = 1000;
