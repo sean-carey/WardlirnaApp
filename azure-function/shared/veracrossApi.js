@@ -2,6 +2,22 @@ const SCHOOL_ROUTE = process.env.VERACROSS_SCHOOL_ROUTE || "ngutu_college";
 const BASE_URL = `https://api.veracross.com/${SCHOOL_ROUTE}/v3`;
 const DEFAULT_PAGE_SIZE = 1000;
 
+function extractRows(payload, endpoint) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (payload && Array.isArray(payload.data)) {
+    return payload.data;
+  }
+
+  throw new Error(
+    `Expected array-like response from Veracross for ${endpoint}, received keys: ${JSON.stringify(
+      payload ? Object.keys(payload) : null
+    )}`
+  );
+}
+
 async function fetchEndpoint(endpoint, accessToken, options = {}) {
   const {
     pageNumber,
@@ -40,17 +56,12 @@ async function fetchAllPages(endpoint, accessToken, pageSize = DEFAULT_PAGE_SIZE
   let pageNumber = 1;
 
   while (true) {
-    const pageRows = await fetchEndpoint(endpoint, accessToken, {
+    const payload = await fetchEndpoint(endpoint, accessToken, {
       pageNumber,
       pageSize
     });
 
-    if (!Array.isArray(pageRows)) {
-      throw new Error(
-        `Expected array response from Veracross for ${endpoint}, received ${typeof pageRows}`
-      );
-    }
-
+    const pageRows = extractRows(payload, endpoint);
     allRows.push(...pageRows);
 
     if (pageRows.length < pageSize) {
