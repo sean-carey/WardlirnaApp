@@ -1,105 +1,152 @@
-/**
- * shared/veracrossApi.js
- *
- * Fetches data from the Veracross API for the planner.
- *
- * Current approach:
- * - No API-side pagination params, because this tenant rejected page/per_page
- * - No API-side enrollment_status[] filter, because this tenant rejected it
- * - Fetch all student rows once, then filter client-side
- * - Profile codes temporarily disabled until the correct endpoint is confirmed
- */
+'use strict';
 
-const https = require('https');
+const { getVeracrossAccessToken } = require('./veracrossAuth');
 
-const BASE_URL = `https://api.veracross.au/${process.env.VERACROSS_SCHOOL_ROUTE}/v3`;
+const VERACROSS_BASE_URL =
+  process.env.VERACROSS_API_BASE_URL ||
+  process.env.VERACROSS_BASE_URL ||
+  'https://api.veracross.com';
 
-/**
- * Simple GET helper.
- * Veracross response is expected to be either:
- * - an array
- * - or an object with a "data" array
- */
-function fetchEndpoint(token, endpoint, params = {}) {
-  return new Promise((resolve, reject) => {
-    const queryParams = new URLSearchParams(params);
-    const qs = queryParams.toString();
-    const url = qs ? `${BASE_URL}/${endpoint}?${qs}` : `${BASE_URL}/${endpoint}`;
+const DEBUG_STUDENTS =
+  String(process.env.VERACROSS_DEBUG_STUDENTS || '').toLowerCase() === '1' ||
+  String(process.env.VERACROSS_DEBUG_STUDENTS || '').toLowerCase() === 'true';
 
-    const options = {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        'X-API-Version': '2022-06-01'
+function buildUrl(endpointPath, query = {}) {
+  const base = VERACROSS_BASE_URL.replace(/\/+$/, '');
+  const path = String(endpointPath || '').replace(/^\/+/, '');
+  const url = new URL(`${base}/${path}`);
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === null || value === '') continue;
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item !== undefined && item !== null && item !== '') {
+          url.searchParams.append(key, String(item));
+        }
       }
-    };
+    } else {
+      url.searchParams.append(key, String(value));
+    }
+  }
 
-    https.get(url, options, (res) => {
-      let data = '';
-
-      res.on('data', chunk => {
-        data += chunk;
-      });
-
-      res.on('end', () => {
-        if (res.statusCode === 401) {
-          reject(new Error('Veracross API: 401 Unauthorised — check credentials and scopes'));
-          return;
-        }
-
-        if (res.statusCode === 403) {
-          reject(new Error('Veracross API: 403 Forbidden — check OAuth app permissions'));
-          return;
-        }
-
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          reject(new Error(`Veracross API: HTTP ${res.statusCode} — ${data.slice(0, 500)}`));
-          return;
-        }
-
-        try {
-          const json = JSON.parse(data);
-          const records = Array.isArray(json) ? json : (json.data || []);
-          resolve(records);
-        } catch (e) {
-          reject(new Error(`Failed to parse API response: ${data.slice(0, 500)}`));
-        }
-      });
-    }).on('error', reject);
-  });
+  return url.toString();
 }
 
-/**
- * Fetch students.
- * Because this Veracross API rejected enrollment_status[] parameters,
- * fetch everything and filter client-side.
- */
-async function fetchStudents(token) {
-  const records = await fetchEndpoint(token, 'students');
+async function fetchEndpoint(endpointPath, query = {}) {
+  const accessToken = await getVeracrossAccessToken();
+  const url = buildUrl(endpointPath, query);
 
-  return records.filter(r => {
-    const status = String(r.enrollment_status || '').toLowerCase();
-
-    // Keep active / future enrolments.
-    // Adjust this if your actual status labels differ.
-    return status.startsWith('re:') || status.startsWith('ne:');
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json'
+    }
   });
+
+  const rawText = await response.text();
+
+  if (!response.ok) {
+    throw new Error(
+      `Veracross API request failed: ${response.status} ${response.statusText} for ${url}\n${rawText}`
+    );
+  }
+
+  if (!rawText) {
+    return [];
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch (err) {
+    throw new Error(
+      `Veracross API returned non-JSON response for ${url}: ${rawText}`
+    );
+  }
+
+  // Be flexible about response shape.
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+
+  if (Array.isArray(parsed.data)) {
+    return parsed.data;
+  }
+
+  if (Array.isArray(parsed.results)) {
+    return parsed.results;
+  }
+
+  if (Array.isArray(parsed.students)) {
+    return parsed.students;
+  }
+
+  // Fallback: return object as single-item array so callers don't explode.
+  return parsed ? [parsed] : [];
 }
 
-/**
- * Fetch student profile codes.
- *
- * Temporarily disabled because the assumed endpoint paths tested so far
- * do not exist for this Veracross API/tenant.
- *
- * Returning an empty array allows the planner to keep working:
- * - ATSI should fall back to default mapping values
- * - NCCD should fall back to default mapping values
- *
- * Re-enable once the correct Veracross endpoint is confirmed.
- */
-async function fetchProfileCodes(token) {
+function logStudentPreview(students) {
+  if (!DEBUG_STUDENTS) return;
+
+  const preview = students.slice(0, 3).map((student, index) => ({
+    index,
+    id:
+      student.student_id ??
+      student.id ??
+      student.person_id ??
+      student.personID ??
+      null,
+    first_name: student.first_name ?? student.firstname ?? student.firstName ?? null,
+    last_name: student.last_name ?? student.lastname ?? student.lastName ?? null,
+    grade_level:
+      student.grade_level ??
+      student.grade ??
+      student.current_grade ??
+      null,
+    enrollment_status: student.enrollment_status ?? student.enrollmentStatus ?? null,
+    keys: Object.keys(student).slice(0, 20)
+  }));
+
+  console.log(
+    'veracrossApi.fetchStudents debug preview:',
+    JSON.stringify(
+      {
+        totalReturned: students.length,
+        preview
+      },
+      null,
+      2
+    )
+  );
+}
+
+async function fetchStudents() {
+  // Intentionally no API-side or client-side enrollment filtering for now.
+  // We want to inspect raw returned records first.
+  const students = await fetchEndpoint('students');
+
+  if (!Array.isArray(students)) {
+    console.warn(
+      'veracrossApi.fetchStudents: expected array, received:',
+      typeof students
+    );
+    return [];
+  }
+
+  logStudentPreview(students);
+  return students;
+}
+
+async function fetchProfileCodes() {
+  // Endpoint path not yet confirmed.
+  // Keep disabled for now so the sync can continue end-to-end.
   return [];
 }
 
-module.exports = { fetchStudents, fetchProfileCodes };
+module.exports = {
+  fetchEndpoint,
+  fetchStudents,
+  fetchProfileCodes
+};
