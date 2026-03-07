@@ -1,6 +1,6 @@
 'use strict';
 
-const { getVeracrossAccessToken } = require('./veracrossAuth');
+const { getAccessToken: getVeracrossAccessToken } = require('./veracrossAuth');
 
 const VERACROSS_BASE_URL =
   process.env.VERACROSS_API_BASE_URL ||
@@ -61,29 +61,14 @@ async function fetchEndpoint(endpointPath, query = {}) {
   try {
     parsed = JSON.parse(rawText);
   } catch (err) {
-    throw new Error(
-      `Veracross API returned non-JSON response for ${url}: ${rawText}`
-    );
+    throw new Error(`Veracross API returned non-JSON response for ${url}: ${rawText}`);
   }
 
-  // Be flexible about response shape.
-  if (Array.isArray(parsed)) {
-    return parsed;
-  }
+  if (Array.isArray(parsed)) return parsed;
+  if (Array.isArray(parsed.data)) return parsed.data;
+  if (Array.isArray(parsed.results)) return parsed.results;
+  if (Array.isArray(parsed.students)) return parsed.students;
 
-  if (Array.isArray(parsed.data)) {
-    return parsed.data;
-  }
-
-  if (Array.isArray(parsed.results)) {
-    return parsed.results;
-  }
-
-  if (Array.isArray(parsed.students)) {
-    return parsed.students;
-  }
-
-  // Fallback: return object as single-item array so callers don't explode.
   return parsed ? [parsed] : [];
 }
 
@@ -98,14 +83,25 @@ function logStudentPreview(students) {
       student.person_id ??
       student.personID ??
       null,
-    first_name: student.first_name ?? student.firstname ?? student.firstName ?? null,
-    last_name: student.last_name ?? student.lastname ?? student.lastName ?? null,
+    first_name:
+      student.first_name ??
+      student.firstname ??
+      student.firstName ??
+      null,
+    last_name:
+      student.last_name ??
+      student.lastname ??
+      student.lastName ??
+      null,
     grade_level:
       student.grade_level ??
       student.grade ??
       student.current_grade ??
       null,
-    enrollment_status: student.enrollment_status ?? student.enrollmentStatus ?? null,
+    enrollment_status:
+      student.enrollment_status ??
+      student.enrollmentStatus ??
+      null,
     keys: Object.keys(student).slice(0, 20)
   }));
 
@@ -123,8 +119,6 @@ function logStudentPreview(students) {
 }
 
 async function fetchStudents() {
-  // Intentionally no API-side or client-side enrollment filtering for now.
-  // We want to inspect raw returned records first.
   const students = await fetchEndpoint('students');
 
   if (!Array.isArray(students)) {
@@ -140,8 +134,6 @@ async function fetchStudents() {
 }
 
 async function fetchProfileCodes() {
-  // Endpoint path not yet confirmed.
-  // Keep disabled for now so the sync can continue end-to-end.
   return [];
 }
 
