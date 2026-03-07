@@ -6,7 +6,8 @@
  * Current approach:
  * - No API-side pagination params, because this tenant rejected page/per_page
  * - No API-side enrollment_status[] filter, because this tenant rejected it
- * - Fetch all rows once, then filter client-side where needed
+ * - Fetch all student rows once, then filter client-side
+ * - Profile codes temporarily disabled until the correct endpoint is confirmed
  */
 
 const https = require('https');
@@ -87,12 +88,18 @@ async function fetchStudents(token) {
 
 /**
  * Fetch student profile codes.
- * Endpoint path still assumed from your current setup.
- * If this fails next, we will verify the exact Veracross endpoint name.
+ *
+ * Temporarily disabled because the assumed endpoint paths tested so far
+ * do not exist for this Veracross API/tenant.
+ *
+ * Returning an empty array allows the planner to keep working:
+ * - ATSI should fall back to default mapping values
+ * - NCCD should fall back to default mapping values
+ *
+ * Re-enable once the correct Veracross endpoint is confirmed.
  */
 async function fetchProfileCodes(token) {
-  const records = await fetchEndpoint(token, 'student-profile-codes');
-  return records;
+  return [];
 }
 
 module.exports = { fetchStudents, fetchProfileCodes };
