@@ -1728,7 +1728,7 @@ async function loadFromBlob(){
       lockedGroups=new Set(d.lockedGroups||[]);
       nextId=Math.max(...[...students,...departing].map(s=>s.id),0)+1;
       setBlobStatus('ok'); clearUnsaved(); showToast('Loaded from Blob'); render();
-    } else if(res.status===404){ setBlobStatus('ok'); showToast('No saved data yet — sync will populate from Veracross'); initDemo(); render(); }
+    } else if(res.status===404){ setBlobStatus('ok'); showToast('No saved data yet — loading from Veracross…'); render(); }
     else throw new Error(res.status);
   }catch(e){ setBlobStatus('err'); }
 }
@@ -1958,11 +1958,14 @@ async function initApp(){
   loadBlobCfg();
   if(blobCfg.account&&blobCfg.sas){
     await loadFromBlob();
+    // loadFromBlob handles render() — auto-sync runs after
   } else {
+    // No blob configured — load demo data so app is usable
     initDemo();
     render();
   }
-  // Auto-sync runs after data is loaded, in background
+  // Auto-sync runs after data is loaded
+  // If blob returned 404 (first run), sync will populate students from Veracross
   autoSyncOnOpen();
 }
 
