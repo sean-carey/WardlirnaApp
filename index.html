@@ -566,7 +566,7 @@ let blobOk=false;
 let pendingCRItems=[];
 let pendingAutoItems=[];   // silent auto-sync queue (non-conflict changes)
 // FUNC_URL is set dynamically from Settings — stored in localStorage as 'ngutuFuncUrl'
-const getFuncUrl=()=>window._funcUrl||localStorage.getItem('ngutuFuncUrl')||'';
+const getFuncUrl=()=>localStorage.getItem('ngutuFuncUrl')||window._funcUrl||'';
 const SYNC_LOCK_MINUTES = 5; // minutes before another auto-sync is allowed
 
 // ══════════════════════════════════════════════════
@@ -1728,7 +1728,7 @@ async function loadFromBlob(){
       lockedGroups=new Set(d.lockedGroups||[]);
       nextId=Math.max(...[...students,...departing].map(s=>s.id),0)+1;
       setBlobStatus('ok'); clearUnsaved(); showToast('Loaded from Blob'); render();
-    } else if(res.status===404){ setBlobStatus('ok'); showToast('No saved data yet'); }
+    } else if(res.status===404){ setBlobStatus('ok'); showToast('No saved data yet — sync will populate from Veracross'); initDemo(); render(); }
     else throw new Error(res.status);
   }catch(e){ setBlobStatus('err'); }
 }
