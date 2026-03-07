@@ -30,7 +30,7 @@ async function getAccessToken() {
     client_secret: clientSecret,
     // Scopes required for student data — confirm with your Veracross rep
     // if your OAuth app was configured with different scope names
-    scope:         'students:list students:read'
+    scope:         'students:list students:read person_profile_codes:list'
   });
 
   const tokenUrl = `https://accounts.veracross.au/${schoolRoute}/oauth/token`;
