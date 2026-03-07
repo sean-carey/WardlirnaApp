@@ -4,8 +4,19 @@ const { getAccessToken: getVeracrossAccessToken } = require('./veracrossAuth');
 
 const VERACROSS_BASE_URL =
   process.env.VERACROSS_API_BASE_URL ||
-  process.env.VERACROSS_BASE_URL ||
   'https://api.veracross.com';
+
+const VERACROSS_SCHOOL_ROUTE =
+  process.env.VERACROSS_SCHOOL_ROUTE ||
+  '';
+
+const VERACROSS_API_VERSION =
+  process.env.VERACROSS_API_VERSION ||
+  'v3';
+
+const VERACROSS_API_REVISION =
+  process.env.VERACROSS_API_REVISION ||
+  '';
 
 const DEBUG_STUDENTS =
   String(process.env.VERACROSS_DEBUG_STUDENTS || '').toLowerCase() === '1' ||
@@ -13,8 +24,15 @@ const DEBUG_STUDENTS =
 
 function buildUrl(endpointPath, query = {}) {
   const base = VERACROSS_BASE_URL.replace(/\/+$/, '');
+  const schoolRoute = String(VERACROSS_SCHOOL_ROUTE).replace(/^\/+|\/+$/g, '');
+  const apiVersion = String(VERACROSS_API_VERSION).replace(/^\/+|\/+$/g, '');
   const path = String(endpointPath || '').replace(/^\/+/, '');
-  const url = new URL(`${base}/${path}`);
+
+  if (!schoolRoute) {
+    throw new Error('Missing VERACROSS_SCHOOL_ROUTE environment variable');
+  }
+
+  const url = new URL(`${base}/${schoolRoute}/${apiVersion}/${path}`);
 
   for (const [key, value] of Object.entries(query)) {
     if (value === undefined || value === null || value === '') continue;
@@ -37,12 +55,18 @@ async function fetchEndpoint(endpointPath, query = {}) {
   const accessToken = await getVeracrossAccessToken();
   const url = buildUrl(endpointPath, query);
 
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+    Accept: 'application/json'
+  };
+
+  if (VERACROSS_API_REVISION) {
+    headers['X-API-Revision'] = VERACROSS_API_REVISION;
+  }
+
   const response = await fetch(url, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: 'application/json'
-    }
+    headers
   });
 
   const rawText = await response.text();
@@ -61,7 +85,9 @@ async function fetchEndpoint(endpointPath, query = {}) {
   try {
     parsed = JSON.parse(rawText);
   } catch (err) {
-    throw new Error(`Veracross API returned non-JSON response for ${url}: ${rawText}`);
+    throw new Error(
+      `Veracross API returned non-JSON response for ${url}: ${rawText}`
+    );
   }
 
   if (Array.isArray(parsed)) return parsed;
@@ -102,7 +128,7 @@ function logStudentPreview(students) {
       student.enrollment_status ??
       student.enrollmentStatus ??
       null,
-    keys: Object.keys(student).slice(0, 20)
+    keys: Object.keys(student).slice(0, 30)
   }));
 
   console.log(
