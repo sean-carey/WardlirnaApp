@@ -1,0 +1,19 @@
+{
+  "name": "ngutu-grouping-planner-functions",
+  "version": "1.0.0",
+  "description": "Azure Functions for Ngutu College Class Grouping Planner — Veracross API integration",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "func start",
+    "test": "jest"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "notes": "No external npm dependencies — uses only Node.js built-ins (https, querystring). This keeps the Function App lightweight and avoids supply-chain risk for confidential student data."
+}
