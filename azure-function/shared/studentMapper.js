@@ -56,12 +56,15 @@ function buildValueListMaps(valueLists) {
   if (!Array.isArray(valueLists)) return { codeDescriptions, categoryDescriptions };
 
   for (const vl of valueLists) {
-    if (!vl.items || !vl.categories) continue;
-    for (const item of vl.items) {
-      codeDescriptions.set(String(item.id), item.description || '');
+    if (Array.isArray(vl.items)) {
+      for (const item of vl.items) {
+        codeDescriptions.set(String(item.id), item.description || '');
+      }
     }
-    for (const cat of vl.categories) {
-      categoryDescriptions.set(String(cat.id), cat.description || '');
+    if (Array.isArray(vl.categories)) {
+      for (const cat of vl.categories) {
+        categoryDescriptions.set(String(cat.id), cat.description || '');
+      }
     }
   }
 
@@ -98,11 +101,11 @@ function getAtsi(personCodes, codeDescriptions, categoryDescriptions) {
     const codeDesc = (codeDescriptions.get(String(codeId)) || codeDescriptions.get(codeId) || '').toLowerCase();
     if (catDesc.includes('indigenous') || catDesc.includes('atsi') || catDesc.includes('aboriginal')) {
       // Y if code indicates Aboriginal, Torres Strait Islander, or Both
-      if (codeDesc.includes('aboriginal') || codeDesc.includes('torres') || codeDesc.includes('both') || codeDesc === 'y' || codeDesc === 'yes') {
+      if (codeDesc.includes('aboriginal') || codeDesc.includes('torres strait') || codeDesc.includes('both aboriginal') || codeDesc === 'y' || codeDesc === 'yes') {
         return 'Y';
       }
       // Explicit non-indigenous
-      if (codeDesc.includes('non') || codeDesc === 'n' || codeDesc === 'no' || codeDesc.includes('neither')) {
+      if (codeDesc.includes('neither') || codeDesc.includes('non') || codeDesc === 'n' || codeDesc === 'no') {
         return 'N';
       }
     }
