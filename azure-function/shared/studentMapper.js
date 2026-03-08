@@ -56,14 +56,16 @@ function buildValueListMaps(valueLists) {
   if (!Array.isArray(valueLists)) return { codeDescriptions, categoryDescriptions };
 
   for (const vl of valueLists) {
-    if (Array.isArray(vl.items)) {
-      for (const item of vl.items) {
-        codeDescriptions.set(String(item.id), item.description || '');
-      }
-    }
     if (Array.isArray(vl.categories)) {
       for (const cat of vl.categories) {
         categoryDescriptions.set(String(cat.id), cat.description || '');
+      }
+    }
+    if (Array.isArray(vl.items)) {
+      for (const item of vl.items) {
+        // Use composite key category:id to avoid collisions across value lists
+        const key = `${item.category}:${item.id}`;
+        codeDescriptions.set(key, item.description || '');
       }
     }
   }
@@ -97,17 +99,12 @@ function buildProfileMap(profileRecords) {
 function getAtsi(personCodes, codeDescriptions, categoryDescriptions) {
   if (!personCodes) return '';
   for (const { codeId, categoryId } of personCodes) {
-    const catDesc = (categoryDescriptions.get(String(categoryId)) || categoryDescriptions.get(categoryId) || '').toLowerCase();
-    const codeDesc = (codeDescriptions.get(String(codeId)) || codeDescriptions.get(codeId) || '').toLowerCase();
+    const catDesc = (categoryDescriptions.get(String(categoryId)) || '').toLowerCase();
+    const codeDesc = (codeDescriptions.get(`${categoryId}:${codeId}`) || '').toLowerCase();
     if (catDesc.includes('indigenous') || catDesc.includes('atsi') || catDesc.includes('aboriginal')) {
-      // Y if code indicates Aboriginal, Torres Strait Islander, or Both
-      if (codeDesc.includes('aboriginal') || codeDesc.includes('torres strait') || codeDesc.includes('both aboriginal') || codeDesc === 'y' || codeDesc === 'yes') {
-        return 'Y';
-      }
-      // Explicit non-indigenous
-      if (codeDesc.includes('neither') || codeDesc.includes('non') || codeDesc === 'n' || codeDesc === 'no') {
-        return 'N';
-      }
+      // Check 'neither' first — description contains 'aboriginal' so must check 'neither' before 'aboriginal'
+      if (codeDesc.includes('neither') || codeDesc === 'n' || codeDesc === 'no') return 'N';
+      if (codeDesc.includes('aboriginal') || codeDesc.includes('torres strait') || codeDesc === 'y' || codeDesc === 'yes') return 'Y';
     }
   }
   return '';
@@ -120,8 +117,8 @@ function getAtsi(personCodes, codeDescriptions, categoryDescriptions) {
 function getNccd(personCodes, codeDescriptions, categoryDescriptions) {
   if (!personCodes) return '';
   for (const { codeId, categoryId } of personCodes) {
-    const catDesc = (categoryDescriptions.get(String(categoryId)) || categoryDescriptions.get(categoryId) || '').toLowerCase();
-    const codeDesc = (codeDescriptions.get(String(codeId)) || codeDescriptions.get(codeId) || '').toLowerCase();
+    const catDesc = (categoryDescriptions.get(String(categoryId)) || '').toLowerCase();
+    const codeDesc = (codeDescriptions.get(`${categoryId}:${codeId}`) || '').toLowerCase();
     if (catDesc.includes('nccd') || catDesc.includes('disability') || catDesc.includes('adjustment')) {
       if (codeDesc.includes('quality') || codeDesc.includes('qual')) return 'qual';
       if (codeDesc.includes('supplementary') || codeDesc.includes('supp')) return 'supp';
