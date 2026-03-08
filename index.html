@@ -1875,6 +1875,9 @@ function processAutoSync(vcStudents){
       }
       // Always update vcId if we matched by name
       if(!existing.vcId && vc.vcId) existing.vcId=vc.vcId;
+      // Always update atsi and nccd from Veracross (authoritative source)
+      if(vc.atsi !== undefined) existing.atsi = vc.atsi;
+      if(vc.nccd !== undefined) existing.nccd = vc.nccd;
     }
   });
 
