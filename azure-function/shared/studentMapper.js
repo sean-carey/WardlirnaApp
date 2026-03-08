@@ -94,8 +94,8 @@ function buildProfileMap(profileRecords) {
 function getAtsi(personCodes, codeDescriptions, categoryDescriptions) {
   if (!personCodes) return '';
   for (const { codeId, categoryId } of personCodes) {
-    const catDesc = (categoryDescriptions.get(categoryId) || '').toLowerCase();
-    const codeDesc = (codeDescriptions.get(codeId) || '').toLowerCase();
+    const catDesc = (categoryDescriptions.get(String(categoryId)) || categoryDescriptions.get(categoryId) || '').toLowerCase();
+    const codeDesc = (codeDescriptions.get(String(codeId)) || codeDescriptions.get(codeId) || '').toLowerCase();
     if (catDesc.includes('indigenous') || catDesc.includes('atsi') || catDesc.includes('aboriginal')) {
       // Y if code indicates Aboriginal, Torres Strait Islander, or Both
       if (codeDesc.includes('aboriginal') || codeDesc.includes('torres') || codeDesc.includes('both') || codeDesc === 'y' || codeDesc === 'yes') {
@@ -117,8 +117,8 @@ function getAtsi(personCodes, codeDescriptions, categoryDescriptions) {
 function getNccd(personCodes, codeDescriptions, categoryDescriptions) {
   if (!personCodes) return '';
   for (const { codeId, categoryId } of personCodes) {
-    const catDesc = (categoryDescriptions.get(categoryId) || '').toLowerCase();
-    const codeDesc = (codeDescriptions.get(codeId) || '').toLowerCase();
+    const catDesc = (categoryDescriptions.get(String(categoryId)) || categoryDescriptions.get(categoryId) || '').toLowerCase();
+    const codeDesc = (codeDescriptions.get(String(codeId)) || codeDescriptions.get(codeId) || '').toLowerCase();
     if (catDesc.includes('nccd') || catDesc.includes('disability') || catDesc.includes('adjustment')) {
       if (codeDesc.includes('quality') || codeDesc.includes('qual')) return 'qual';
       if (codeDesc.includes('supplementary') || codeDesc.includes('supp')) return 'supp';
