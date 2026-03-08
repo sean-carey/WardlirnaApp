@@ -78,6 +78,11 @@ module.exports = async function (context, req) {
     context.log(`veracross-sync: fetched ${rawStudents.length} students, fetching profile codes`);
     const { records: profileRecords, valueLists } = await fetchProfileCodes(token);
     context.log(`veracross-sync: fetched ${profileRecords.length} profile code rows, mapping`);
+    // DEBUG — log category descriptions to identify ATSI field name
+    if (valueLists && valueLists.length > 0) {
+      const categories = valueLists.flatMap(vl => vl.categories || []);
+      context.log('veracross-sync: profile code categories:', JSON.stringify(categories.slice(0, 20)));
+    }
     const students = mapStudents(rawStudents, profileRecords, valueLists);
 
     context.log(`veracross-sync: returning ${students.length} mapped students`);
