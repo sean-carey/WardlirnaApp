@@ -78,13 +78,11 @@ module.exports = async function (context, req) {
     context.log(`veracross-sync: fetched ${rawStudents.length} students, fetching profile codes`);
     const { records: profileRecords, valueLists } = await fetchProfileCodes(token);
     context.log(`veracross-sync: fetched ${profileRecords.length} profile code rows, mapping`);
-    // DEBUG — log items for Indigenous Status (category -4) and Disability (category -5)
-    if (valueLists && valueLists.length > 0) {
-      const allItems = valueLists.flatMap(vl => vl.items || []);
-      const indigenous = allItems.filter(i => i.category === -4);
-      const disability = allItems.filter(i => i.category === -5);
-      context.log('veracross-sync: indigenous items:', JSON.stringify(indigenous));
-      context.log('veracross-sync: disability items:', JSON.stringify(disability.slice(0, 10)));
+    // DEBUG — trace first student with any profile code
+    const samplePid = profileRecords.length > 0 ? String(profileRecords[0].person_id) : null;
+    if (samplePid) {
+      const sampleCodes = profileRecords.filter(r => String(r.person_id) === samplePid);
+      context.log('veracross-sync: sample profile rows:', JSON.stringify(sampleCodes));
     }
     const students = mapStudents(rawStudents, profileRecords, valueLists);
 
