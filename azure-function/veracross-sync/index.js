@@ -78,12 +78,7 @@ module.exports = async function (context, req) {
     context.log(`veracross-sync: fetched ${rawStudents.length} students, fetching profile codes`);
     const { records: profileRecords, valueLists } = await fetchProfileCodes(token);
     context.log(`veracross-sync: fetched ${profileRecords.length} profile code rows, mapping`);
-    // DEBUG — trace first student with any profile code
-    const samplePid = profileRecords.length > 0 ? String(profileRecords[0].person_id) : null;
-    if (samplePid) {
-      const sampleCodes = profileRecords.filter(r => String(r.person_id) === samplePid);
-      context.log('veracross-sync: sample profile rows:', JSON.stringify(sampleCodes));
-    }
+
     const students = mapStudents(rawStudents, profileRecords, valueLists);
 
     context.log(`veracross-sync: returning ${students.length} mapped students`);
