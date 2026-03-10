@@ -107,7 +107,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .gcards{padding:.35rem;display:flex;flex-direction:column;gap:.22rem;min-height:50px}
 
 /* STUDENT CARD — single line */
-.sc{border-radius:6px;padding:.28rem .4rem;cursor:grab;display:flex;align-items:center;gap:.35rem;transition:all .15s;position:relative;user-select:none;background:var(--g50);border:1px solid var(--g200)}
+.sc{border-radius:6px;padding:.28rem .4rem;cursor:default;display:flex;align-items:center;gap:.35rem;transition:all .15s;position:relative;user-select:none;background:var(--g50);border:1px solid var(--g200)}
 .sc:hover{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.1);transform:translateY(-1px);z-index:2}
 .sc.dragging{opacity:.3;cursor:grabbing}
 .sc.conflict{border-color:#fca5a5;background:#fff5f5}
@@ -289,7 +289,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <button class="tbtn" id="tbSocio" onclick="toggle('socio')">Off</button>
   <span class="tlabel">Detail:</span>
   <button class="tbtn" id="tbDetail" onclick="toggle('detail')">Off</button>
-  <div style="margin-left:auto">
+  <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem">
+    <button class="tbtn" id="tbFlipAll" onclick="toggleAllGroupStats()" title="Flip all groups to stats view">📊 Flip All</button>
     <input class="srch" type="text" placeholder="🔍  Search…" oninput="doSearch(this.value)" id="searchBox">
   </div>
 </div>
@@ -335,11 +336,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <!-- ANALYTICS PAGE -->
   <div class="page" id="page-analytics" style="flex-direction:row">
     <div id="analyFilter" style="width:210px;background:#fff;border-right:1px solid var(--g200);flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column;padding:.75rem .8rem;gap:.75rem">
-      <div>
-        <div class="tlabel" style="margin-bottom:.4rem">Exclude from report</div>
-        <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer"><input type="checkbox" id="afKindy" onchange="aRefresh()"> Kindergarten</label>
-        <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer;margin-top:.25rem"><input type="checkbox" id="afReception" onchange="aRefresh()"> Reception</label>
-      </div>
+
       <div><div class="tlabel" style="margin-bottom:.4rem">Primary Metric</div><div id="afMetric" style="display:flex;flex-direction:column;gap:.25rem"></div></div>
       <div><div class="tlabel" style="margin-bottom:.4rem">Break down by</div><div id="afBreak" style="display:flex;flex-direction:column;gap:.25rem"></div></div>
       <div><div class="tlabel" style="margin-bottom:.4rem">Filter Community</div><div id="afComm" style="display:flex;flex-direction:column;gap:.25rem"></div></div>
@@ -368,7 +365,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <!-- SETTINGS PAGE -->
   <div class="page" id="page-settings" style="flex-direction:column;overflow:auto">
     <div class="settings-body">
-      <div class="scard">
+      <div class="scard admin-only">
         <h3>☁ Azure Blob Storage <span id="blobStatusLabel" class="blob-badge bb-err">Not connected</span></h3>
         <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Pre-configured — connects automatically. Contact your system administrator to change these settings.</p>
         <div class="frow" style="margin-bottom:.65rem">
@@ -381,7 +378,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
           <button class="mbtn mbtn-ghost" onclick="loadFromBlob()">Reload from Blob</button>
         </div>
       </div>
-      <div class="scard">
+      <div class="scard admin-only">
         <h3>🔄 Veracross Sync</h3>
         <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Upload a CSV export from Veracross. The app will compare each student field-by-field. Conflicts are reviewed before applying. New students are added automatically. Students missing from the export are flagged as potential leavers.</p>
         <p style="font-size:.7rem;color:var(--muted);margin-bottom:.85rem">Expected columns: <code style="background:var(--g100);padding:.1rem .3rem;border-radius:3px">first, last, year, gender, atsi, nccd</code></p>
@@ -392,6 +389,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         <div style="display:flex;gap:.4rem;flex-wrap:wrap">
           <button class="mbtn mbtn-ghost admin-only" onclick="triggerVeracrossUpload()">Upload CSV instead</button>
         </div>
+      </div>
+      <div class="scard">
+        <h3>🎒 Display Settings</h3>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.75rem">Control which year levels are shown across the planner and analytics.</p>
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.8rem;cursor:pointer">
+          <input type="checkbox" id="kindyToggle" checked onchange="setShowKindy(this.checked)" style="width:15px;height:15px">
+          Show Kindergarten students
+        </label>
       </div>
       <div class="scard">
         <h3>⬇ Export</h3>
@@ -450,7 +455,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
     <div class="fg"><label>❌ Should NOT be with</label><input class="fi" id="smNot" placeholder="comma-separated names"></div>
     <div class="fg"><label>📝 Family Notes / Requests</label><textarea class="ft" id="smFamily"></textarea></div>
     <div class="mfoot">
-      <button class="mbtn mbtn-warn" onclick="toggleLeavingFromModal()">🟠 Toggle Leaving</button>
+      <button class="mbtn mbtn-warn" onclick="toggleLeavingFromModal()">🟠 Leaving ?</button>
       <button class="mbtn mbtn-danger" onclick="markDeparting()">🚪 Mark Departing</button>
       <button class="mbtn mbtn-ghost" onclick="closeModal('ovStudent')">Cancel</button>
       <button class="mbtn mbtn-primary" onclick="saveStudent()">Save</button>
@@ -560,7 +565,8 @@ let editingId=null, addingToGroup=null, dragId=null;
 let lockedGroups=new Set();
 let groupStatsView=new Set(); // groups showing stats overlay instead of names
 let unsaved=false;
-let userRole=''; // 'admin' or 'viewer' — set on load from /.auth/me
+let userRole='';
+let showKindy=true; // Kindy shown by default — toggle in Settings // 'admin' or 'viewer' — set on load from /.auth/me
 // Pre-configured Blob Storage defaults — no manual setup required for staff
 const BLOB_DEFAULTS = {
   account: 'stwardlirnaplanner',
@@ -628,9 +634,8 @@ function renderUnassigned(){
   count.textContent = unassigned.length;
   chips.innerHTML = unassigned.map(s=>{
     const yrColor = YEAR_COLORS[s.year]||'#94a3b8';
-    return `<div class="sc" style="display:inline-flex;background:#fff;cursor:grab;border-color:#f59e0b"
-      draggable="${userRole==='admin'?'true':'false'}" data-id="${s.id}"
-      ondragstart="if(userRole==='admin')onDragStart(event,${s.id})" ondragend="onDragEnd()"
+    return `<div class="sc" style="display:inline-flex;background:#fff;cursor:default;border-color:#f59e0b"
+      draggable="false" data-id="${s.id}"
       oncontextmenu="openCtxMenu(event,${s.id})"
       title="Right-click to assign to a group">
       <div class="ypip" style="background:${yrColor}"></div>
@@ -713,7 +718,7 @@ function renderGroup(group,avg){
 
   return `
     <div class="gcol ${locked?'locked':''}" id="${gid}"
-      ${locked?'':`ondragover="onDragOver(event,'${group.replace(/'/g,"\\'")}') " ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${group.replace(/'/g,"\\'")}')"`}>
+      >
       <div class="ghdr">
         <span class="gname">${group}</span>
         <span class="gcnt">${gs.length}</span>
@@ -747,15 +752,14 @@ function renderCard(s){
   if(s.leaving==='Y') icons.push('🟠');
 
   const yrColor=YEAR_COLORS[s.year]||'#94a3b8';
-  const nccdDetail=detailOn?`<span class="sc-detail">${NCCD_LABELS[s.nccd]}</span>`:'';
+  const nccdDetail=detailOn?`<span class="sc-detail">${NCCD_LABELS[s.nccd]||''}</span>`:'';
 
-  return `<div class="${cls}" draggable="${userRole==='admin'?'true':'false'}" data-id="${s.id}"
-    ondragstart="if(userRole==='admin')onDragStart(event,${s.id})" ondragend="onDragEnd()"
+  return `<div class="${cls}" draggable="false" data-id="${s.id}"
     ondblclick="openStudentModal(${s.id})"
     oncontextmenu="openCtxMenu(event,${s.id})"
     title="Dbl-click edit • Right-click move">
     <div class="ypip" style="background:${yrColor}"></div>
-    <span class="sc-name">${s.last}, ${s.first}</span>
+    <span class="sc-name">${s.last}, ${s.first}</span>${s.atsi==='Y'?'<span title="Aboriginal/Torres Strait Islander" style="font-size:.65rem;margin-left:.15rem">🏴</span>':''}
     <span class="sc-yr">${s.year}</span>
     ${nccdDetail}
     ${icons.length?`<div class="sc-icons">${icons.join('')}</div>`:''}
@@ -782,9 +786,9 @@ function renderSidebar(){
 
   // Gender breakdown
   const genderHTML=`
-    <div class="yr-row"><div class="yr-pip" style="background:#60a5fa"></div><span class="yr-lbl">Male</span><span class="yr-cnt">${cMales}</span></div>
-    <div class="yr-row"><div class="yr-pip" style="background:#f472b6"></div><span class="yr-lbl">Female</span><span class="yr-cnt">${cFemales}</span></div>
-    ${cOther>0?`<div class="yr-row"><div class="yr-pip" style="background:#a78bfa"></div><span class="yr-lbl">Gender diverse</span><span class="yr-cnt">${cOther}</span></div>`:''}`;
+    <div class="yr-row"><div class="yr-pip" style="background:#2dd4bf"></div><span class="yr-lbl">Male</span><span class="yr-cnt">${cMales}</span></div>
+    <div class="yr-row"><div class="yr-pip" style="background:#fb923c"></div><span class="yr-lbl">Female</span><span class="yr-cnt">${cFemales}</span></div>
+    <div class="yr-row"><div class="yr-pip" style="background:#a78bfa"></div><span class="yr-lbl">Gender diverse</span><span class="yr-cnt">${cOther}</span></div>`;
 
   // ATSI breakdown
   const atsiHTML=`
@@ -867,10 +871,7 @@ function openCtxMenu(e,id){
     ${userRole==='admin'?'<div class="ctxi" onclick="openStudentModal('+id+');closeCtxMenu()">✏️ Edit details</div>':''}
     <div class="ctxi" onclick="toggleLeaving(${id})">🟠 ${s.leaving==='Y'?'Remove':'Flag as'} possibly leaving</div>
     <div class="ctxi-sep"></div>
-    <div style="padding:.2rem .85rem;font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Move to…</div>
-    ${commGroups.slice(0,12).map(g=>`<div class="ctxi" onclick="moveStudentTo(${id},'${g}');closeCtxMenu()">${g}</div>`).join('')}
-    <div class="ctxi-sep"></div>
-    <div class="ctxi danger" onclick="markDepartingById(${id});closeCtxMenu()">🚪 Mark departing</div>`;
+    <div class="ctxi danger admin-only" onclick="markDepartingById(${id});closeCtxMenu()">🚪 Mark departing</div>`;
   menu.style.left=Math.min(e.clientX,window.innerWidth-170)+'px';
   menu.style.top=Math.min(e.clientY,window.innerHeight-300)+'px';
   menu.classList.add('show');
@@ -923,6 +924,25 @@ function onDrop(e,group){
 // ══════════════════════════════════════════════════
 function toggleGroupView(group){
   groupStatsView.has(group)?groupStatsView.delete(group):groupStatsView.add(group);
+  renderCanvas();
+}
+
+function setShowKindy(val){
+  showKindy=val;
+  render();
+  if(document.getElementById('page-analytics').classList.contains('on')) renderAnalytics();
+}
+
+function toggleAllGroupStats(){
+  const allGroups = Object.values(STRUCT).flatMap(b=>b.flatMap(x=>x.groups));
+  const allFlipped = allGroups.every(g=>groupStatsView.has(g));
+  if(allFlipped){
+    groupStatsView.clear();
+  } else {
+    allGroups.forEach(g=>groupStatsView.add(g));
+  }
+  const btn = document.getElementById('tbFlipAll');
+  if(btn) btn.classList.toggle('on', !allFlipped);
   renderCanvas();
 }
 
@@ -1052,8 +1072,12 @@ function triggerVeracrossUpload(){ document.getElementById('vcInput').click(); }
 // enrollment_status: anything starting with "RE:" = active
 // exit_date: if populated → flag as likely leaver
 
+const LEAVING_GROUP = '__leaving__';
+
 function parseHomroomToGroup(homeroom){
   if(!homeroom || homeroom.trim()==='') return UNASSIGNED_GROUP;
+  // "Leaving:Carey" or any homeroom starting with "Leaving" → departing
+  if(homeroom.trim().toLowerCase().startsWith('leaving')) return LEAVING_GROUP;
   // "Purli Wardli: Johnson" → "Purli"
   const parts = homeroom.split(' Wardli');
   const name = parts[0].trim();
@@ -1225,7 +1249,11 @@ function crApply(){
   pendingCRItems.forEach(item=>{
     if(item.type==='new'&&item.accept){
       const newGroup = item.vc.group && (ALL_GROUPS.includes(item.vc.group)||item.vc.group===UNASSIGNED_GROUP) ? item.vc.group : UNASSIGNED_GROUP;
-      students.push({id:nextId++,...item.vc,group:newGroup,wantsWith:[],notWith:[],family:'',leaving:item.vc.leaving||'N',future:'N'});
+      if(item.vc.group===LEAVING_GROUP){
+        departing.push({id:nextId++,...item.vc,group:item.vc.homeroom||'Leaving',wantsWith:[],notWith:[],family:'',leaving:'Y',future:'N'});
+      } else {
+        students.push({id:nextId++,...item.vc,group:newGroup,wantsWith:[],notWith:[],family:'',leaving:item.vc.leaving||'N',future:'N'});
+      }
       added++;
     } else if(item.type==='missing'&&item.accept){
       markDepartingById(item.student.id); departed++;
@@ -1265,9 +1293,10 @@ const BREAKDOWNS = [
 ];
 
 function aGetBase(){
-  const excKindy = document.getElementById('afKindy')?.checked;
-  const excRec   = document.getElementById('afReception')?.checked;
+  const excKindy = false;
+  const excRec   = false;
   let base = students.filter(s => {
+    if(!showKindy && s.year==='Kindergarten') return false;
     if(excKindy && s.year==='Kindergarten') return false;
     if(excRec   && s.year==='Reception') return false;
     if(aState.commFilter !== 'All'){
@@ -1294,7 +1323,7 @@ function aGetBase(){
 // segment value → color
 function aColor(metric, val){
   if(metric==='gender'){
-    return {Male:'#60a5fa', Female:'#f472b6', Other:'#a78bfa'}[val] || '#94a3b8';
+    return {Male:'#2dd4bf', Female:'#fb923c', Other:'#a78bfa'}[val] || '#94a3b8';
   }
   if(metric==='atsi'){
     return val==='Y' ? '#f59e0b' : '#94a3b8';
@@ -1869,7 +1898,11 @@ function processAutoSync(vcStudents){
     if(!existing){
       // Auto-apply new students — land in their homeroom group or unassigned
       newItems.push({type:'new',vc,autoApplied:true});
-      students.push({id:nextId++,...vc,wantsWith:[],notWith:[],family:''});
+      if(vc.group===LEAVING_GROUP){
+        departing.push({id:nextId++,...vc,group:vc.homeroom||'Leaving',wantsWith:[],notWith:[],family:'',leaving:'Y',future:'N'});
+      } else {
+        students.push({id:nextId++,...vc,wantsWith:[],notWith:[],family:''});
+      }
     } else {
       const diffs=SYNC_FIELDS.filter(f=>vc[f]&&vc[f].toLowerCase()!==(existing[f]||'').toLowerCase());
       if(diffs.length){
