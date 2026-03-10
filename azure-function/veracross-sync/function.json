@@ -5,8 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "options"],
-      "route": "veracross-sync"
+      "methods": ["POST"],
+      "route": "roles"
     },
     {
       "type": "http",
