@@ -13,21 +13,21 @@
       }
     }
   },
- "routes": [
-  {
-    "route": "/api/roles",
-    "allowedRoles": ["anonymous"]
-  },
-  {
-    "route": "/api/*",
-    "allowedRoles": ["admin", "viewer"]
-  },
-  {
-    "route": "/*",
-    "allowedRoles": ["admin", "viewer"]
-  }
-] 
-"responseOverrides": {
+  "routes": [
+    {
+      "route": "/api/roles",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": ["admin", "viewer"]
+    },
+    {
+      "route": "/*",
+      "allowedRoles": ["admin", "viewer"]
+    }
+  ],
+  "responseOverrides": {
     "401": {
       "redirect": "/.auth/login/aad",
       "statusCode": 302
