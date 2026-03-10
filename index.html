@@ -429,7 +429,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         </select>
       </div>
       <div class="fg"><label>Gender</label>
-        <select class="fs" id="smGender"><option>Male</option><option>Female</option><option>Other</option></select>
+        <select class="fs" id="smGender"><option>Male</option><option>Female</option><option>Non-binary</option></select>
       </div>
     </div>
     <div class="frow">
@@ -485,7 +485,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         </select>
       </div>
       <div class="fg"><label>Gender</label>
-        <select class="fs" id="addGender"><option>Male</option><option>Female</option><option>Other</option></select>
+        <select class="fs" id="addGender"><option>Male</option><option>Female</option><option>Non-binary</option></select>
       </div>
     </div>
     <div class="frow">
@@ -519,6 +519,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       <button class="mbtn mbtn-ghost" onclick="closeModal('ovConflict')">Cancel</button>
       <button class="mbtn mbtn-warn" onclick="crAcceptAll()">Accept All Veracross Changes</button>
       <button class="mbtn mbtn-primary" onclick="crApply()">Apply Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- GENERIC INFO MODAL -->
+<div class="overlay" id="genModal" onclick="if(event.target===this)closeModal('genModal')">
+  <div class="modal" style="max-width:520px;width:90%">
+    <div class="modal-header">
+      <h3 class="modal-title" id="genModalTitle">Info</h3>
+      <button class="modal-close" onclick="closeModal('genModal')">✕</button>
+    </div>
+    <div id="genModalBody" style="padding:1rem;max-height:60vh;overflow-y:auto"></div>
+    <div style="padding:.75rem 1rem;border-top:1px solid var(--g100);display:flex;justify-content:flex-end">
+      <button class="mbtn mbtn-ghost" onclick="closeModal('genModal')">Close</button>
     </div>
   </div>
 </div>
@@ -671,7 +685,7 @@ function renderGroup(group,avg){
   });
   const males=gs.filter(s=>s.gender==='Male').length;
   const females=gs.filter(s=>s.gender==='Female').length;
-  const other=gs.filter(s=>s.gender==='Other').length;
+  const other=gs.filter(s=>s.gender==='Non-binary').length;
   const atsi=gs.filter(s=>s.atsi==='Y').length;
   const locked=lockedGroups.has(group);
   const statsView=groupStatsView.has(group);
@@ -690,15 +704,15 @@ function renderGroup(group,avg){
   const statsHTML=`<div class="gstats-overlay">
     <div class="ov-row"><span class="ov-lbl">Gender</span>
       <div class="ov-track">
-        ${males>0?`<div class="ov-seg" style="width:${males/tot*100}%;background:#60a5fa" title="M:${males}"></div>`:''}
-        ${females>0?`<div class="ov-seg" style="width:${females/tot*100}%;background:#f472b6" title="F:${females}"></div>`:''}
-        ${other>0?`<div class="ov-seg" style="width:${other/tot*100}%;background:#a78bfa" title="Other:${other}"></div>`:''}
+        ${males>0?`<div class="ov-seg" style="width:${males/tot*100}%;background:#2dd4bf" title="M:${males}"></div>`:''}
+        ${females>0?`<div class="ov-seg" style="width:${females/tot*100}%;background:#fb923c" title="F:${females}"></div>`:''}
+        ${other>0?`<div class="ov-seg" style="width:${(other)/tot*100}%;background:#a78bfa" title="Non-binary:${other}"></div>`:''}
       </div>
       <span class="ov-val" style="font-size:.6rem">♂${males}♀${females}</span>
     </div>
     <div class="ov-row"><span class="ov-lbl">ATSI</span>
       <div class="ov-track">
-        ${atsi>0?`<div class="ov-seg" style="width:${atsi/tot*100}%;background:#f59e0b" title="ATSI:${atsi}"></div>`:''}
+        ${atsi>0?`<div class="ov-seg" style="width:${atsi/tot*100}%;background:#c2410c" title="ATSI:${atsi}"></div>`:''}
         <div class="ov-seg" style="width:${(tot-atsi)/tot*100}%;background:#e2e8f0" title="Non:${tot-atsi}"></div>
       </div>
       <span class="ov-val">${atsi}</span>
@@ -759,7 +773,7 @@ function renderCard(s){
     oncontextmenu="openCtxMenu(event,${s.id})"
     title="Dbl-click edit • Right-click move">
     <div class="ypip" style="background:${yrColor}"></div>
-    <span class="sc-name">${s.last}, ${s.first}</span>${s.atsi==='Y'?'<span title="Aboriginal/Torres Strait Islander" style="font-size:.65rem;margin-left:.15rem">🏴</span>':''}
+    <span class="sc-name">${s.last}, ${s.first}</span>${s.atsi==='Y'?`<svg title="Aboriginal/Torres Strait Islander" style="display:inline-block;vertical-align:middle;margin-left:.2rem;border-radius:1px" width="14" height="9" viewBox="0 0 14 9"><rect width="14" height="4.5" fill="#000"/><rect y="4.5" width="14" height="4.5" fill="#CC0000"/><circle cx="7" cy="4.5" r="2.5" fill="#FFD700"/></svg>`:''}
     <span class="sc-yr">${s.year}</span>
     ${nccdDetail}
     ${icons.length?`<div class="sc-icons">${icons.join('')}</div>`:''}
@@ -774,15 +788,15 @@ function renderSidebar(){
   const cStudents=students.filter(s=>cGroups.includes(s.group));
   const cMales=cStudents.filter(s=>s.gender==='Male').length;
   const cFemales=cStudents.filter(s=>s.gender==='Female').length;
-  const cOther=cStudents.filter(s=>s.gender==='Other').length;
+  const cOther=cStudents.filter(s=>s.gender==='Non-binary').length;
   const cATSI=cStudents.filter(s=>s.atsi==='Y').length;
   const cNonATSI=cStudents.filter(s=>s.atsi==='N').length;
 
   document.getElementById('sbStats').innerHTML=`
     <div class="sp"><div class="sp-v">${students.length}</div><div class="sp-l">Total</div></div>
     <div class="sp"><div class="sp-v">${cStudents.length}</div><div class="sp-l">${comm}</div></div>
-    <div class="sp"><div class="sp-v">${departing.length}</div><div class="sp-l">Departing</div></div>
-    <div class="sp"><div class="sp-v">${students.filter(s=>s.leaving==='Y').length}</div><div class="sp-l">Poss. leaving</div></div>`;
+    <div class="sp" style="cursor:pointer" onclick="showLeavingList('departing')" title="Click to see departing students"><div class="sp-v">${departing.length}</div><div class="sp-l">Departing ↗</div></div>
+    <div class="sp" style="cursor:pointer" onclick="showLeavingList('leaving')" title="Click to see possibly leaving students"><div class="sp-v">${students.filter(s=>s.leaving==='Y').length}</div><div class="sp-l">Poss. leaving ↗</div></div>`;
 
   // Gender breakdown
   const genderHTML=`
@@ -792,7 +806,7 @@ function renderSidebar(){
 
   // ATSI breakdown
   const atsiHTML=`
-    <div class="yr-row"><div class="yr-pip" style="background:#f59e0b"></div><span class="yr-lbl">Aboriginal/TSI</span><span class="yr-cnt">${cATSI}</span></div>
+    <div class="yr-row"><div class="yr-pip" style="background:#c2410c"></div><span class="yr-lbl">Aboriginal/TSI</span><span class="yr-cnt">${cATSI}</span></div>
     <div class="yr-row"><div class="yr-pip" style="background:#94a3b8"></div><span class="yr-lbl">Non-Indigenous</span><span class="yr-cnt">${cNonATSI}</span></div>`;
 
   // Year counts
@@ -925,6 +939,22 @@ function onDrop(e,group){
 function toggleGroupView(group){
   groupStatsView.has(group)?groupStatsView.delete(group):groupStatsView.add(group);
   renderCanvas();
+}
+
+function showLeavingList(type){
+  const isDep = type==='departing';
+  const list = isDep ? departing : students.filter(s=>s.leaving==='Y');
+  const title = isDep ? '🚪 Departing Students' : '🟠 Possibly Leaving';
+  const html = list.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:.4rem;padding:.5rem 0">`+
+      list.map(s=>`<div style="background:${isDep?'#fee2e2':'#fff7ed'};border:1px solid ${isDep?'#fca5a5':'#fb923c'};border-radius:8px;padding:.3rem .65rem;font-size:.78rem">
+        <strong>${s.last}, ${s.first}</strong> <span style="color:var(--muted)">${s.year} · ${s.group}</span>
+      </div>`).join('')+`</div>`
+    : `<p style="color:var(--muted);font-size:.8rem">None identified.</p>`;
+  
+  document.getElementById('genModalTitle').textContent = title;
+  document.getElementById('genModalBody').innerHTML = html;
+  openModal('genModal');
 }
 
 function setShowKindy(val){
@@ -1323,10 +1353,10 @@ function aGetBase(){
 // segment value → color
 function aColor(metric, val){
   if(metric==='gender'){
-    return {Male:'#2dd4bf', Female:'#fb923c', Other:'#a78bfa'}[val] || '#94a3b8';
+    return {Male:'#2dd4bf', Female:'#fb923c', 'Non-binary':'#a78bfa'}[val] || '#94a3b8';
   }
   if(metric==='atsi'){
-    return val==='Y' ? '#f59e0b' : '#94a3b8';
+    return val==='Y' ? '#c2410c' : '#94a3b8';
   }
   if(metric==='nccd'){
     return NCCD_COLORS[val] || '#94a3b8';
@@ -1564,7 +1594,7 @@ function renderAnalyticsCombo(charts){
       <td><strong>${g.length}</strong></td>
       <td>${g.filter(s=>s.gender==='Male').length}</td>
       <td>${g.filter(s=>s.gender==='Female').length}</td>
-      <td>${g.filter(s=>s.gender==='Other').length}</td>
+      <td>${g.filter(s=>s.gender==='Non-binary').length}</td>
       <td style="color:var(--muted)">${(g.length/total*100).toFixed(1)}%</td>
     </tr>`;
   });
@@ -1914,6 +1944,23 @@ function processAutoSync(vcStudents){
       // Always update atsi and nccd from Veracross (authoritative source)
       if(vc.atsi !== undefined) existing.atsi = vc.atsi;
       if(vc.nccd !== undefined) existing.nccd = vc.nccd;
+      // If student's homeroom has moved to Leaving — move them to departing
+      if(vc.group===LEAVING_GROUP){
+        const idx=students.indexOf(existing);
+        if(idx!==-1){
+          students.splice(idx,1);
+          departing.push({...existing,leaving:'Y'});
+          newItems.push({type:'departed_to_leaving',student:existing,autoApplied:true});
+        }
+      }
+    }
+  });
+  // Also check if any existing student in departing array needs updating from VC
+  departing.forEach(s=>{
+    const vc=vcStudents.find(v=>v.vcId===s.vcId||(v.first.toLowerCase()===s.first.toLowerCase()&&v.last.toLowerCase()===s.last.toLowerCase()));
+    if(vc){
+      if(vc.atsi!==undefined) s.atsi=vc.atsi;
+      if(vc.nccd!==undefined) s.nccd=vc.nccd;
     }
   });
 
