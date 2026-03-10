@@ -370,16 +370,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
     <div class="settings-body">
       <div class="scard">
         <h3>☁ Azure Blob Storage <span id="blobStatusLabel" class="blob-badge bb-err">Not connected</span></h3>
-        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Auto-saves groupings.json and students_master.json to your Azure storage container.</p>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Pre-configured — connects automatically. Contact your system administrator to change these settings.</p>
         <div class="frow" style="margin-bottom:.65rem">
-          <div class="fg"><label>Storage Account</label><input class="fi" id="blobAcct" placeholder="mystorageaccount"></div>
-          <div class="fg"><label>Container</label><input class="fi" id="blobCont" placeholder="groupings"></div>
+          <div class="fg"><label>Storage Account</label><input class="fi" id="blobAcct" readonly style="background:var(--g50);color:var(--muted)"></div>
+          <div class="fg"><label>Container</label><input class="fi" id="blobCont" readonly style="background:var(--g50);color:var(--muted)"></div>
         </div>
-        <div class="fg"><label>SAS Token</label><input class="fi" id="blobSAS" type="password" placeholder="?sv=2023-01-03&ss=b…"></div>
+        <div class="fg"><label>SAS Token</label><input class="fi" id="blobSAS" type="password" readonly style="background:var(--g50);color:var(--muted)"></div>
         <div style="display:flex;gap:.4rem;margin-top:.5rem">
           <button class="mbtn mbtn-primary" onclick="testBlob()">Test Connection</button>
-          <button class="mbtn mbtn-ghost" onclick="saveBlobCfg()">Save</button>
-          <button class="mbtn mbtn-ghost" onclick="loadFromBlob()">Load from Blob</button>
+          <button class="mbtn mbtn-ghost" onclick="loadFromBlob()">Reload from Blob</button>
         </div>
       </div>
       <div class="scard">
@@ -387,13 +386,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Upload a CSV export from Veracross. The app will compare each student field-by-field. Conflicts are reviewed before applying. New students are added automatically. Students missing from the export are flagged as potential leavers.</p>
         <p style="font-size:.7rem;color:var(--muted);margin-bottom:.85rem">Expected columns: <code style="background:var(--g100);padding:.1rem .3rem;border-radius:3px">first, last, year, gender, atsi, nccd</code></p>
         <div class="fg" style="margin-bottom:.65rem">
-          <label>Azure Function URL <span style="font-weight:400;color:var(--muted)">(for live sync)</span></label>
-          <input class="fi" id="funcUrl" placeholder="https://func-ngutu-veracross-sync.azurewebsites.net/api/veracross-sync">
-          <div style="font-size:.68rem;color:var(--muted);margin-top:.25rem">Leave blank until Function App is deployed. Once set, the app will auto-sync with Veracross on open.</div>
+          <label>Azure Function URL <span style="font-weight:400;color:var(--muted)">(pre-configured)</span></label>
+          <input class="fi" id="funcUrl" readonly style="background:var(--g50);color:var(--muted);font-size:.7rem">
         </div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-          <button class="mbtn mbtn-primary" onclick="saveFuncUrl()">Save Function URL</button>
-          <button class="mbtn mbtn-ghost" onclick="triggerVeracrossUpload()">Upload CSV instead</button>
+          <button class="mbtn mbtn-ghost admin-only" onclick="triggerVeracrossUpload()">Upload CSV instead</button>
         </div>
       </div>
       <div class="scard">
@@ -576,7 +573,7 @@ let blobOk=false;
 let pendingCRItems=[];
 let pendingAutoItems=[];   // silent auto-sync queue (non-conflict changes)
 // FUNC_URL is set dynamically from Settings — stored in localStorage as 'ngutuFuncUrl'
-const getFuncUrl=()=>localStorage.getItem('ngutuFuncUrl')||window._funcUrl||'';
+const getFuncUrl=()=>FUNC_DEFAULT;
 const SYNC_LOCK_MINUTES = 240; // 4 hours before another auto-sync is allowed
 
 // ══════════════════════════════════════════════════
@@ -1682,28 +1679,20 @@ async function aExportXLSX(){
 // BLOB STORAGE
 // ══════════════════════════════════════════════════
 function saveBlobCfg(){
-  blobCfg={account:document.getElementById('blobAcct').value.trim(),container:document.getElementById('blobCont').value.trim(),sas:document.getElementById('blobSAS').value.trim()};
-  localStorage.setItem('ngutublob',JSON.stringify(blobCfg));
-  showToast('Blob settings saved');
+  showToast('Settings are pre-configured — no changes needed');
 }
 function loadBlobCfg(){
-  const s=localStorage.getItem('ngutublob');
-  // Use saved config if available, otherwise fall back to pre-configured defaults
-  if(s){ blobCfg=JSON.parse(s); } else { blobCfg={...BLOB_DEFAULTS}; }
+  // Always use hardcoded defaults — no localStorage dependency
+  blobCfg={...BLOB_DEFAULTS};
+  window._funcUrl=FUNC_DEFAULT;
   // Populate Settings fields if they exist in the DOM
   const acct=document.getElementById('blobAcct'); if(acct) acct.value=blobCfg.account;
   const cont=document.getElementById('blobCont'); if(cont) cont.value=blobCfg.container;
   const sas=document.getElementById('blobSAS'); if(sas) sas.value=blobCfg.sas;
-  // Function URL — use saved, then default
-  const fu=localStorage.getItem('ngutuFuncUrl')||FUNC_DEFAULT;
-  window._funcUrl=fu;
-  const el=document.getElementById('funcUrl'); if(el) el.value=fu;
+  const el=document.getElementById('funcUrl'); if(el) el.value=FUNC_DEFAULT;
 }
 function saveFuncUrl(){
-  const url=(document.getElementById('funcUrl').value||'').trim();
-  localStorage.setItem('ngutuFuncUrl',url);
-  window._funcUrl=url;
-  showToast('Function URL saved');
+  showToast('Function URL is pre-configured — no changes needed');
 }
 function blobUrl(f){ const sas=blobCfg.sas.startsWith('?')?blobCfg.sas:'?'+blobCfg.sas; return `https://${blobCfg.account}.blob.core.windows.net/${blobCfg.container}/${f}${sas}`; }
 function setBlobStatus(state){
