@@ -434,7 +434,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
     </div>
     <div class="frow">
       <div class="fg"><label>ATSI</label>
-        <select class="fs" id="smATSI"><option value="N">Non-Indigenous</option><option value="Y">Aboriginal/TSI</option></select>
+        <select class="fs" id="smATSI"><option value="N">Non-Indigenous</option><option value="aboriginal">Aboriginal</option><option value="tsi">Torres Strait Islander</option><option value="both">Aboriginal & TSI</option></select>
       </div>
       <div class="fg"><label>NCCD Level</label>
         <select class="fs" id="smNCCD">
@@ -490,7 +490,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
     </div>
     <div class="frow">
       <div class="fg"><label>ATSI</label>
-        <select class="fs" id="addATSI"><option value="N">Non-Indigenous</option><option value="Y">Aboriginal/TSI</option></select>
+        <select class="fs" id="addATSI"><option value="N">Non-Indigenous</option><option value="aboriginal">Aboriginal</option><option value="tsi">Torres Strait Islander</option><option value="both">Aboriginal & TSI</option></select>
       </div>
       <div class="fg"><label>NCCD Level</label>
         <select class="fs" id="addNCCD">
@@ -686,7 +686,7 @@ function renderGroup(group,avg){
   const males=gs.filter(s=>s.gender==='Male').length;
   const females=gs.filter(s=>s.gender==='Female').length;
   const other=gs.filter(s=>s.gender==='Non-binary').length;
-  const atsi=gs.filter(s=>s.atsi==='Y').length;
+  const atsi=gs.filter(s=>isATSI(s)).length;
   const locked=lockedGroups.has(group);
   const statsView=groupStatsView.has(group);
   const gid='g_'+group.replace(/[^a-z0-9]/gi,'_');
@@ -773,7 +773,7 @@ function renderCard(s){
     oncontextmenu="openCtxMenu(event,${s.id})"
     title="Dbl-click edit • Right-click move">
     <div class="ypip" style="background:${yrColor}"></div>
-    <span class="sc-name">${s.last}, ${s.first}</span>${s.atsi==='Y'?`<svg title="Aboriginal/Torres Strait Islander" style="display:inline-block;vertical-align:middle;margin-left:.2rem;border-radius:1px" width="14" height="9" viewBox="0 0 14 9"><rect width="14" height="4.5" fill="#000"/><rect y="4.5" width="14" height="4.5" fill="#CC0000"/><circle cx="7" cy="4.5" r="2.5" fill="#FFD700"/></svg>`:''}
+    <span class="sc-name">${s.last}, ${s.first}</span>${atsiFlags(s.atsi)}
     <span class="sc-yr">${s.year}</span>
     ${nccdDetail}
     ${icons.length?`<div class="sc-icons">${icons.join('')}</div>`:''}
@@ -789,7 +789,7 @@ function renderSidebar(){
   const cMales=cStudents.filter(s=>s.gender==='Male').length;
   const cFemales=cStudents.filter(s=>s.gender==='Female').length;
   const cOther=cStudents.filter(s=>s.gender==='Non-binary').length;
-  const cATSI=cStudents.filter(s=>s.atsi==='Y').length;
+  const cATSI=cStudents.filter(s=>isATSI(s)).length;
   const cNonATSI=cStudents.filter(s=>s.atsi==='N').length;
 
   document.getElementById('sbStats').innerHTML=`
@@ -957,6 +957,21 @@ function showLeavingList(type){
   openModal('genModal');
 }
 
+// Returns SVG flag(s) for aboriginal/tsi/both/Y/N
+function atsiFlags(atsi){
+  const aboriginal = `<svg title="Aboriginal" style="display:inline-block;vertical-align:middle;margin-left:.2rem;border-radius:1px" width="14" height="9" viewBox="0 0 14 9"><rect width="14" height="4.5" fill="#000"/><rect y="4.5" width="14" height="4.5" fill="#CC0000"/><circle cx="7" cy="4.5" r="2.5" fill="#FFD700"/></svg>`;
+  const tsi = `<svg title="Torres Strait Islander" style="display:inline-block;vertical-align:middle;margin-left:.15rem;border-radius:1px" width="14" height="9" viewBox="0 0 14 9">
+    <rect width="14" height="9" fill="#009B77"/>
+    <rect y="3.2" width="14" height="2.6" fill="#000"/>
+    <polygon points="7,1.2 7.8,3.5 10.2,3.5 8.2,5 9,7.3 7,5.8 5,7.3 5.8,5 3.8,3.5 6.2,3.5" fill="#FFFFFF"/>
+    <circle cx="7" cy="4.5" r="1.2" fill="#009B77"/>
+  </svg>`;
+  if(atsi==='both' || atsi==='Y') return aboriginal+tsi;
+  if(atsi==='aboriginal') return aboriginal;
+  if(atsi==='tsi') return tsi;
+  return '';
+}
+
 function setShowKindy(val){
   showKindy=val;
   render();
@@ -1103,6 +1118,7 @@ function triggerVeracrossUpload(){ document.getElementById('vcInput').click(); }
 // exit_date: if populated → flag as likely leaver
 
 const LEAVING_GROUP = '__leaving__';
+const isATSI = s => s.atsi==='Y'||s.atsi==='aboriginal'||s.atsi==='tsi'||s.atsi==='both';
 
 function parseHomroomToGroup(homeroom){
   if(!homeroom || homeroom.trim()==='') return UNASSIGNED_GROUP;
@@ -1356,7 +1372,7 @@ function aColor(metric, val){
     return {Male:'#2dd4bf', Female:'#fb923c', 'Non-binary':'#a78bfa'}[val] || '#94a3b8';
   }
   if(metric==='atsi'){
-    return val==='Y' ? '#c2410c' : '#94a3b8';
+    return (val==='Y'||val==='aboriginal'||val==='tsi'||val==='both') ? '#c2410c' : '#94a3b8';
   }
   if(metric==='nccd'){
     return NCCD_COLORS[val] || '#94a3b8';
@@ -1365,7 +1381,7 @@ function aColor(metric, val){
   return '#60a5fa';
 }
 function aLabel(metric, val){
-  if(metric==='atsi') return val==='Y'?'Aboriginal/TSI':'Non-Indigenous';
+  if(metric==='atsi'){ if(val==='aboriginal') return 'Aboriginal'; if(val==='tsi') return 'Torres Strait Islander'; if(val==='both') return 'Aboriginal & TSI'; if(val==='Y') return 'Aboriginal/TSI'; return 'Non-Indigenous'; }
   if(metric==='nccd') return NCCD_LABELS[val] || val;
   return val;
 }
@@ -1610,7 +1626,7 @@ function renderAnalyticsCombo(charts){
     </tr></thead><tbody>`;
   years.forEach(y=>{
     const ys=base.filter(s=>s.year===y);
-    const a=ys.filter(s=>s.atsi==='Y'), na=ys.filter(s=>s.atsi==='N');
+    const a=ys.filter(s=>isATSI(s)), na=ys.filter(s=>s.atsi==='N');
     html += `<tr>
       <td style="font-weight:600;color:${YEAR_COLORS[y]}">${y}</td>
       <td><strong>${ys.length}</strong></td>
@@ -1623,7 +1639,7 @@ function renderAnalyticsCombo(charts){
       <td style="color:var(--muted)">${ys.length?(a.length/ys.length*100).toFixed(0)+'%':'—'}</td>
     </tr>`;
   });
-  const a=base.filter(s=>s.atsi==='Y'), na=base.filter(s=>s.atsi==='N');
+  const a=base.filter(s=>isATSI(s)), na=base.filter(s=>s.atsi==='N');
   html += `<tr style="background:var(--g100);font-weight:700">
     <td>Total</td><td>${base.length}</td>
     <td style="color:#f59e0b">${a.length}</td>
@@ -1646,7 +1662,7 @@ function renderAnalyticsCombo(charts){
     html += `<tr><td style="font-weight:600;color:${YEAR_COLORS[y]}">${y}</td>`;
     Object.keys(NCCD_COLORS).forEach(k=>{
       const n=ys.filter(s=>s.nccd===k);
-      html += `<td>${n.length}</td><td style="color:#f59e0b">${n.filter(s=>s.atsi==='Y').length}</td>`;
+      html += `<td>${n.length}</td><td style="color:#f59e0b">${n.filter(s=>isATSI(s)).length}</td>`;
     });
     html += `</tr>`;
   });
@@ -1717,7 +1733,7 @@ async function aExportXLSX(){
     for(const [c,bands] of Object.entries(STRUCT)){
       if(bands.flatMap(b=>b.groups).includes(s.group)){ community=c; break; }
     }
-    studentRows.push([s.first,s.last,s.year,s.gender,s.atsi==='Y'?'Aboriginal/TSI':'Non-Indigenous',NCCD_LABELS[s.nccd]||s.nccd,s.group,community,s.leaving==='Y'?'Yes':'No',s.future==='Y'?'Yes':'No']);
+    studentRows.push([s.first,s.last,s.year,s.gender,(s.atsi==='aboriginal'?'Aboriginal':s.atsi==='tsi'?'Torres Strait Islander':s.atsi==='both'?'Aboriginal & TSI':isATSI(s)?'Aboriginal/TSI':'Non-Indigenous'),NCCD_LABELS[s.nccd]||s.nccd,s.group,community,s.leaving==='Y'?'Yes':'No',s.future==='Y'?'Yes':'No']);
   });
 
   // Build XLSX manually as CSV (tab-separated with BOM for Excel)
@@ -1964,17 +1980,25 @@ function processAutoSync(vcStudents){
     }
   });
 
-  // Flag departures (in app but not in Veracross) — auto-flag as possibly leaving
+  // Handle students in app but absent from Veracross
+  // future:'Y' = manually pre-enrolled, not yet in Veracross — leave alone
+  // everyone else missing from Veracross → auto-move to Departing
+  const toDepart=[];
   students.forEach(s=>{
-    if(s.group===UNASSIGNED_GROUP) return;
+    if(s.future==='Y') return; // pre-enrolment — intentionally not in VC yet
     const inVC=vcStudents.find(vc=>
-      vc.vcId===s.vcId ||
+      (vc.vcId && vc.vcId===s.vcId) ||
       (vc.first.toLowerCase()===s.first.toLowerCase()&&vc.last.toLowerCase()===s.last.toLowerCase())
     );
-    if(!inVC && s.leaving!=='Y'){
-      s.future='Y'; // flag as possibly leaving — don't auto-depart
-      newItems.push({type:'missing',student:s,autoApplied:true});
+    if(!inVC){
+      toDepart.push(s);
     }
+  });
+  toDepart.forEach(s=>{
+    const idx=students.indexOf(s);
+    if(idx!==-1) students.splice(idx,1);
+    departing.push({...s,leaving:'Y'});
+    newItems.push({type:'missing',student:s,autoApplied:true});
   });
 
   const added    = newItems.filter(i=>i.type==='new').length;
@@ -1990,7 +2014,7 @@ function processAutoSync(vcStudents){
     render();
     const parts=[];
     if(added)     parts.push(`<strong>+${added}</strong> new student${added!==1?'s':''} added`);
-    if(departed)  parts.push(`<strong>${departed}</strong> possibly leaving (flagged)`);
+    if(departed)  parts.push(`<strong>${departed}</strong> moved to Departing (not in Veracross)`);
     if(conflicts) parts.push(`<strong>${conflicts}</strong> field change${conflicts!==1?'s':''} need review — click Veracross Sync to resolve`);
     showSyncBanner('☁ Veracross sync complete — '+parts.join(', ')+(conflicts?'':' '), conflicts?'warn':'ok');
   } else {
