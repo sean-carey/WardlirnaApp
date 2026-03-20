@@ -266,9 +266,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <div class="unsaved admin-only" id="unsavedBadge">● Unsaved changes</div>
   <span id="blobBadge" class="blob-badge bb-err" style="font-size:.68rem;padding:.15rem .5rem;border-radius:10px;font-weight:600;background:#fee2e2;color:#dc2626">⚡ Not connected</span>
   <button class="hbtn hbtn-ghost admin-only" onclick="showPage('settings')">⚙ Settings</button>
-  <button class="hbtn hbtn-ghost admin-only" onclick="triggerVeracrossUpload()" id="vcSyncBtn" style="position:relative">
-    ⬆ Veracross Sync
+  <button class="hbtn hbtn-primary admin-only" onclick="forceSyncNow()" id="forceSyncBtn" title="Pull latest data from Veracross API now">
+    🔄 Sync from Veracross
     <span id="vcBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#f87171;color:#fff;font-size:.58rem;font-weight:700;border-radius:10px;padding:.05rem .3rem;min-width:14px;text-align:center"></span>
+  </button>
+  <button class="hbtn hbtn-ghost admin-only" onclick="triggerVeracrossUpload()" id="vcSyncBtn" style="position:relative" title="Manually upload a Veracross CSV export instead of using the API">
+    📤 Upload CSV
   </button>
   <button class="hbtn hbtn-primary admin-only" onclick="saveToBlob()">💾 Save</button>
   <input type="file" id="vcInput" accept=".csv" style="display:none" onchange="handleVeracrossCSV(event)">
@@ -410,15 +413,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         </div>
       </div>
       <div class="scard admin-only">
-        <h3>🔄 Veracross Sync</h3>
-        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Upload a CSV export from Veracross. The app will compare each student field-by-field. Conflicts are reviewed before applying. New students are added automatically. Students missing from the export are flagged as potential leavers.</p>
-        <p style="font-size:.7rem;color:var(--muted);margin-bottom:.85rem">Expected columns: <code style="background:var(--g100);padding:.1rem .3rem;border-radius:3px">first, last, year, gender, atsi, nccd</code></p>
-        <div class="fg" style="margin-bottom:.65rem">
+        <h3>🔄 Veracross API Sync</h3>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.6rem">Pulls live student data directly from Veracross via the Azure Function. Runs automatically on login if data is more than 4 hours old. Use the button below or the <strong>Sync from Veracross</strong> button in the header to force an immediate pull.</p>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">New students are added automatically. Students no longer in Veracross are moved to Departing. Field changes (name, year, gender) are queued for review.</p>
+        <div class="fg" style="margin-bottom:.75rem">
           <label>Azure Function URL <span style="font-weight:400;color:var(--muted)">(pre-configured)</span></label>
           <input class="fi" id="funcUrl" readonly style="background:var(--g50);color:var(--muted);font-size:.7rem">
         </div>
-        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-          <button class="mbtn mbtn-ghost admin-only" onclick="triggerVeracrossUpload()">Upload CSV instead</button>
+        <button class="mbtn mbtn-primary" onclick="forceSyncNow();showPage('planner')" style="margin-bottom:.75rem">🔄 Sync from Veracross now</button>
+        <div style="border-top:1px solid var(--g100);padding-top:.75rem;margin-top:.25rem">
+          <p style="font-size:.72rem;color:var(--muted);margin-bottom:.4rem"><strong>CSV fallback</strong> — if the API is unavailable, you can upload a manual Veracross export instead.</p>
+          <p style="font-size:.68rem;color:var(--muted);margin-bottom:.5rem">Expected columns: <code style="background:var(--g100);padding:.1rem .3rem;border-radius:3px">first, last, year, gender, atsi, nccd</code></p>
+          <button class="mbtn mbtn-ghost" onclick="triggerVeracrossUpload()">📤 Upload CSV manually</button>
         </div>
       </div>
 
@@ -1414,17 +1420,17 @@ function crApply(){
 
 // --- State ---
 let aState = {
-  metric: 'gender',      // gender | atsi | nccd
+  metric: 'overview',    // overview | gender | atsi | nccd
   breakBy: 'year',       // year | group | community | combo
   commFilter: 'All',     // All | Madlurta | Kurlana | Warti | Karra
   drillStack: [],        // [{label, metric, value}]
 };
 
 const METRICS = [
+  {id:'overview', label:'Overview', icon:'📊'},
   {id:'gender', label:'Gender', icon:'⚥'},
   {id:'atsi',   label:'ATSI Status', icon:'🌏'},
   {id:'nccd',   label:'NCCD Support', icon:'🎯'},
-  {id:'overview', label:'Overview', icon:'📊'},
 ];
 const BREAKDOWNS = [
   {id:'year',      label:'By Year Level'},
@@ -1522,9 +1528,14 @@ function aAxisColor(breakBy, val){
   return '#60a5fa';
 }
 
-function aRefresh(){
-  renderAnalytics();
+function aRefresh(){ renderAnalytics(); }
+function aSetMetric(v){ aState.metric=v; aState.drillStack=[]; renderAnalytics(); }
+function aSetBreak(v){
+  // Overview only works with certain breakdowns — guard
+  if(aState.metric==='overview' && v==='combo') return;
+  aState.breakBy=v; aState.drillStack=[]; renderAnalytics();
 }
+function aSetComm(v){ aState.commFilter=v; aState.drillStack=[]; renderAnalytics(); }
 
 function aDrill(metric, value, label){
   aState.drillStack.push({metric, value, label});
@@ -1538,23 +1549,22 @@ function aDrillTo(idx){
 
 function renderAnalytics(){
   // Init filter UI once
+  // Use div buttons instead of radio inputs — radios inside innerHTML lose state on re-render
+  function afBtn(active, label, icon, fn){
+    return `<div onclick="${fn}" style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;cursor:pointer;padding:.28rem .45rem;border-radius:5px;background:${active?'var(--hdr3)':'transparent'};color:${active?'#fff':'var(--txt)'};user-select:none">
+      <span style="width:12px;height:12px;border-radius:50%;border:2px solid ${active?'#fff':'#94a3b8'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+        ${active?`<span style="width:5px;height:5px;border-radius:50%;background:#fff;display:block"></span>`:''}
+      </span>${icon?icon+' ':''}${label}</div>`;
+  }
+
   const afM = document.getElementById('afMetric');
-  if(afM) afM.innerHTML = METRICS.map(m=>`
-    <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer;padding:.2rem .3rem;border-radius:4px;background:${aState.metric===m.id?'var(--hdr3)':'transparent'};color:${aState.metric===m.id?'#fff':'var(--txt)'}">
-      <input type="radio" name="afm" value="${m.id}" ${aState.metric===m.id?'checked':''} onchange="aState.metric='${m.id}';aState.drillStack=[];aRefresh()" style="accent-color:#fff"> ${m.icon} ${m.label}
-    </label>`).join('');
+  if(afM) afM.innerHTML = METRICS.map(m=>afBtn(aState.metric===m.id, m.label, m.icon, `aSetMetric('${m.id}')`)).join('');
 
   const afB = document.getElementById('afBreak');
-  if(afB) afB.innerHTML = BREAKDOWNS.map(b=>`
-    <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer;padding:.2rem .3rem;border-radius:4px;background:${aState.breakBy===b.id?'var(--hdr3)':'transparent'};color:${aState.breakBy===b.id?'#fff':'var(--txt)'}">
-      <input type="radio" name="afb" value="${b.id}" ${aState.breakBy===b.id?'checked':''} onchange="aState.breakBy='${b.id}';aState.drillStack=[];aRefresh()" style="accent-color:#fff"> ${b.label}
-    </label>`).join('');
+  if(afB) afB.innerHTML = BREAKDOWNS.map(b=>afBtn(aState.breakBy===b.id, b.label, '', `aSetBreak('${b.id}')`)).join('');
 
   const afC = document.getElementById('afComm');
-  if(afC) afC.innerHTML = ['All',...Object.keys(STRUCT)].map(c=>`
-    <label style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;cursor:pointer;padding:.2rem .3rem;border-radius:4px;background:${aState.commFilter===c?'var(--hdr3)':'transparent'};color:${aState.commFilter===c?'#fff':'var(--txt)'}">
-      <input type="radio" name="afc" value="${c}" ${aState.commFilter===c?'checked':''} onchange="aState.commFilter='${c}';aState.drillStack=[];aRefresh()" style="accent-color:#fff"> ${c}
-    </label>`).join('');
+  if(afC) afC.innerHTML = ['All',...Object.keys(STRUCT)].map(c=>afBtn(aState.commFilter===c, c, '', `aSetComm('${c}')`)).join('');
 
   // Breadcrumb
   const crumb = document.getElementById('analyCrumb');
@@ -2159,6 +2169,24 @@ async function autoSyncOnOpen(){
     processAutoSync(vcStudents);
   }catch(e){
     showSyncBanner('⚠ Veracross sync failed: '+e.message+' — working with saved data', 'warn');
+  }
+}
+
+// Force a fresh Veracross API pull regardless of sync lock
+async function forceSyncNow(){
+  if(!getFuncUrl()){
+    showToast('Function URL not configured — check Azure Function is deployed'); return;
+  }
+  const btn = document.getElementById('forceSyncBtn');
+  if(btn){ btn.disabled=true; btn.innerHTML='🔄 Syncing…'; }
+  showSyncBanner('🔄 Connecting to Veracross…','info');
+  try{
+    await fetch(blobUrl('sync-lock.json'),{method:'DELETE'}).catch(()=>{});
+    await autoSyncOnOpen();
+  } catch(e){
+    showSyncBanner('❌ Sync failed — '+e.message,'err');
+  } finally {
+    if(btn){ btn.disabled=false; btn.innerHTML='🔄 Sync from Veracross'; }
   }
 }
 
