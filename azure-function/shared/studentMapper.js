@@ -35,7 +35,7 @@ function mapGender(code) {
 }
 
 function mapGradeLevel(code) {
-  if (code === 25) return "Kindy";
+  if (code === 25) return "Kindergarten";
   if (code === 20) return "Reception";
   if (typeof code === "number" && Number.isFinite(code)) return `Year ${code}`;
   return "";
@@ -98,15 +98,21 @@ function buildProfileMap(profileRecords) {
  */
 function getAtsi(personCodes, codeDescriptions, categoryDescriptions) {
   if (!personCodes) return '';
+  let isAboriginal = false;
+  let isTSI = false;
   for (const { codeId, categoryId } of personCodes) {
     const catDesc = (categoryDescriptions.get(String(categoryId)) || '').toLowerCase();
     const codeDesc = (codeDescriptions.get(`${categoryId}:${codeId}`) || '').toLowerCase();
     if (catDesc.includes('indigenous') || catDesc.includes('atsi') || catDesc.includes('aboriginal')) {
-      // Check 'neither' first — description contains 'aboriginal' so must check 'neither' before 'aboriginal'
       if (codeDesc.includes('neither') || codeDesc === 'n' || codeDesc === 'no') return 'N';
-      if (codeDesc.includes('aboriginal') || codeDesc.includes('torres strait') || codeDesc === 'y' || codeDesc === 'yes') return 'Y';
+      if (codeDesc === 'y' || codeDesc === 'yes') { isAboriginal = true; isTSI = true; } // generic Y — treat as both
+      else if (codeDesc.includes('aboriginal') && !codeDesc.includes('torres strait')) isAboriginal = true;
+      else if (codeDesc.includes('torres strait')) isTSI = true;
     }
   }
+  if (isAboriginal && isTSI) return 'both';
+  if (isAboriginal) return 'aboriginal';
+  if (isTSI) return 'tsi';
   return '';
 }
 
