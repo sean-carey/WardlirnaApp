@@ -1205,6 +1205,14 @@ function triggerVeracrossUpload(){ document.getElementById('vcInput').click(); }
 
 const LEAVING_GROUP = '__leaving__';
 const isATSI = s => s.atsi==='Y'||s.atsi==='aboriginal'||s.atsi==='tsi'||s.atsi==='both';
+// Normalise year level strings from various sources
+const normaliseYear = y => {
+  if(!y) return y;
+  const t = y.trim();
+  if(t==='Kindy'||t==='KG'||t==='K') return 'Kindergarten';
+  if(t==='Rec'||t==='REC') return 'Reception';
+  return t;
+};
 
 function parseHomroomToGroup(homeroom){
   if(!homeroom || homeroom.trim()==='') return UNASSIGNED_GROUP;
@@ -1275,7 +1283,7 @@ function handleVeracrossCSV(e){
     const vcStudents = rows.filter(r=>r.first_name||r.first).map(r=>{
       const firstName = (r.preferred_name && r.preferred_name.trim()) ? r.preferred_name.trim() : (r.first_name||r.first||'').trim();
       const lastName  = (r.last_name||r.last||'').trim();
-      const year      = (r.grade_level||r.year||'').trim();
+      const year      = normaliseYear((r.grade_level||r.year||'').trim());
       const gender    = (r.gender||'').trim();
       const homeroom  = (r.homeroom||'').trim();
       const exitDate  = (r.exit_date||'').trim();
@@ -1307,7 +1315,8 @@ function handleVeracrossCSV(e){
     const SYNC_FIELDS=['first','last','year','gender'];
     const FIELD_LABELS={first:'First name',last:'Last name',year:'Year level',gender:'Gender',atsi:'ATSI',nccd:'NCCD'};
 
-    vcStudents.forEach(vc=>{
+    vcStudents=vcStudents.map(s=>({...s,year:normaliseYear(s.year)}));
+  vcStudents.forEach(vc=>{
       const existing=students.find(s=>
         s.first.toLowerCase()===vc.first.toLowerCase() &&
         s.last.toLowerCase()===vc.last.toLowerCase()
@@ -1449,6 +1458,17 @@ function aGetBase(){
     return true;
   });
   return base;
+}
+
+// Largest-remainder rounding — ensures percentages sum to exactly 100
+function lrRound(counts, total){
+  if(!total) return counts.map(()=>0);
+  const floats = counts.map(c=>c/total*100);
+  const floors = floats.map(f=>Math.floor(f));
+  let rem = 100 - floors.reduce((a,b)=>a+b,0);
+  const order = floats.map((f,i)=>({i,r:f-Math.floor(f)})).sort((a,b)=>b.r-a.r);
+  for(let k=0;k<rem;k++) floors[order[k].i]++;
+  return floors;
 }
 
 // segment value → color
@@ -1619,14 +1639,14 @@ function renderAnalytics(){
       <td style="font-weight:600;color:${aAxisColor(aState.breakBy,key)}">${key}</td>
       <td><strong>${ks.length}</strong></td>
       ${segs.map(v=>`<td>${ks.filter(s=>s[aState.metric]===v).length}</td>`).join('')}
-      ${segs.map(v=>`<td style="color:var(--muted)">${(ks.filter(s=>s[aState.metric]===v).length/kt*100).toFixed(0)}%</td>`).join('')}
+      ${(()=>{const counts=segs.map(v=>ks.filter(s=>s[aState.metric]===v).length);const pcts=lrRound(counts,kt);return segs.map((_,i)=>`<td style="color:var(--muted)">${pcts[i]}%</td>`).join('');})()}
     </tr>`;
   });
   // Totals row
   summaryHTML += `<tr style="background:var(--g100);font-weight:700">
     <td>Total</td><td>${base.length}</td>
     ${segs.map(v=>`<td>${base.filter(s=>s[aState.metric]===v).length}</td>`).join('')}
-    ${segs.map(v=>`<td style="color:var(--muted)">${(base.filter(s=>s[aState.metric]===v).length/total*100).toFixed(0)}%</td>`).join('')}
+    ${(()=>{const counts=segs.map(v=>base.filter(s=>s[aState.metric]===v).length);const pcts=lrRound(counts,total);return segs.map((_,i)=>`<td style="color:var(--muted)">${pcts[i]}%</td>`).join('');})()}
   </tr></tbody></table></div>`;
 
   charts.innerHTML = summaryHTML;
@@ -1888,7 +1908,9 @@ async function loadFromBlob(){
     const res=await fetch(blobUrl('groupings.json'));
     if(res.ok){
       const d=await res.json();
-      students=d.students||[]; departing=d.departing||[]; left=d.left||[];
+      students=(d.students||[]).map(s=>({...s,year:normaliseYear(s.year)}));
+      departing=(d.departing||[]).map(s=>({...s,year:normaliseYear(s.year)}));
+      left=(d.left||[]).map(s=>({...s,year:normaliseYear(s.year)}));
       lockedGroups=new Set(d.lockedGroups||[]);
       nextId=Math.max(...[...students,...departing,...(left||[])].map(s=>s.id),0)+1;
       setBlobStatus('ok'); clearUnsaved(); showToast('Loaded from Blob'); render();
