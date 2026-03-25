@@ -252,6 +252,95 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:var(--g200);border-radius:2px}
+
+/* ══ ROLL PRINT ══ */
+.roll-controls{width:238px;flex-shrink:0;background:#fff;border-right:1px solid var(--g200);display:flex;flex-direction:column;overflow-y:auto}
+.ctrl-block{padding:.75rem .85rem;border-bottom:1px solid var(--g100)}
+.ctrl-label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.45rem;display:block}
+.preset-row{display:flex;gap:.3rem}
+.preset-btn{flex:1;padding:.3rem .4rem;border-radius:5px;font-size:.72rem;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:#fff;color:var(--muted);text-align:center;transition:all .12s}
+.preset-btn:hover{border-color:var(--brand);color:var(--brand)}
+.comm-item{border:1px solid var(--g200);border-radius:6px;overflow:hidden;margin-bottom:.3rem}
+.comm-header{display:flex;align-items:center;gap:.45rem;padding:.4rem .55rem;cursor:pointer;background:var(--g50);border:none;width:100%;text-align:left;font-size:.76rem;font-weight:600;color:var(--txt);transition:background .12s}
+.comm-header:hover{background:var(--g100)}
+.comm-rdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.comm-rcount{font-size:.65rem;font-weight:400;color:var(--muted);margin-left:.1rem}
+.comm-rchev{margin-left:auto;font-size:.6rem;color:var(--muted);transition:transform .18s}
+.comm-item.open .comm-rchev{transform:rotate(90deg)}
+.comm-groups{display:none}
+.comm-item.open .comm-groups{display:block}
+.comm-selall{display:flex;align-items:center;gap:.4rem;padding:.28rem .55rem .28rem 1.5rem;font-size:.68rem;color:var(--muted);font-style:italic;cursor:pointer;border:none;width:100%;background:transparent;border-top:1px solid var(--g100);text-align:left;transition:background .1s}
+.comm-selall:hover{background:var(--g50);color:var(--brand)}
+.group-rbtn{display:flex;align-items:center;gap:.45rem;padding:.32rem .55rem .32rem 1.5rem;font-size:.74rem;font-weight:500;cursor:pointer;border:none;width:100%;background:transparent;color:var(--txt);border-top:1px solid var(--g100);text-align:left;transition:background .1s}
+.group-rbtn:hover{background:var(--g50)}
+.grcheck{width:13px;height:13px;border:1.5px solid var(--g300);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
+.grcheck.on{background:var(--brand);border-color:var(--brand)}
+.grcheck.on::after{content:'✓';color:#fff;font-size:.55rem;line-height:1}
+.sort-row{display:flex;gap:.3rem}
+.sort-btn{flex:1;padding:.3rem;border-radius:5px;font-size:.71rem;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:#fff;color:var(--muted);text-align:center;transition:all .12s;line-height:1.3}
+.sort-btn:hover{border-color:var(--brand);color:var(--brand)}
+.sort-btn.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.roll-opt-row{display:flex;align-items:center;gap:.5rem;font-size:.75rem;margin-bottom:.38rem}
+.roll-opt-row:last-child{margin-bottom:0}
+.roll-opt-row input[type=checkbox]{width:13px;height:13px;accent-color:var(--brand);flex-shrink:0}
+.roll-opt-row label{cursor:pointer}
+.num-input{width:40px;padding:.18rem .3rem;border:1px solid var(--g200);border-radius:4px;font-size:.74rem;font-family:'DM Sans',sans-serif;text-align:center;color:var(--txt)}
+.sel-full{font-family:'DM Sans',sans-serif;font-size:.75rem;padding:.35rem .5rem;border:1px solid var(--g200);border-radius:5px;color:var(--txt);background:#fff;width:100%}
+.inp-full{font-family:'DM Sans',sans-serif;font-size:.75rem;padding:.35rem .5rem;border:1px solid var(--g200);border-radius:5px;width:100%;margin-top:.3rem;color:var(--txt)}
+.ctrl-footer{padding:.7rem .85rem;border-top:1px solid var(--g100)}
+.print-btn{width:100%;padding:.58rem;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s}
+.print-btn:hover{background:var(--brand2)}
+.roll-preview{flex:1;overflow-y:auto;padding:1.5rem 2rem;background:var(--g100)}
+.preview-empty{text-align:center;padding:5rem 2rem;color:var(--muted);font-size:.84rem}
+.print-page{background:#fff;border-radius:10px;box-shadow:0 2px 18px rgba(0,0,0,.07);max-width:760px;margin:0 auto 1.5rem;overflow:hidden}
+.print-page:last-child{margin-bottom:0}
+.doc-hdr{background:var(--brand);padding:1rem 1.4rem .85rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.doc-hdr-l .doc-title{font-family:'Outfit',sans-serif;font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.15}
+.doc-hdr-l .doc-comm{font-size:.7rem;color:rgba(255,255,255,.6);margin-bottom:.08rem}
+.doc-hdr-l .doc-band{font-size:.7rem;color:rgba(255,255,255,.55);margin-top:.18rem}
+.doc-hdr-r{text-align:right;font-size:.68rem;color:rgba(255,255,255,.6);line-height:1.65;white-space:nowrap}
+.doc-hdr-r strong{color:#fff;font-size:.78rem}
+.doc-purpose{background:var(--brand2);padding:.33rem 1.4rem;font-size:.7rem;color:rgba(255,255,255,.75);display:flex;gap:1.2rem;flex-wrap:wrap}
+.doc-purpose b{color:#fff}
+.roll-wrap{padding:.85rem 1.4rem .95rem}
+.roll-rtable{width:100%;border-collapse:collapse;font-size:.77rem}
+.roll-rtable thead tr{background:var(--g50);border-bottom:2px solid var(--g200)}
+.roll-rtable th{padding:.36rem .52rem;text-align:left;font-size:.61rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.roll-rtable th.rc-num{width:26px}
+.roll-rtable th.rc-name{min-width:150px}
+.roll-rtable th.rc-year{width:95px}
+.roll-rtable th.rc-chk{width:34px;text-align:center}
+.roll-rtable th.rc-sig{width:105px}
+.roll-rtable tbody tr{border-bottom:1px solid var(--g200)}
+.roll-rtable tbody tr:last-child{border-bottom:none}
+.roll-rtable tbody tr:nth-child(even){background:var(--g50)}
+.roll-rtable tbody tr.rrl{background:#fff7ed}
+.roll-rtable td{padding:.48rem .52rem;vertical-align:middle}
+.rn{color:var(--g300);font-size:.67rem;font-family:'DM Mono',monospace}
+.rnlast{font-weight:600}
+.rnfirst{font-weight:400;color:var(--muted);margin-left:.18rem;font-size:.71rem}
+.rypill{display:inline-flex;align-items:center;gap:.28rem;font-size:.71rem;color:var(--muted)}
+.rydot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.rchkbox{width:15px;height:15px;border:1.5px solid var(--g300);border-radius:3px;display:inline-block}
+.rsigline{border-bottom:1px solid var(--g300);width:88px;height:20px;display:inline-block}
+.rnoteline{border-bottom:1px solid var(--g300);display:block;height:20px;min-width:80px}
+.rltag{font-size:.59rem;background:#fed7aa;color:#92400e;border-radius:8px;padding:.04rem .3rem;margin-left:.28rem;font-weight:600}
+.doc-ftr{border-top:2px solid var(--g100);background:var(--g50);padding:.65rem 1.4rem;display:flex;justify-content:space-between;align-items:center}
+.ftr-n{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;color:var(--brand)}
+.ftr-n span{font-size:.63rem;color:var(--muted);font-weight:400;font-family:'DM Sans',sans-serif;margin-left:.25rem}
+.ftr-note{font-size:.62rem;color:var(--muted);text-align:right;line-height:1.55}
+@media print{
+  .mock-nav,.roll-controls,.nav,.toolbar,.header{display:none!important}
+  .page-roll{display:block!important;overflow:visible!important}
+  .roll-preview{padding:0!important;background:#fff!important;overflow:visible!important}
+  .print-page{border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important}
+  .print-page.pb{page-break-after:always}
+  .doc-hdr,.doc-purpose,.doc-ftr{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .roll-rtable tbody tr:nth-child(even){background:#f8fafc!important;print-color-adjust:exact}
+  .roll-rtable tbody tr.rrl{background:#fff7ed!important;print-color-adjust:exact}
+  #page-planner,#page-analytics,#page-departing,#page-settings{display:none!important}
+  #page-roll{display:flex!important}
+}
 </style>
 </head>
 <body>
@@ -282,6 +371,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <div class="ntab active" data-page="planner" onclick="showPage('planner')">📋 Planner</div>
   <div class="ntab" data-page="analytics" onclick="showPage('analytics')">📊 Analytics</div>
   <div class="ntab" data-page="departing" onclick="showPage('departing')">🚪 Departing <span id="depCount">(0)</span></div>
+  <div class="ntab" data-page="roll" onclick="showPage('roll')">🖨 Roll Print</div>
   <div class="ntab" data-page="settings" onclick="showPage('settings')">🔧 Settings</div>
 </div>
 
@@ -393,6 +483,85 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         <p id="leftEmpty" style="font-size:.78rem;color:var(--muted);display:none">No students marked as formally left.</p>
       </div>
 
+    </div>
+  </div>
+
+
+  <!-- ROLL PRINT PAGE -->
+  <div class="page" id="page-roll" style="flex-direction:row;overflow:hidden">
+    <div class="roll-controls" id="rollControlPanel">
+
+      <div class="ctrl-block">
+        <span class="ctrl-label">Quick Select</span>
+        <div class="preset-row">
+          <button class="preset-btn" onclick="rollSelectAll()">All groups</button>
+          <button class="preset-btn" onclick="rollSelectNone()">Clear</button>
+        </div>
+      </div>
+
+      <div class="ctrl-block" style="flex:1;min-height:0;overflow-y:auto">
+        <span class="ctrl-label">Communities &amp; Groups</span>
+        <div id="rollAccordion"></div>
+      </div>
+
+      <div class="ctrl-block">
+        <span class="ctrl-label">Sort Order</span>
+        <div class="sort-row">
+          <button class="sort-btn on" id="rsb-surname" onclick="rollSetSort('surname')">Surname</button>
+          <button class="sort-btn" id="rsb-year" onclick="rollSetSort('year')">Year then<br>Surname</button>
+        </div>
+      </div>
+
+      <div class="ctrl-block">
+        <span class="ctrl-label">Page Layout</span>
+        <div class="roll-opt-row">
+          <input type="checkbox" id="rOptPageBreak" checked onchange="renderRoll()">
+          <label for="rOptPageBreak">Each group on its own page</label>
+        </div>
+      </div>
+
+      <div class="ctrl-block">
+        <span class="ctrl-label">Columns</span>
+        <div class="roll-opt-row">
+          <input type="checkbox" id="rOptYear" checked onchange="renderRoll()">
+          <label for="rOptYear">Year level</label>
+        </div>
+        <div class="roll-opt-row" style="gap:.4rem">
+          <input type="checkbox" id="rOptCheck" checked onchange="renderRoll()">
+          <label for="rOptCheck">Check columns</label>
+          <input type="number" class="num-input" id="rNumChecks" value="1" min="1" max="8" onchange="renderRoll()">
+        </div>
+        <div class="roll-opt-row">
+          <input type="checkbox" id="rOptNotes" onchange="renderRoll()">
+          <label for="rOptNotes">Notes column</label>
+        </div>
+        <div class="roll-opt-row">
+          <input type="checkbox" id="rOptSig" checked onchange="renderRoll()">
+          <label for="rOptSig">Signature column</label>
+        </div>
+      </div>
+
+      <div class="ctrl-block">
+        <span class="ctrl-label">Roll Purpose</span>
+        <select class="sel-full" id="rPurSel" onchange="onRollPurpose()">
+          <option value="">— No label —</option>
+          <option value="Attendance Check">Attendance Check</option>
+          <option value="Consent Return">Consent Return</option>
+          <option value="Excursion Check">Excursion Check</option>
+          <option value="Parent Night">Parent Night</option>
+          <option value="Photo Day">Photo Day</option>
+          <option value="Sports Carnival">Sports Carnival</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <input type="text" class="inp-full" id="rPurCustom" placeholder="Enter purpose…" style="display:none" oninput="renderRoll()">
+      </div>
+
+      <div class="ctrl-footer">
+        <button class="print-btn" onclick="window.print()">🖨&nbsp; Print Roll</button>
+      </div>
+    </div>
+    <div class="roll-preview" id="rollPreview">
+      <div class="preview-empty">Select groups on the left to build your roll.</div>
     </div>
   </div>
 
@@ -1971,6 +2140,7 @@ function showPage(p){
   document.getElementById('plannerToolbar').style.display=p==='planner'?'':'none';
   if(p==='analytics') renderAnalytics();
   if(p==='departing') renderDepartingPage();
+  if(p==='roll'){ buildRollAccordion(); renderRoll(); }
 }
 
 // ══════════════════════════════════════════════════
@@ -2310,6 +2480,184 @@ async function initApp(){
 }
 
 initApp();
+
+
+// ════════════════════════════════════════════════════
+// ROLL PRINT
+// ════════════════════════════════════════════════════
+const rollSel = new Set();
+let rollSortMode = 'surname';
+
+function buildRollAccordion(){
+  const el = document.getElementById('rollAccordion');
+  if(!el) return;
+  el.innerHTML = Object.entries(STRUCT).map(([comm,bands])=>{
+    const color = YEAR_COLORS[bands[0]?.groups[0]] || '#94a3b8';
+    // Use community colour approximation based on band
+    const commColors = {Madlurta:'#f0abfc',Kurlana:'#818cf8',Warti:'#4ade80',Karra:'#f87171',Wirra:'#38bdf8'};
+    const c = commColors[comm]||'#94a3b8';
+    const groups = bands.flatMap(b=>b.groups);
+    return `<div class="comm-item" id="rci-${comm}">
+      <button class="comm-header" onclick="rollToggleComm('${comm}')">
+        <span class="comm-rdot" style="background:${c}"></span>
+        ${comm}<span class="comm-rcount">(${groups.length})</span>
+        <span class="comm-rchev">▶</span>
+      </button>
+      <div class="comm-groups">
+        <button class="comm-selall" onclick="rollToggleCommAll('${comm}',event)">Select / deselect all ${comm}</button>
+        ${groups.map(g=>`<button class="group-rbtn" onclick="rollToggleGroup('${g}')">
+          <span class="grcheck" id="rgc-${g}"></span>${g}
+        </button>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function rollToggleComm(comm){
+  document.getElementById('rci-'+comm)?.classList.toggle('open');
+}
+
+function rollToggleCommAll(comm,e){
+  e.stopPropagation();
+  const groups = Object.entries(STRUCT).find(([c])=>c===comm)?.[1]?.flatMap(b=>b.groups)||[];
+  const allOn = groups.every(g=>rollSel.has(g));
+  groups.forEach(g=>allOn?rollSel.delete(g):rollSel.add(g));
+  rollSyncUI();
+}
+
+function rollToggleGroup(g){
+  rollSel.has(g)?rollSel.delete(g):rollSel.add(g);
+  rollSyncUI();
+}
+
+function rollSyncUI(){
+  ALL_GROUPS.forEach(g=>{
+    document.getElementById('rgc-'+g)?.classList.toggle('on',rollSel.has(g));
+  });
+  renderRoll();
+}
+
+function rollSelectAll(){
+  ALL_GROUPS.forEach(g=>rollSel.add(g));
+  Object.keys(STRUCT).forEach(c=>document.getElementById('rci-'+c)?.classList.add('open'));
+  rollSyncUI();
+}
+function rollSelectNone(){ rollSel.clear(); rollSyncUI(); }
+
+function rollSetSort(m){
+  rollSortMode=m;
+  ['surname','year'].forEach(k=>document.getElementById('rsb-'+k)?.classList.toggle('on',k===m));
+  renderRoll();
+}
+
+function onRollPurpose(){
+  const v=document.getElementById('rPurSel')?.value;
+  if(document.getElementById('rPurCustom')) document.getElementById('rPurCustom').style.display=v==='custom'?'':'none';
+  renderRoll();
+}
+
+function getRollPurpose(){
+  const v=document.getElementById('rPurSel')?.value;
+  if(v==='custom') return document.getElementById('rPurCustom')?.value||'';
+  return v||'';
+}
+
+function getRollOpts(){
+  return {
+    year:      document.getElementById('rOptYear')?.checked??true,
+    check:     document.getElementById('rOptCheck')?.checked??true,
+    nChecks:   Math.max(1,Math.min(8,parseInt(document.getElementById('rNumChecks')?.value)||1)),
+    notes:     document.getElementById('rOptNotes')?.checked??false,
+    sig:       document.getElementById('rOptSig')?.checked??true,
+    pageBreak: document.getElementById('rOptPageBreak')?.checked??true,
+  };
+}
+
+function rollSortStudents(arr){
+  return [...arr].sort((a,b)=>{
+    if(rollSortMode==='year'){
+      const d=YEAR_LEVELS.indexOf(a.year)-YEAR_LEVELS.indexOf(b.year);
+      if(d!==0) return d;
+    }
+    return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);
+  });
+}
+
+function buildRollPage(group,gs,opts,purpose,today,addBreak){
+  let comm='',band='';
+  Object.entries(STRUCT).forEach(([c,bands])=>bands.forEach(b=>{if(b.groups.includes(group)){comm=c;band=b.band;}}));
+  // Exclude future enrolments (pre-enrolled, not yet in Veracross)
+  // Include possibly leaving — they are currently enrolled
+  const list = rollSortStudents(gs.filter(s=>s.future!=='Y'));
+  if(!list.length) return '';
+
+  const nChk = opts.check ? opts.nChecks : 0;
+  const colLabels = [...Array(nChk)].map((_,i)=>nChk>1?String.fromCharCode(65+i):'✓');
+  const leavingCount = list.filter(s=>s.leaving==='Y').length;
+
+  return `<div class="print-page${addBreak?' pb':''}">
+    <div class="doc-hdr">
+      <div class="doc-hdr-l">
+        <div class="doc-comm">${comm} Learning Community</div>
+        <div class="doc-title">${group}${purpose?` — <span style="color:var(--accent)">${purpose}</span>`:''}</div>
+        <div class="doc-band">${band}</div>
+      </div>
+      <div class="doc-hdr-r">
+        <strong>${today}</strong><br>
+        Ngutu College<br>
+        ${list.length} student${list.length!==1?'s':''}
+      </div>
+    </div>
+    ${purpose?`<div class="doc-purpose"><b>${purpose}</b> &nbsp;·&nbsp; ${group} &nbsp;·&nbsp; ${comm} &nbsp;·&nbsp; ${list.length} students</div>`:''}
+    <div class="roll-wrap">
+      <table class="roll-rtable">
+        <thead><tr>
+          <th class="rc-num">#</th>
+          <th class="rc-name">Student Name</th>
+          ${opts.year?'<th class="rc-year">Year Level</th>':''}
+          ${colLabels.map(l=>`<th class="rc-chk">${l}</th>`).join('')}
+          ${opts.notes?'<th>Notes</th>':''}
+          ${opts.sig?'<th class="rc-sig">Signature</th>':''}
+        </tr></thead>
+        <tbody>
+          ${list.map((s,i)=>`<tr class="${s.leaving==='Y'?'rrl':''}">
+            <td class="rn">${String(i+1).padStart(2,'0')}</td>
+            <td><span class="rnlast">${s.last},</span><span class="rnfirst">${s.first}</span>${s.leaving==='Y'?'<span class="rltag">poss. leaving</span>':''}</td>
+            ${opts.year?`<td><span class="rypill"><span class="rydot" style="background:${YEAR_COLORS[s.year]||'#94a3b8'}"></span>${s.year}</span></td>`:''}
+            ${[...Array(nChk)].map(()=>'<td style="text-align:center"><span class="rchkbox"></span></td>').join('')}
+            ${opts.notes?'<td><span class="rnoteline"></span></td>':''}
+            ${opts.sig?'<td><span class="rsigline"></span></td>':''}
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="doc-ftr">
+      <div>
+        <div class="ftr-n">${list.length}<span>students</span></div>
+        ${leavingCount?`<div style="font-size:.67rem;color:#fb923c;margin-top:.12rem">⚠ ${leavingCount} poss. leaving included</div>`:''}
+      </div>
+      <div class="ftr-note">Wardlirna Planner · ${purpose||'Roll'}<br>${today} · Internal use only</div>
+    </div>
+  </div>`;
+}
+
+function renderRoll(){
+  const el = document.getElementById('rollPreview');
+  if(!el) return;
+  const opts = getRollOpts();
+  const purpose = getRollPurpose();
+  const today = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  if(!rollSel.size){
+    el.innerHTML='<div class="preview-empty">Select groups on the left to build your roll.</div>';
+    return;
+  }
+  const pages=[];
+  Object.entries(STRUCT).forEach(([comm,bands])=>bands.forEach(band=>band.groups.forEach(g=>{
+    if(rollSel.has(g)) pages.push({group:g,gs:students.filter(s=>s.group===g)});
+  })));
+  const html=pages.map(({group,gs},i)=>buildRollPage(group,gs,opts,purpose,today,opts.pageBreak&&i<pages.length-1)).join('');
+  el.innerHTML=html||'<div class="preview-empty">No students in selected groups.</div>';
+}
+
 </script>
-</body>
-</html>
