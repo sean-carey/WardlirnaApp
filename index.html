@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Class Grouping Planner — Ngutu College</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" href="/favicon-96x96.png">
 <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -501,19 +505,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <div class="page" id="page-roll" style="flex-direction:row;overflow:hidden">
     <div class="roll-controls" id="rollControlPanel">
 
+      <!-- Print mode toggle -->
       <div class="ctrl-block">
-        <span class="ctrl-label">Quick Select</span>
-        <div class="preset-row">
-          <button class="preset-btn" onclick="rollSelectAll()">All groups</button>
-          <button class="preset-btn" onclick="rollSelectNone()">Clear</button>
+        <span class="ctrl-label">Print By</span>
+        <div class="sort-row">
+          <button class="sort-btn on" id="rmode-group" onclick="rollSetMode('group')">Home Group</button>
+          <button class="sort-btn" id="rmode-year" onclick="rollSetMode('year')">Year Level</button>
         </div>
       </div>
 
-      <div class="ctrl-block" style="flex:1;min-height:0;overflow-y:auto">
+      <!-- Quick select (shared) -->
+      <div class="ctrl-block">
+        <span class="ctrl-label">Quick Select</span>
+        <div class="preset-row">
+          <button class="preset-btn" onclick="rollQuickAll()">All</button>
+          <button class="preset-btn" onclick="rollQuickNone()">Clear</button>
+        </div>
+      </div>
+
+      <!-- Group mode: community accordion -->
+      <div class="ctrl-block" id="rGroupPanel" style="flex:1;min-height:0;overflow-y:auto">
         <span class="ctrl-label">Communities &amp; Groups</span>
         <div id="rollAccordion"></div>
       </div>
 
+      <!-- Year level mode: year checkboxes -->
+      <div class="ctrl-block" id="rYearPanel" style="flex:1;min-height:0;overflow-y:auto;display:none">
+        <span class="ctrl-label">Year Levels</span>
+        <div id="rollYearList"></div>
+      </div>
+
+      <!-- Sort (shared) -->
       <div class="ctrl-block">
         <span class="ctrl-label">Sort Order</span>
         <div class="sort-row">
@@ -522,6 +544,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         </div>
       </div>
 
+      <!-- Page layout (shared) -->
       <div class="ctrl-block">
         <span class="ctrl-label">Page Layout</span>
         <div class="roll-opt-row">
@@ -530,6 +553,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         </div>
       </div>
 
+      <!-- Columns (shared) -->
       <div class="ctrl-block">
         <span class="ctrl-label">Columns</span>
         <div class="roll-opt-row">
@@ -542,15 +566,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
           <input type="number" class="num-input" id="rNumChecks" value="1" min="1" max="8" onchange="renderRoll()">
         </div>
         <div class="roll-opt-row">
-          <input type="checkbox" id="rOptNotes" onchange="renderRoll()">
+          <input type="checkbox" id="rOptNotes" checked onchange="renderRoll()">
           <label for="rOptNotes">Notes column</label>
         </div>
         <div class="roll-opt-row">
-          <input type="checkbox" id="rOptSig" checked onchange="renderRoll()">
+          <input type="checkbox" id="rOptSig" onchange="renderRoll()">
           <label for="rOptSig">Signature column</label>
         </div>
       </div>
 
+      <!-- Purpose (shared) -->
       <div class="ctrl-block">
         <span class="ctrl-label">Roll Purpose</span>
         <select class="sel-full" id="rPurSel" onchange="onRollPurpose()">
@@ -2150,7 +2175,7 @@ function showPage(p){
   document.getElementById('plannerToolbar').style.display=p==='planner'?'':'none';
   if(p==='analytics') renderAnalytics();
   if(p==='departing') renderDepartingPage();
-  if(p==='roll'){ buildRollAccordion(); renderRoll(); }
+  if(p==='roll'){ buildRollAccordion(); buildRollYearList(); renderRoll(); }
 }
 
 // ══════════════════════════════════════════════════
@@ -2495,8 +2520,64 @@ initApp();
 // ════════════════════════════════════════════════════
 // ROLL PRINT
 // ════════════════════════════════════════════════════
-const rollSel = new Set();
+const rollSel = new Set();       // selected groups (group mode)
+const rollYearSel = new Set();   // selected year levels (year mode)
 let rollSortMode = 'surname';
+let rollPrintMode = 'group';     // 'group' | 'year'
+
+function rollSetMode(mode){
+  rollPrintMode = mode;
+  document.getElementById('rmode-group')?.classList.toggle('on', mode==='group');
+  document.getElementById('rmode-year')?.classList.toggle('on', mode==='year');
+  document.getElementById('rGroupPanel').style.display = mode==='group' ? '' : 'none';
+  document.getElementById('rYearPanel').style.display  = mode==='year'  ? '' : 'none';
+  // Year level mode always shows year column
+  const rOptYear = document.getElementById('rOptYear');
+  if(rOptYear) rOptYear.checked = true;
+  renderRoll();
+}
+
+function buildRollYearList(){
+  const el = document.getElementById('rollYearList');
+  if(!el) return;
+  // Only show year levels that actually have active students
+  const activeYears = YEAR_LEVELS.filter(y => students.some(s => s.year===y && s.future!=='Y'));
+  el.innerHTML = activeYears.map(y => `
+    <button class="group-rbtn" onclick="rollToggleYear('${y}')">
+      <span class="grcheck" id="ryc-${y.replace(/ /g,'_')}"></span>
+      <span class="rydot" style="background:${YEAR_COLORS[y]||'#94a3b8'};border:2px solid ${YEAR_COLORS[y]||'#94a3b8'};margin-right:.1rem"></span>
+      ${y}
+    </button>`).join('');
+}
+
+function rollToggleYear(y){
+  rollYearSel.has(y) ? rollYearSel.delete(y) : rollYearSel.add(y);
+  rollSyncYearUI();
+}
+
+function rollSyncYearUI(){
+  YEAR_LEVELS.forEach(y=>{
+    const id = 'ryc-'+y.replace(/ /g,'_');
+    document.getElementById(id)?.classList.toggle('on', rollYearSel.has(y));
+  });
+  renderRoll();
+}
+
+function rollQuickAll(){
+  if(rollPrintMode==='group'){
+    ALL_GROUPS.forEach(g=>rollSel.add(g));
+    Object.keys(STRUCT).forEach(c=>document.getElementById('rci-'+c)?.classList.add('open'));
+    rollSyncUI();
+  } else {
+    YEAR_LEVELS.filter(y=>students.some(s=>s.year===y&&s.future!=='Y')).forEach(y=>rollYearSel.add(y));
+    rollSyncYearUI();
+  }
+}
+
+function rollQuickNone(){
+  if(rollPrintMode==='group'){ rollSel.clear(); rollSyncUI(); }
+  else { rollYearSel.clear(); rollSyncYearUI(); }
+}
 
 function buildRollAccordion(){
   const el = document.getElementById('rollAccordion');
@@ -2577,8 +2658,8 @@ function getRollOpts(){
     year:      document.getElementById('rOptYear')?.checked??true,
     check:     document.getElementById('rOptCheck')?.checked??true,
     nChecks:   Math.max(1,Math.min(8,parseInt(document.getElementById('rNumChecks')?.value)||1)),
-    notes:     document.getElementById('rOptNotes')?.checked??false,
-    sig:       document.getElementById('rOptSig')?.checked??true,
+    notes:     document.getElementById('rOptNotes')?.checked??true,
+    sig:       document.getElementById('rOptSig')?.checked??false,
     pageBreak: document.getElementById('rOptPageBreak')?.checked??true,
   };
 }
@@ -2651,6 +2732,76 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
   </div>`;
 }
 
+// ── Year level page builder
+function buildRollYearPage(year, yearStudents, opts, purpose, today, addBreak){
+  // Always show year column in year mode; sort by surname (or year-then-surname if mixed)
+  const list = rollSortStudents(yearStudents.filter(s => s.future !== 'Y'));
+  if(!list.length) return '';
+
+  const nChk = opts.check ? opts.nChecks : 0;
+  const colLabels = [...Array(nChk)].map((_,i) => nChk>1 ? String.fromCharCode(65+i) : '✓');
+  const leavingCount = list.filter(s => s.leaving==='Y').length;
+
+  // Group info line — show which home groups are represented
+  const groups = [...new Set(list.map(s=>s.group))].join(', ');
+  const communities = [...new Set(list.map(s=>{
+    for(const [c,bands] of Object.entries(STRUCT)){
+      if(bands.flatMap(b=>b.groups).includes(s.group)) return c;
+    }
+    return '';
+  }))].filter(Boolean).join(', ');
+
+  return `<div class="print-page${addBreak?' pb':''}">
+    <div class="doc-hdr">
+      <div class="doc-hdr-l">
+        <div class="doc-comm">${communities}</div>
+        <div class="doc-title" style="display:flex;align-items:center;gap:.55rem">
+          <span class="rydot" style="width:12px;height:12px;background:${YEAR_COLORS[year]||'#94a3b8'};border:2px solid ${YEAR_COLORS[year]||'#94a3b8'};display:inline-block;border-radius:50%;flex-shrink:0"></span>
+          ${year}${purpose?` — <span style="color:#5eb8ff">${purpose}</span>`:''}
+        </div>
+        <div class="doc-band">Groups: ${groups}</div>
+      </div>
+      <div class="doc-hdr-r">
+        <strong>${today}</strong><br>
+        Ngutu College<br>
+        ${list.length} student${list.length!==1?'s':''}
+      </div>
+    </div>
+    ${purpose?`<div class="doc-purpose"><b>${purpose}</b> &nbsp;·&nbsp; ${year} &nbsp;·&nbsp; ${list.length} students</div>`:''}
+    <div class="roll-wrap">
+      <table class="roll-rtable${list.length>28?' compact':''}">
+        <thead><tr>
+          <th class="rc-num">#</th>
+          <th class="rc-name">Student Name</th>
+          <th class="rc-year">Year Level</th>
+          <th style="min-width:90px">Home Group</th>
+          ${colLabels.map(l=>`<th class="rc-chk">${l}</th>`).join('')}
+          ${opts.notes?'<th>Notes</th>':''}
+          ${opts.sig?'<th class="rc-sig">Signature</th>':''}
+        </tr></thead>
+        <tbody>
+          ${list.map((s,i)=>`<tr class="${s.leaving==='Y'?'rrl':''}">
+            <td class="rn">${String(i+1).padStart(2,'0')}</td>
+            <td><span class="rnlast">${s.last},</span><span class="rnfirst">${s.first}</span>${s.leaving==='Y'?'<span class="rltag">poss. leaving</span>':''}</td>
+            <td><span class="rypill"><span class="rydot" style="background:${YEAR_COLORS[s.year]||'#94a3b8'};border:2px solid ${YEAR_COLORS[s.year]||'#94a3b8'}"></span>${s.year}</span></td>
+            <td style="font-size:.71rem;color:var(--muted)">${s.group}</td>
+            ${[...Array(nChk)].map(()=>'<td style="text-align:center"><span class="rchkbox"></span></td>').join('')}
+            ${opts.notes?'<td><span class="rnoteline"></span></td>':''}
+            ${opts.sig?'<td><span class="rsigline"></span></td>':''}
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="doc-ftr">
+      <div>
+        <div class="ftr-n">${list.length}<span>students</span></div>
+        ${leavingCount?`<div style="font-size:.67rem;color:#fb923c;margin-top:.12rem">⚠ ${leavingCount} poss. leaving included</div>`:''}
+      </div>
+      <div class="ftr-note">Wardlirna Planner · ${purpose||'Roll'}<br>${today} · Internal use only</div>
+    </div>
+  </div>`;
+}
+
 function renderRoll(){
   const el = document.getElementById('rollPreview');
   if(!el) return;
@@ -2658,16 +2809,35 @@ function renderRoll(){
   const purpose = getRollPurpose();
   const today = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-  if(!rollSel.size){
-    el.innerHTML='<div class="preview-empty">Select groups on the left to build your roll.</div>';
-    return;
+  if(rollPrintMode === 'year'){
+    // ── Year level mode
+    if(!rollYearSel.size){
+      el.innerHTML='<div class="preview-empty">Select year levels on the left to build your roll.</div>';
+      return;
+    }
+    const pages = YEAR_LEVELS
+      .filter(y => rollYearSel.has(y))
+      .map(y => ({ year:y, ys: students.filter(s=>s.year===y) }))
+      .filter(({ys}) => ys.some(s=>s.future!=='Y'));
+
+    const html = pages.map(({year,ys},i) =>
+      buildRollYearPage(year, ys, opts, purpose, today, opts.pageBreak && i<pages.length-1)
+    ).join('');
+    el.innerHTML = html || '<div class="preview-empty">No students found for selected year levels.</div>';
+
+  } else {
+    // ── Group mode
+    if(!rollSel.size){
+      el.innerHTML='<div class="preview-empty">Select groups on the left to build your roll.</div>';
+      return;
+    }
+    const pages=[];
+    Object.entries(STRUCT).forEach(([comm,bands])=>bands.forEach(band=>band.groups.forEach(g=>{
+      if(rollSel.has(g)) pages.push({group:g,gs:students.filter(s=>s.group===g)});
+    })));
+    const html=pages.map(({group,gs},i)=>buildRollPage(group,gs,opts,purpose,today,opts.pageBreak&&i<pages.length-1)).join('');
+    el.innerHTML=html||'<div class="preview-empty">No students in selected groups.</div>';
   }
-  const pages=[];
-  Object.entries(STRUCT).forEach(([comm,bands])=>bands.forEach(band=>band.groups.forEach(g=>{
-    if(rollSel.has(g)) pages.push({group:g,gs:students.filter(s=>s.group===g)});
-  })));
-  const html=pages.map(({group,gs},i)=>buildRollPage(group,gs,opts,purpose,today,opts.pageBreak&&i<pages.length-1)).join('');
-  el.innerHTML=html||'<div class="preview-empty">No students in selected groups.</div>';
 }
 
 </script>
