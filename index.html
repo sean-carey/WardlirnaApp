@@ -259,7 +259,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .ctrl-label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.45rem;display:block}
 .preset-row{display:flex;gap:.3rem}
 .preset-btn{flex:1;padding:.3rem .4rem;border-radius:5px;font-size:.72rem;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:#fff;color:var(--muted);text-align:center;transition:all .12s}
-.preset-btn:hover{border-color:var(--brand);color:var(--brand)}
+.preset-btn:hover{border-color:var(--hdr2);color:var(--hdr2)}
 .comm-item{border:1px solid var(--g200);border-radius:6px;overflow:hidden;margin-bottom:.3rem}
 .comm-header{display:flex;align-items:center;gap:.45rem;padding:.4rem .55rem;cursor:pointer;background:var(--g50);border:none;width:100%;text-align:left;font-size:.76rem;font-weight:600;color:var(--txt);transition:background .12s}
 .comm-header:hover{background:var(--g100)}
@@ -270,39 +270,42 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .comm-groups{display:none}
 .comm-item.open .comm-groups{display:block}
 .comm-selall{display:flex;align-items:center;gap:.4rem;padding:.28rem .55rem .28rem 1.5rem;font-size:.68rem;color:var(--muted);font-style:italic;cursor:pointer;border:none;width:100%;background:transparent;border-top:1px solid var(--g100);text-align:left;transition:background .1s}
-.comm-selall:hover{background:var(--g50);color:var(--brand)}
+.comm-selall:hover{background:var(--g50);color:var(--hdr2)}
 .group-rbtn{display:flex;align-items:center;gap:.45rem;padding:.32rem .55rem .32rem 1.5rem;font-size:.74rem;font-weight:500;cursor:pointer;border:none;width:100%;background:transparent;color:var(--txt);border-top:1px solid var(--g100);text-align:left;transition:background .1s}
 .group-rbtn:hover{background:var(--g50)}
 .grcheck{width:13px;height:13px;border:1.5px solid var(--g300);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
-.grcheck.on{background:var(--brand);border-color:var(--brand)}
+.grcheck.on{background:var(--hdr2);border-color:var(--hdr2)}
 .grcheck.on::after{content:'✓';color:#fff;font-size:.55rem;line-height:1}
 .sort-row{display:flex;gap:.3rem}
 .sort-btn{flex:1;padding:.3rem;border-radius:5px;font-size:.71rem;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:#fff;color:var(--muted);text-align:center;transition:all .12s;line-height:1.3}
-.sort-btn:hover{border-color:var(--brand);color:var(--brand)}
-.sort-btn.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.sort-btn:hover{border-color:var(--hdr2);color:var(--hdr2)}
+.sort-btn.on{background:var(--hdr2);color:#fff;border-color:var(--hdr2)}
 .roll-opt-row{display:flex;align-items:center;gap:.5rem;font-size:.75rem;margin-bottom:.38rem}
 .roll-opt-row:last-child{margin-bottom:0}
-.roll-opt-row input[type=checkbox]{width:13px;height:13px;accent-color:var(--brand);flex-shrink:0}
+.roll-opt-row input[type=checkbox]{width:13px;height:13px;accent-color:var(--hdr2);flex-shrink:0}
 .roll-opt-row label{cursor:pointer}
 .num-input{width:40px;padding:.18rem .3rem;border:1px solid var(--g200);border-radius:4px;font-size:.74rem;font-family:'DM Sans',sans-serif;text-align:center;color:var(--txt)}
 .sel-full{font-family:'DM Sans',sans-serif;font-size:.75rem;padding:.35rem .5rem;border:1px solid var(--g200);border-radius:5px;color:var(--txt);background:#fff;width:100%}
 .inp-full{font-family:'DM Sans',sans-serif;font-size:.75rem;padding:.35rem .5rem;border:1px solid var(--g200);border-radius:5px;width:100%;margin-top:.3rem;color:var(--txt)}
 .ctrl-footer{padding:.7rem .85rem;border-top:1px solid var(--g100)}
-.print-btn{width:100%;padding:.58rem;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s}
-.print-btn:hover{background:var(--brand2)}
+.print-btn{width:100%;padding:.58rem;background:var(--hdr2);color:#fff;border:none;border-radius:8px;font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s}
+.print-btn:hover{background:var(--hdr3)}
 .roll-preview{flex:1;overflow-y:auto;padding:1.5rem 2rem;background:var(--g100)}
 .preview-empty{text-align:center;padding:5rem 2rem;color:var(--muted);font-size:.84rem}
 .print-page{background:#fff;border-radius:10px;box-shadow:0 2px 18px rgba(0,0,0,.07);max-width:760px;margin:0 auto 1.5rem;overflow:hidden}
 .print-page:last-child{margin-bottom:0}
-.doc-hdr{background:var(--brand);padding:1rem 1.4rem .85rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.doc-hdr{background:var(--hdr2);padding:1rem 1.4rem .85rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
 .doc-hdr-l .doc-title{font-family:'Outfit',sans-serif;font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.15}
 .doc-hdr-l .doc-comm{font-size:.7rem;color:rgba(255,255,255,.6);margin-bottom:.08rem}
 .doc-hdr-l .doc-band{font-size:.7rem;color:rgba(255,255,255,.55);margin-top:.18rem}
 .doc-hdr-r{text-align:right;font-size:.68rem;color:rgba(255,255,255,.6);line-height:1.65;white-space:nowrap}
 .doc-hdr-r strong{color:#fff;font-size:.78rem}
-.doc-purpose{background:var(--brand2);padding:.33rem 1.4rem;font-size:.7rem;color:rgba(255,255,255,.75);display:flex;gap:1.2rem;flex-wrap:wrap}
+.doc-purpose{background:var(--hdr3);padding:.33rem 1.4rem;font-size:.7rem;color:rgba(255,255,255,.75);display:flex;gap:1.2rem;flex-wrap:wrap}
 .doc-purpose b{color:#fff}
 .roll-wrap{padding:.85rem 1.4rem .95rem}
+.roll-rtable.compact td{padding:.32rem .52rem;font-size:.72rem}
+.roll-rtable.compact th{padding:.26rem .52rem;font-size:.57rem}
+.roll-rtable.compact .rypill{font-size:.67rem}
 .roll-rtable{width:100%;border-collapse:collapse;font-size:.77rem}
 .roll-rtable thead tr{background:var(--g50);border-bottom:2px solid var(--g200)}
 .roll-rtable th{padding:.36rem .52rem;text-align:left;font-size:.61rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
@@ -320,26 +323,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .rnlast{font-weight:600}
 .rnfirst{font-weight:400;color:var(--muted);margin-left:.18rem;font-size:.71rem}
 .rypill{display:inline-flex;align-items:center;gap:.28rem;font-size:.71rem;color:var(--muted)}
-.rydot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.rydot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block;vertical-align:middle}
 .rchkbox{width:15px;height:15px;border:1.5px solid var(--g300);border-radius:3px;display:inline-block}
 .rsigline{border-bottom:1px solid var(--g300);width:88px;height:20px;display:inline-block}
 .rnoteline{border-bottom:1px solid var(--g300);display:block;height:20px;min-width:80px}
 .rltag{font-size:.59rem;background:#fed7aa;color:#92400e;border-radius:8px;padding:.04rem .3rem;margin-left:.28rem;font-weight:600}
 .doc-ftr{border-top:2px solid var(--g100);background:var(--g50);padding:.65rem 1.4rem;display:flex;justify-content:space-between;align-items:center}
-.ftr-n{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;color:var(--brand)}
+.ftr-n{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;color:var(--hdr2)}
 .ftr-n span{font-size:.63rem;color:var(--muted);font-weight:400;font-family:'DM Sans',sans-serif;margin-left:.25rem}
 .ftr-note{font-size:.62rem;color:var(--muted);text-align:right;line-height:1.55}
 @media print{
-  .mock-nav,.roll-controls,.nav,.toolbar,.header{display:none!important}
-  .page-roll{display:block!important;overflow:visible!important}
-  .roll-preview{padding:0!important;background:#fff!important;overflow:visible!important}
+  /* Hide ALL app chrome */
+  .hdr,.nav,.toolbar,.roll-controls{display:none!important}
+  /* Show only roll page */
+  #page-planner,#page-analytics,#page-departing,#page-settings{display:none!important}
+  #page-roll{display:flex!important;overflow:visible!important;height:auto!important}
+  .page-roll{display:block!important;overflow:visible!important;height:auto!important}
+  .roll-preview{padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important}
   .print-page{border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important}
   .print-page.pb{page-break-after:always}
-  .doc-hdr,.doc-purpose,.doc-ftr{print-color-adjust:exact;-webkit-print-color-adjust:exact}
-  .roll-rtable tbody tr:nth-child(even){background:#f8fafc!important;print-color-adjust:exact}
-  .roll-rtable tbody tr.rrl{background:#fff7ed!important;print-color-adjust:exact}
-  #page-planner,#page-analytics,#page-departing,#page-settings{display:none!important}
-  #page-roll{display:flex!important}
+  /* Force background colours to print */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  /* Tighter rows for larger classes */
+  .roll-rtable td{padding:.32rem .52rem!important}
+  .roll-rtable th{padding:.28rem .52rem!important}
+  /* Year dot — force display in print */
+  .rydot{display:inline-block!important;width:7px!important;height:7px!important;border-radius:50%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .rypill{display:inline-flex!important}
 }
 </style>
 </head>
@@ -2599,7 +2609,7 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
     <div class="doc-hdr">
       <div class="doc-hdr-l">
         <div class="doc-comm">${comm} Learning Community</div>
-        <div class="doc-title">${group}${purpose?` — <span style="color:var(--accent)">${purpose}</span>`:''}</div>
+        <div class="doc-title">${group}${purpose?` — <span style="color:#5eb8ff">${purpose}</span>`:''}</div>
         <div class="doc-band">${band}</div>
       </div>
       <div class="doc-hdr-r">
@@ -2610,7 +2620,7 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
     </div>
     ${purpose?`<div class="doc-purpose"><b>${purpose}</b> &nbsp;·&nbsp; ${group} &nbsp;·&nbsp; ${comm} &nbsp;·&nbsp; ${list.length} students</div>`:''}
     <div class="roll-wrap">
-      <table class="roll-rtable">
+      <table class="roll-rtable${list.length>24?' compact':''}">
         <thead><tr>
           <th class="rc-num">#</th>
           <th class="rc-name">Student Name</th>
@@ -2623,7 +2633,7 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
           ${list.map((s,i)=>`<tr class="${s.leaving==='Y'?'rrl':''}">
             <td class="rn">${String(i+1).padStart(2,'0')}</td>
             <td><span class="rnlast">${s.last},</span><span class="rnfirst">${s.first}</span>${s.leaving==='Y'?'<span class="rltag">poss. leaving</span>':''}</td>
-            ${opts.year?`<td><span class="rypill"><span class="rydot" style="background:${YEAR_COLORS[s.year]||'#94a3b8'}"></span>${s.year}</span></td>`:''}
+            ${opts.year?`<td><span class="rypill"><span class="rydot" style="background:${YEAR_COLORS[s.year]||'#94a3b8'};border:2px solid ${YEAR_COLORS[s.year]||'#94a3b8'}"></span>${s.year}</span></td>`:''}
             ${[...Array(nChk)].map(()=>'<td style="text-align:center"><span class="rchkbox"></span></td>').join('')}
             ${opts.notes?'<td><span class="rnoteline"></span></td>':''}
             ${opts.sig?'<td><span class="rsigline"></span></td>':''}
