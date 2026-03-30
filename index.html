@@ -3319,7 +3319,7 @@ function renderPlan(){
         <span style="font-size:.67rem;font-weight:400;color:var(--muted)">${planLocked?'Unlock to drag back into a group':''}</span>
       </div>
       <div class="plan-alumni-chips" id="pz-__alumni__"
-        ${planLocked?'':' ondragover="planDragOver(event,'__alumni__')" ondragleave="planDragLeave(event)" ondrop="planDrop(event,'__alumni__')"'}>
+        ${planLocked?'':'ondragover="planAlumniDragOver(event)" ondragleave="planDragLeave(event)" ondrop="planAlumniDrop(event)"'}>
         ${sortedAlumni.map(s=>renderPlanChip(s,'__alumni__')).join('')}
       </div>
     </div>`;
@@ -3329,6 +3329,9 @@ function renderPlan(){
 }
 
 // ── Drag and drop for plan
+function planAlumniDragOver(e){ planDragOver(e,'__alumni__'); }
+function planAlumniDrop(e){ planDrop(e,'__alumni__'); }
+
 function planDragStart(e, id, fromGroup){
   if(planLocked) return;
   planDragId = {id, fromGroup};
