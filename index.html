@@ -340,7 +340,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   /* Hide ALL app chrome */
   .hdr,.nav,.toolbar,.roll-controls{display:none!important}
   /* Show only roll page */
-  #page-planner,#page-analytics,#page-departing,#page-settings{display:none!important}
+  #page-planner,#page-analytics,#page-departing,#page-settings,#page-plan{display:none!important}
   #page-roll{display:flex!important;overflow:visible!important;height:auto!important}
   .page-roll{display:block!important;overflow:visible!important;height:auto!important}
   .roll-preview{padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important}
@@ -355,6 +355,59 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   .rydot{display:inline-block!important;width:7px!important;height:7px!important;border-radius:50%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .rypill{display:inline-flex!important}
 }
+
+/* ══ 2027 PLANNING TAB ══ */
+.plan-shell{display:flex;flex:1;overflow:hidden;flex-direction:column}
+.plan-toolbar{background:#fff;border-bottom:1px solid var(--g200);padding:.45rem 1.1rem;display:flex;align-items:center;gap:.7rem;flex-shrink:0;flex-wrap:wrap}
+.plan-tl{font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:700;color:var(--hdr2)}
+.plan-lock-btn{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .65rem;border-radius:5px;font-size:.74rem;font-weight:600;cursor:pointer;border:1px solid var(--g300);background:var(--g50);color:var(--muted);transition:all .15s}
+.plan-lock-btn.unlocked{background:#fef9c3;border-color:#eab308;color:#92400e}
+.plan-lock-btn:hover{border-color:var(--hdr3);color:var(--hdr3)}
+.plan-body{flex:1;overflow:auto;padding:1rem 1.25rem;display:flex;flex-direction:column;gap:1.25rem}
+.plan-comm{background:#fff;border-radius:10px;border:1px solid var(--g200);overflow:hidden}
+.plan-comm-hdr{background:linear-gradient(135deg,var(--hdr1),var(--hdr2));padding:.55rem 1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.plan-comm-name{font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:800;color:#fff;letter-spacing:-.01em}
+.plan-comm-tag{font-size:.68rem;color:rgba(255,255,255,.65);background:rgba(255,255,255,.12);padding:.1rem .45rem;border-radius:10px}
+.plan-comm-totals{margin-left:auto;display:flex;gap:.85rem;align-items:center}
+.plan-comm-stat{font-size:.68rem;color:rgba(255,255,255,.75);text-align:center}
+.plan-comm-stat b{color:#fff;font-size:.82rem;display:block;font-family:'Outfit',sans-serif}
+.plan-groups-row{display:flex;overflow-x:auto;padding:.75rem;gap:.65rem;align-items:flex-start}
+.plan-col{background:var(--g50);border:1px solid var(--g200);border-radius:8px;min-width:158px;width:175px;flex-shrink:0;display:flex;flex-direction:column;transition:border-color .15s}
+.plan-col.drop-over{border-color:var(--hdr3);background:#f0f7ff}
+.plan-col-hdr{padding:.4rem .6rem .35rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid var(--g200);background:#fff;border-radius:8px 8px 0 0}
+.plan-col-name{font-size:.74rem;font-weight:700;color:var(--txt);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plan-col-count{font-size:.65rem;font-weight:600;color:var(--muted);background:var(--g100);border-radius:10px;padding:.06rem .35rem;white-space:nowrap}
+.plan-col-body{padding:.35rem .4rem;display:flex;flex-direction:column;gap:.22rem;min-height:50px}
+.plan-yr-bucket{border:1px solid var(--g200);border-radius:5px;margin-bottom:.3rem;background:#fff;overflow:hidden}
+.plan-yr-hdr{padding:.2rem .45rem;display:flex;align-items:center;gap:.3rem;font-size:.63rem;font-weight:700;color:var(--muted);background:var(--g50);border-bottom:1px solid var(--g100)}
+.plan-yr-body{padding:.25rem .35rem;display:flex;flex-direction:column;gap:.18rem;min-height:16px}
+.pchip{display:flex;align-items:center;gap:.28rem;background:#fff;border:1px solid var(--g200);border-radius:4px;padding:.2rem .38rem;font-size:.71rem;transition:all .12s;user-select:none;cursor:default}
+.pchip.pdrag{cursor:grab}
+.pchip.pdrag:hover{border-color:var(--hdr3);background:#f0f7ff}
+.pchip.dragging{opacity:.35;transform:scale(.97)}
+.pchip-yr{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pchip-name{flex:1;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pchip-sub{font-size:.61rem;color:var(--muted);white-space:nowrap}
+.pchip.future-chip{background:#eff6ff;border-color:#93c5fd}
+.pchip.alumni-chip{background:var(--g50);border-color:var(--g300);opacity:.7}
+.plan-col.tobe{border-color:#fbbf24;background:#fffbeb}
+.plan-col.tobe .plan-col-hdr{background:#fef9c3;border-bottom-color:#fde68a}
+.plan-col.tobe .plan-col-name{color:#92400e}
+.plan-col.kindy-entry{border-color:#a78bfa;background:#faf5ff}
+.plan-col.kindy-entry .plan-col-hdr{background:#ede9fe;border-bottom-color:#c4b5fd}
+.plan-col.kindy-entry .plan-col-name{color:#5b21b6}
+.plan-col-stats{padding:.28rem .45rem;border-top:1px solid var(--g100);display:flex;flex-wrap:wrap;gap:.22rem}
+.pstat{font-size:.59rem;display:flex;align-items:center;gap:.18rem;color:var(--muted);background:var(--g50);border-radius:8px;padding:.06rem .3rem}
+.pstat-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.plan-add-row{padding:.3rem .4rem;border-top:1px solid var(--g100);display:flex;flex-direction:column;gap:.25rem}
+.plan-add-inputs{display:flex;gap:.25rem}
+.plan-add-f,.plan-add-l{flex:1;min-width:0;padding:.2rem .28rem;border:1px solid var(--g200);border-radius:4px;font-size:.69rem;font-family:'DM Sans',sans-serif}
+.plan-add-f:focus,.plan-add-l:focus{outline:none;border-color:var(--hdr3)}
+.plan-add-btn{padding:.2rem;background:var(--hdr3);color:#fff;border:none;border-radius:4px;font-size:.69rem;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;font-weight:600}
+.plan-alumni{background:#f8fafc;border:1px solid var(--g200);border-radius:8px;padding:.65rem .9rem}
+.plan-alumni-hdr{font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:.4rem;display:flex;align-items:center;gap:.45rem}
+.plan-alumni-chips{display:flex;flex-wrap:wrap;gap:.3rem}
+
 </style>
 </head>
 <body>
@@ -386,6 +439,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <div class="ntab" data-page="analytics" onclick="showPage('analytics')">📊 Analytics</div>
   <div class="ntab" data-page="departing" onclick="showPage('departing')">🚪 Departing <span id="depCount">(0)</span></div>
   <div class="ntab" data-page="roll" onclick="showPage('roll')">🖨 Roll Print</div>
+  <div class="ntab" data-page="plan" onclick="showPage('plan')">📅 2027 Planning</div>
   <div class="ntab" data-page="settings" onclick="showPage('settings')">🔧 Settings</div>
 </div>
 
@@ -597,6 +651,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
     </div>
     <div class="roll-preview" id="rollPreview">
       <div class="preview-empty">Select groups on the left to build your roll.</div>
+    </div>
+  </div>
+
+
+  <!-- 2027 PLANNING PAGE -->
+  <div class="page" id="page-plan" style="flex-direction:column;overflow:hidden">
+    <div class="plan-shell">
+      <div class="plan-toolbar">
+        <span class="plan-tl">📅 2027 Class Planning</span>
+        <span style="font-size:.72rem;color:var(--muted)">Plan next year&#39;s groupings. Saved separately from current year data.</span>
+        <button class="plan-lock-btn" id="planLockBtn" onclick="togglePlanLock()">🔒 Locked</button>
+        <button class="mbtn mbtn-ghost" style="font-size:.72rem;margin-left:auto" onclick="confirmRegenPlan()">↺ Re-generate from current</button>
+        <button class="mbtn mbtn-primary admin-only" style="font-size:.72rem" onclick="savePlan2027()">💾 Save Plan</button>
+      </div>
+      <div class="plan-body" id="planBody">
+        <div style="text-align:center;padding:3rem;color:var(--muted);font-size:.84rem">Loading 2027 plan…</div>
+      </div>
     </div>
   </div>
 
@@ -2176,6 +2247,7 @@ function showPage(p){
   if(p==='analytics') renderAnalytics();
   if(p==='departing') renderDepartingPage();
   if(p==='roll'){ buildRollAccordion(); buildRollYearList(); renderRoll(); }
+  if(p==='plan'){ initPlan2027Page(); }
 }
 
 // ══════════════════════════════════════════════════
@@ -2837,6 +2909,497 @@ function renderRoll(){
     })));
     const html=pages.map(({group,gs},i)=>buildRollPage(group,gs,opts,purpose,today,opts.pageBreak&&i<pages.length-1)).join('');
     el.innerHTML=html||'<div class="preview-empty">No students in selected groups.</div>';
+  }
+}
+
+
+
+// ════════════════════════════════════════════════════════════════
+// 2027 PLANNING ENGINE
+// ════════════════════════════════════════════════════════════════
+
+// ── 2027 structure: communities, named groups, special groups
+const PLAN_STRUCT = {
+  Madlurta: {
+    band: 'Kindergarten / Reception 2027',
+    groups: ['Purli','Tirntu','Maku'],
+    special: ['Kindy Entry 2027'],   // manually-entered new kindy students
+  },
+  Kurlana: {
+    band: 'Year 1 / 2 / 3',
+    groups: ['Kudlyu','Paitya','Kadli'],
+    special: ['To Be Placed'],       // incoming Reception→Year1
+  },
+  Warti: {
+    band: 'Year 4 / 5 / 6',
+    groups: ['Kuya','Kurraka','Kalta'],
+    special: ['To Be Placed'],       // incoming Year3→Year4
+  },
+  Karra: {
+    band: 'Year 7–12',
+    groups: [],                       // seniors shown by year level only
+    yearLevels: ['Year 7','Year 8','Year 9','Year 10','Year 11','Year 12'],
+  },
+  Wirra: {
+    band: 'Year 1–6 (cross-community)',
+    groups: ['Ngakala'],
+    special: [],
+  },
+};
+
+const PLAN_NEXT_YEAR = {
+  'Kindergarten':'Reception','Reception':'Year 1','Year 1':'Year 2',
+  'Year 2':'Year 3','Year 3':'Year 4','Year 4':'Year 5','Year 5':'Year 6',
+  'Year 6':'Year 7','Year 7':'Year 8','Year 8':'Year 9','Year 9':'Year 10',
+  'Year 10':'Year 11','Year 11':'Year 12','Year 12':'Alumni',
+};
+
+// State: plan2027 is an object keyed by group/bucket name → array of student objects
+// plan2027._alumni = array
+// plan2027._kindyEntry = array of manually-added new kids (id, first, last)
+let plan2027 = null;
+let planLocked = true;
+let planDragId = null; // id of student being dragged in plan
+let planNextId = 90000; // separate ID space from main students
+
+function togglePlanLock(){
+  planLocked = !planLocked;
+  const btn = document.getElementById('planLockBtn');
+  if(btn){
+    btn.textContent = planLocked ? '🔒 Locked' : '🔓 Unlocked';
+    btn.classList.toggle('unlocked', !planLocked);
+  }
+  renderPlan();
+}
+
+// ── Determine which named group a current student belongs to in 2027
+function plan2027GroupFor(s){
+  const nextYear = PLAN_NEXT_YEAR[s.year] || s.year;
+  const curGroup = s.group;
+
+  // Kindergarten → Reception: stays in same group (Purli/Tirntu/Maku)
+  if(s.year === 'Kindergarten') return { comm:'Madlurta', group: curGroup, year: nextYear };
+
+  // Reception → Year 1: To Be Placed in Kurlana (includes future:'Y' Receptions)
+  if(s.year === 'Reception') return { comm:'Kurlana', group:'__tobe__', year: nextYear };
+
+  // Year 1 → Year 2: stays in same group (Kurlana)
+  if(s.year === 'Year 1') return { comm:'Kurlana', group: curGroup, year: nextYear };
+
+  // Year 2 → Year 3: stays in same group (Kurlana)
+  if(s.year === 'Year 2') return { comm:'Kurlana', group: curGroup, year: nextYear };
+
+  // Year 3 → Year 4: To Be Placed in Warti
+  if(s.year === 'Year 3') return { comm:'Warti', group:'__tobe__', year: nextYear };
+
+  // Year 4 → Year 5: stays in same group (Warti)
+  if(s.year === 'Year 4') return { comm:'Warti', group: curGroup, year: nextYear };
+
+  // Year 5 → Year 6: stays in same group (Warti)
+  if(s.year === 'Year 5') return { comm:'Warti', group: curGroup, year: nextYear };
+
+  // Year 6 → Year 7: goes to Karra, year level bucket
+  // Ngakala Year 6s also go here
+  if(s.year === 'Year 6') return { comm:'Karra', group:'__yr__', year: nextYear };
+
+  // Year 7–11 in Karra → advance year, stay in year level bucket
+  if(['Year 7','Year 8','Year 9','Year 10','Year 11'].includes(s.year)){
+    return { comm:'Karra', group:'__yr__', year: nextYear };
+  }
+
+  // Year 12 → Alumni
+  if(s.year === 'Year 12') return { comm:'__alumni__', group:'__alumni__', year:'Alumni' };
+
+  // Ngakala Year 1–5 → stay in Ngakala, advance year
+  if(curGroup === 'Ngakala') return { comm:'Wirra', group:'Ngakala', year: nextYear };
+
+  return { comm:'__unplaced__', group:'__unplaced__', year: nextYear };
+}
+
+// ── Build initial plan from current students
+function buildInitialPlan(){
+  const p = { _alumni:[], _kindyEntry:[], _manual:{} };
+  const allGroups = [...PLAN_STRUCT.Madlurta.groups, ...PLAN_STRUCT.Madlurta.special,
+    ...PLAN_STRUCT.Kurlana.groups, ...PLAN_STRUCT.Kurlana.special,
+    ...PLAN_STRUCT.Warti.groups, ...PLAN_STRUCT.Warti.special,
+    ...PLAN_STRUCT.Wirra.groups,
+    ...PLAN_STRUCT.Karra.yearLevels];
+  allGroups.forEach(g => p[g] = p[g]||[]);
+  p['__tobe_Kurlana'] = [];
+  p['__tobe_Warti'] = [];
+
+  // Process active students (exclude departing) — include future:'Y' for Receptions
+  [...students].forEach(s => {
+    const dest = plan2027GroupFor(s);
+    const planS = {
+      id: s.id,
+      first: s.first,
+      last: s.last,
+      year: dest.year,
+      origYear: s.year,
+      gender: s.gender,
+      atsi: s.atsi,
+      nccd: s.nccd,
+      origGroup: s.group,
+      future: s.future||'N',
+    };
+    if(dest.comm === '__alumni__'){
+      p._alumni.push(planS);
+    } else if(dest.group === '__tobe__'){
+      const key = '__tobe_' + dest.comm;
+      p[key] = p[key]||[];
+      p[key].push(planS);
+    } else if(dest.group === '__yr__'){
+      p[dest.year] = p[dest.year]||[];
+      p[dest.year].push(planS);
+    } else {
+      p[dest.group] = p[dest.group]||[];
+      p[dest.group].push(planS);
+    }
+  });
+  return p;
+}
+
+// ── Initialise (or re-generate) the plan
+function initPlan2027(force=false){
+  if(plan2027 && !force){
+    renderPlan(); return;
+  }
+  plan2027 = buildInitialPlan();
+  renderPlan();
+  savePlan2027(true);
+}
+
+function confirmRegenPlan(){
+  if(confirm('Re-generate the 2027 plan from current student data? This will overwrite any manual changes you have made.'))
+    initPlan2027(true);
+}
+
+// ── Blob save/load for plan
+async function savePlan2027(silent=false){
+  if(!blobCfg.account||!blobCfg.sas) return;
+  const data = JSON.stringify({plan2027, savedAt: new Date().toISOString()});
+  try{
+    await fetch(blobUrl('plan2027.json'),{method:'PUT',headers:{'x-ms-blob-type':'BlockBlob','Content-Type':'application/json'},body:data});
+    if(!silent) showToast('2027 plan saved');
+  }catch(e){ showToast('Save failed'); }
+}
+
+async function loadPlan2027(){
+  if(!blobCfg.account||!blobCfg.sas) return false;
+  try{
+    const res = await fetch(blobUrl('plan2027.json'));
+    if(res.ok){
+      const d = await res.json();
+      plan2027 = d.plan2027;
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+// ── Stats helpers
+function planStats(arr){
+  const total = arr.length;
+  const male   = arr.filter(s=>s.gender==='Male').length;
+  const female = arr.filter(s=>s.gender==='Female').length;
+  const nb     = arr.filter(s=>s.gender==='Non-binary').length;
+  const atsi   = arr.filter(s=>isATSI(s)).length;
+  const byYear = {};
+  arr.forEach(s=>{ byYear[s.year]=(byYear[s.year]||0)+1; });
+  return {total,male,female,nb,atsi,byYear};
+}
+
+function renderPlanStats(arr){
+  if(!arr.length) return '';
+  const st = planStats(arr);
+  const yearPips = Object.entries(st.byYear).map(([y,n])=>
+    `<span class="pstat"><span class="pstat-dot" style="background:${YEAR_COLORS[y]||'#94a3b8'}"></span>${y.replace('Year ','Y').replace('Kindergarten','Kindy').replace('Reception','Rec')}: ${n}</span>`
+  ).join('');
+  return `<div class="plan-col-stats">
+    <span class="pstat" title="Male"><span class="pstat-dot" style="background:#2dd4bf"></span>${st.male}M</span>
+    <span class="pstat" title="Female"><span class="pstat-dot" style="background:#fb923c"></span>${st.female}F</span>
+    ${st.nb?`<span class="pstat" title="Non-binary"><span class="pstat-dot" style="background:#a78bfa"></span>${st.nb}NB</span>`:''}
+    ${st.atsi?`<span class="pstat" title="Aboriginal/TSI"><span class="pstat-dot" style="background:#c2410c"></span>${st.atsi} ATSI</span>`:''}
+    ${yearPips}
+  </div>`;
+}
+
+function renderCommTotals(arr){
+  const st = planStats(arr);
+  return `
+    <div class="plan-comm-stat"><b>${st.total}</b>students</div>
+    <div class="plan-comm-stat"><b>${st.male}</b>M</div>
+    <div class="plan-comm-stat"><b>${st.female}</b>F</div>
+    ${st.nb?`<div class="plan-comm-stat"><b>${st.nb}</b>NB</div>`:''}
+    <div class="plan-comm-stat"><b>${st.atsi}</b>ATSI</div>`;
+}
+
+// ── Student chip
+function renderPlanChip(s, fromGroup){
+  const draggable = !planLocked;
+  const isAlumni = fromGroup === '__alumni__';
+  const isFuture = s.future === 'Y';
+  const cls = ['pchip', draggable?'pdrag':'', isAlumni?'alumni-chip':'', isFuture?'future-chip':''].filter(Boolean).join(' ');
+  const yearColor = YEAR_COLORS[s.year]||'#94a3b8';
+  return `<div class="${cls}" 
+    id="pc-${s.id}"
+    ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'${fromGroup}')" ondragend="planDragEnd(event)"`:''}
+    title="${s.last}, ${s.first} · ${s.year}${s.origYear&&s.origYear!==s.year?' (was '+s.origYear+')':''}${isFuture?' · Pre-enrolled':''}"
+  >
+    <span class="pchip-yr" style="background:${yearColor}"></span>
+    <span class="pchip-name">${s.last}, ${s.first}</span>
+    <span class="pchip-sub">${s.year.replace('Year ','Y').replace('Kindergarten','K').replace('Reception','Rec')}</span>
+  </div>`;
+}
+
+// ── Drop zone wrapper
+function planDropZone(groupKey, children, extraClass=''){
+  const locked = planLocked ? '' : `ondragover="planDragOver(event,'${groupKey}')" ondragleave="planDragLeave(event)" ondrop="planDrop(event,'${groupKey}')"`;
+  return `<div class="plan-col-body" id="pz-${groupKey.replace(/[^a-zA-Z0-9]/g,'_')}" ${locked}>${children}</div>`;
+}
+
+// ── Render one named group column
+function renderPlanCol(groupKey, label, students2027, special=''){
+  const sorted = [...(students2027||[])].sort((a,b)=>a.last.localeCompare(b.last)||a.first.localeCompare(b.first));
+  const chips = sorted.map(s=>renderPlanChip(s,groupKey)).join('');
+  const colClass = ['plan-col', special].filter(Boolean).join(' ');
+  return `<div class="${colClass}" id="pcol-${groupKey.replace(/[^a-zA-Z0-9]/g,'_')}">
+    <div class="plan-col-hdr">
+      <span class="plan-col-name">${label}</span>
+      <span class="plan-col-count">${sorted.length}</span>
+    </div>
+    ${planDropZone(groupKey, chips, special)}
+    ${renderPlanStats(sorted)}
+    ${special==='kindy-entry'?renderKindyAddRow():''}
+  </div>`;
+}
+
+// ── Kindy Entry add-student form
+function renderKindyAddRow(){
+  return `<div class="plan-add-row">
+    <div class="plan-add-inputs">
+      <input class="plan-add-f" id="keFirst" placeholder="First" onkeydown="if(event.key==='Enter')addKindyEntry()">
+      <input class="plan-add-l" id="keLast" placeholder="Last" onkeydown="if(event.key==='Enter')addKindyEntry()">
+    </div>
+    <button class="plan-add-btn" onclick="addKindyEntry()">+ Add</button>
+  </div>`;
+}
+
+function addKindyEntry(){
+  const first = (document.getElementById('keFirst')?.value||'').trim();
+  const last  = (document.getElementById('keLast')?.value||'').trim();
+  if(!first||!last){ showToast('Enter first and last name'); return; }
+  if(!plan2027) return;
+  plan2027['Kindy Entry 2027'] = plan2027['Kindy Entry 2027']||[];
+  plan2027['Kindy Entry 2027'].push({
+    id: planNextId++, first, last,
+    year:'Kindergarten', origYear:'', gender:'', atsi:'', nccd:'',
+    origGroup:'', future:'Y',
+  });
+  savePlan2027(true); renderPlan();
+}
+
+// ── Karra year-level buckets
+function renderKarraCol(){
+  const allKarra = PLAN_STRUCT.Karra.yearLevels.flatMap(y=>(plan2027[y]||[]));
+  const st = planStats(allKarra);
+
+  const buckets = PLAN_STRUCT.Karra.yearLevels.map(y=>{
+    const ys = [...(plan2027[y]||[])].sort((a,b)=>a.last.localeCompare(b.last));
+    if(!ys.length) return '';
+    const chips = ys.map(s=>renderPlanChip(s,y)).join('');
+    const locked = planLocked?'': `ondragover="planDragOver(event,'${y}')" ondragleave="planDragLeave(event)" ondrop="planDrop(event,'${y}')"`;
+    return `<div class="plan-yr-bucket">
+      <div class="plan-yr-hdr">
+        <span class="pstat-dot" style="background:${YEAR_COLORS[y]||'#94a3b8'};width:6px;height:6px;border-radius:50%"></span>
+        ${y} <span style="margin-left:auto">${ys.length}</span>
+      </div>
+      <div class="plan-yr-body" id="pz-${y.replace(/ /g,'_')}" ${locked}>${chips}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="plan-comm" id="pcomm-Karra">
+    <div class="plan-comm-hdr">
+      <span class="plan-comm-name">Karra</span>
+      <span class="plan-comm-tag">${PLAN_STRUCT.Karra.band}</span>
+      <div class="plan-comm-totals">${renderCommTotals(allKarra)}</div>
+    </div>
+    <div class="plan-groups-row">
+      <div class="plan-col" style="width:100%;max-width:100%;min-width:220px">
+        <div class="plan-col-hdr">
+          <span class="plan-col-name">Senior Students by Year Level</span>
+          <span class="plan-col-count">${allKarra.length}</span>
+        </div>
+        <div style="padding:.5rem .5rem">${buckets||'<div style="font-size:.74rem;color:var(--muted);padding:.5rem">No students</div>'}</div>
+        ${renderPlanStats(allKarra)}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Main render
+function renderPlan(){
+  const el = document.getElementById('planBody');
+  if(!el) return;
+  if(!plan2027){ el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted)">Click ↺ Re-generate to build the 2027 plan from current data.</div>'; return; }
+
+  let html = '';
+
+  // ── MADLURTA
+  const madGroups = [...PLAN_STRUCT.Madlurta.groups, ...PLAN_STRUCT.Madlurta.special];
+  const madAll = madGroups.flatMap(g=>(plan2027[g]||[]));
+  html += `<div class="plan-comm" id="pcomm-Madlurta">
+    <div class="plan-comm-hdr">
+      <span class="plan-comm-name">Madlurta</span>
+      <span class="plan-comm-tag">${PLAN_STRUCT.Madlurta.band}</span>
+      <div class="plan-comm-totals">${renderCommTotals(madAll)}</div>
+    </div>
+    <div class="plan-groups-row">
+      ${PLAN_STRUCT.Madlurta.groups.map(g=>renderPlanCol(g,g,plan2027[g]||[])).join('')}
+      ${renderPlanCol('Kindy Entry 2027','Kindy Entry 2027',plan2027['Kindy Entry 2027']||[],'kindy-entry')}
+    </div>
+  </div>`;
+
+  // ── KURLANA
+  const kurGroups = [...PLAN_STRUCT.Kurlana.groups];
+  const kurTobe = plan2027['__tobe_Kurlana']||[];
+  const kurAll = [...kurGroups.flatMap(g=>plan2027[g]||[]), ...kurTobe];
+  html += `<div class="plan-comm" id="pcomm-Kurlana">
+    <div class="plan-comm-hdr">
+      <span class="plan-comm-name">Kurlana</span>
+      <span class="plan-comm-tag">${PLAN_STRUCT.Kurlana.band}</span>
+      <div class="plan-comm-totals">${renderCommTotals(kurAll)}</div>
+    </div>
+    <div class="plan-groups-row">
+      ${kurGroups.map(g=>renderPlanCol(g,g,plan2027[g]||[])).join('')}
+      ${renderPlanCol('__tobe_Kurlana','To Be Placed',kurTobe,'tobe')}
+    </div>
+  </div>`;
+
+  // ── WARTI
+  const warGroups = [...PLAN_STRUCT.Warti.groups];
+  const warTobe = plan2027['__tobe_Warti']||[];
+  const warAll = [...warGroups.flatMap(g=>plan2027[g]||[]), ...warTobe];
+  html += `<div class="plan-comm" id="pcomm-Warti">
+    <div class="plan-comm-hdr">
+      <span class="plan-comm-name">Warti</span>
+      <span class="plan-comm-tag">${PLAN_STRUCT.Warti.band}</span>
+      <div class="plan-comm-totals">${renderCommTotals(warAll)}</div>
+    </div>
+    <div class="plan-groups-row">
+      ${warGroups.map(g=>renderPlanCol(g,g,plan2027[g]||[])).join('')}
+      ${renderPlanCol('__tobe_Warti','To Be Placed',warTobe,'tobe')}
+    </div>
+  </div>`;
+
+  // ── KARRA (year level buckets)
+  html += renderKarraCol();
+
+  // ── WIRRA
+  const wirAll = plan2027['Ngakala']||[];
+  html += `<div class="plan-comm" id="pcomm-Wirra">
+    <div class="plan-comm-hdr">
+      <span class="plan-comm-name">Wirra</span>
+      <span class="plan-comm-tag">${PLAN_STRUCT.Wirra.band}</span>
+      <div class="plan-comm-totals">${renderCommTotals(wirAll)}</div>
+    </div>
+    <div class="plan-groups-row">
+      ${renderPlanCol('Ngakala','Ngakala',wirAll)}
+    </div>
+  </div>`;
+
+  // ── ALUMNI
+  const alumni = plan2027._alumni||[];
+  if(alumni.length){
+    const sortedAlumni = [...alumni].sort((a,b)=>a.last.localeCompare(b.last));
+    html += `<div class="plan-alumni">
+      <div class="plan-alumni-hdr">
+        🎓 Alumni (former Year 12) — ${alumni.length} students
+        <span style="font-size:.67rem;font-weight:400;color:var(--muted)">${planLocked?'Unlock to drag back into a group':''}</span>
+      </div>
+      <div class="plan-alumni-chips" id="pz-__alumni__"
+        ${planLocked?'':' ondragover="planDragOver(event,'__alumni__')" ondragleave="planDragLeave(event)" ondrop="planDrop(event,'__alumni__')"'}>
+        ${sortedAlumni.map(s=>renderPlanChip(s,'__alumni__')).join('')}
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── Drag and drop for plan
+function planDragStart(e, id, fromGroup){
+  if(planLocked) return;
+  planDragId = {id, fromGroup};
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>{ const el=document.getElementById('pc-'+id); if(el) el.classList.add('dragging'); },0);
+}
+
+function planDragEnd(e){
+  document.querySelectorAll('.pchip.dragging').forEach(el=>el.classList.remove('dragging'));
+  document.querySelectorAll('.plan-col.drop-over,.plan-col-body.drop-over,.plan-yr-body.drop-over,.plan-alumni-chips.drop-over')
+    .forEach(el=>el.classList.remove('drop-over'));
+  planDragId = null;
+}
+
+function planDragOver(e, toGroup){
+  if(planLocked||!planDragId) return;
+  e.preventDefault(); e.dataTransfer.dropEffect='move';
+  const zoneId = 'pz-'+toGroup.replace(/ /g,'_');
+  document.getElementById(zoneId)?.classList.add('drop-over');
+}
+
+function planDragLeave(e){
+  e.currentTarget?.classList.remove('drop-over');
+}
+
+function planDrop(e, toGroup){
+  if(planLocked||!planDragId) return;
+  e.preventDefault();
+  const {id, fromGroup} = planDragId;
+
+  // Find and remove from source
+  const sourceKey = fromGroup==='__alumni__'?'_alumni':fromGroup;
+  let student = null;
+  if(fromGroup==='__alumni__'){
+    const idx=plan2027._alumni.findIndex(s=>s.id===id);
+    if(idx!==-1){ student=plan2027._alumni.splice(idx,1)[0]; }
+  } else {
+    const arr = plan2027[fromGroup];
+    if(arr){ const idx=arr.findIndex(s=>s.id===id); if(idx!==-1) student=arr.splice(idx,1)[0]; }
+  }
+  if(!student) return;
+
+  // Update year if moving between buckets
+  if(toGroup==='__alumni__'){
+    student.year='Alumni';
+  } else if(PLAN_STRUCT.Karra.yearLevels.includes(toGroup)){
+    student.year=toGroup;
+  }
+
+  // Add to destination
+  if(toGroup==='__alumni__'){
+    plan2027._alumni = plan2027._alumni||[];
+    plan2027._alumni.push(student);
+  } else {
+    plan2027[toGroup] = plan2027[toGroup]||[];
+    plan2027[toGroup].push(student);
+  }
+
+  savePlan2027(true);
+  renderPlan();
+}
+
+
+
+async function initPlan2027Page(){
+  // Try loading saved plan first, fall back to generating from current data
+  const loaded = await loadPlan2027();
+  if(!loaded || !plan2027){
+    initPlan2027(true);
+  } else {
+    renderPlan();
   }
 }
 
