@@ -435,7 +435,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 
 <!-- NAV -->
 <div class="nav">
-  <div class="ntab active" data-page="planner" onclick="showPage('planner')">📋 Planner</div>
+  <div class="ntab active" data-page="planner" onclick="showPage('planner')">📋 Wardlirna</div>
   <div class="ntab" data-page="analytics" onclick="showPage('analytics')">📊 Analytics</div>
   <div class="ntab" data-page="departing" onclick="showPage('departing')">🚪 Departing <span id="depCount">(0)</span></div>
   <div class="ntab" data-page="roll" onclick="showPage('roll')">🖨 Roll Print</div>
@@ -657,15 +657,38 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 
   <!-- 2027 PLANNING PAGE -->
   <div class="page" id="page-plan" style="flex-direction:column;overflow:hidden">
-    <div class="plan-shell">
-      <div class="plan-toolbar">
-        <span class="plan-tl">📅 2027 Class Planning</span>
-        <span style="font-size:.72rem;color:var(--muted)">Plan next year&#39;s groupings. Saved separately from current year data.</span>
-        <button class="plan-lock-btn" id="planLockBtn" onclick="togglePlanLock()">🔒 Locked</button>
-        <button class="mbtn mbtn-ghost" style="font-size:.72rem;margin-left:auto" onclick="confirmRegenPlan()">↺ Re-generate from current</button>
-        <button class="mbtn mbtn-primary admin-only" style="font-size:.72rem" onclick="savePlan2027()">💾 Save Plan</button>
+    <!-- Plan toolbar -->
+    <div class="toolbar" id="planToolbar2" style="display:none">
+      <span class="plan-tl">📅 2027 Class Planning</span>
+      <div id="planCtabs" style="display:flex;gap:.25rem;margin-left:.5rem"></div>
+      <span style="font-size:.72rem;color:var(--muted);margin-left:.5rem">Saved separately from current year data.</span>
+      <button class="plan-lock-btn" id="planLockBtn" onclick="togglePlanLock()">🔒 Locked</button>
+      <button class="mbtn mbtn-ghost" style="font-size:.72rem;margin-left:auto" onclick="confirmRegenPlan()">↺ Re-generate</button>
+      <button class="mbtn mbtn-primary admin-only" style="font-size:.72rem" onclick="savePlan2027()">💾 Save Plan</button>
+    </div>
+    <!-- Plan body: sidebar + canvas -->
+    <div style="display:flex;flex:1;overflow:hidden">
+      <!-- Sidebar -->
+      <div class="sb">
+        <div class="sb-sec">
+          <h4>Overview — <span id="planCommLabel" style="text-transform:none;font-weight:400"></span></h4>
+          <div class="sg" id="planSbStats"></div>
+        </div>
+        <div class="sb-sec">
+          <h4>Year Levels</h4>
+          <div id="planSbYears"></div>
+        </div>
+        <div class="sb-sec">
+          <h4>Gender</h4>
+          <div id="planSbGender"></div>
+        </div>
+        <div class="sb-sec">
+          <h4>ATSI</h4>
+          <div id="planSbAtsi"></div>
+        </div>
       </div>
-      <div class="plan-body" id="planBody">
+      <!-- Canvas -->
+      <div class="canvas" id="planCanvas">
         <div style="text-align:center;padding:3rem;color:var(--muted);font-size:.84rem">Loading 2027 plan…</div>
       </div>
     </div>
@@ -2244,6 +2267,7 @@ function showPage(p){
   document.getElementById('page-'+p).classList.add('on');
   document.querySelectorAll('.ntab').forEach(t=>{ t.classList.toggle('active',t.dataset.page===p); });
   document.getElementById('plannerToolbar').style.display=p==='planner'?'':'none';
+  const pt2=document.getElementById('planToolbar2'); if(pt2) pt2.style.display=p==='plan'?'':'none';
   if(p==='analytics') renderAnalytics();
   if(p==='departing') renderDepartingPage();
   if(p==='roll'){ buildRollAccordion(); buildRollYearList(); renderRoll(); }
@@ -3113,219 +3137,199 @@ function planStats(arr){
 function renderPlanStats(arr){
   if(!arr.length) return '';
   const st = planStats(arr);
-  const yearPips = Object.entries(st.byYear).map(([y,n])=>
-    `<span class="pstat"><span class="pstat-dot" style="background:${YEAR_COLORS[y]||'#94a3b8'}"></span>${y.replace('Year ','Y').replace('Kindergarten','Kindy').replace('Reception','Rec')}: ${n}</span>`
+  const yearPips = Object.entries(st.byYear).sort((a,b)=>YEAR_LEVELS.indexOf(a[0])-YEAR_LEVELS.indexOf(b[0])).map(([y,n])=>
+    `<div class="yr-row"><div class="yr-pip" style="background:${YEAR_COLORS[y]||'#94a3b8'}"></div><span class="yr-lbl">${y}</span><span class="yr-cnt">${n}</span></div>`
   ).join('');
-  return `<div class="plan-col-stats">
-    <span class="pstat" title="Male"><span class="pstat-dot" style="background:#2dd4bf"></span>${st.male}M</span>
-    <span class="pstat" title="Female"><span class="pstat-dot" style="background:#fb923c"></span>${st.female}F</span>
-    ${st.nb?`<span class="pstat" title="Non-binary"><span class="pstat-dot" style="background:#a78bfa"></span>${st.nb}NB</span>`:''}
-    ${st.atsi?`<span class="pstat" title="Aboriginal/TSI"><span class="pstat-dot" style="background:#c2410c"></span>${st.atsi} ATSI</span>`:''}
+  return `<div style="padding:.35rem .55rem;border-top:1px solid var(--g100);font-size:.68rem">
+    <div style="display:flex;gap:.5rem;margin-bottom:.25rem">
+      <span style="color:#2dd4bf">♂${st.male}</span>
+      <span style="color:#fb923c">♀${st.female}</span>
+      ${st.nb?`<span style="color:#a78bfa">NB ${st.nb}</span>`:''}
+      ${st.atsi?`<span style="color:#c2410c">ATSI ${st.atsi}</span>`:''}
+    </div>
     ${yearPips}
   </div>`;
 }
 
-function renderCommTotals(arr){
-  const st = planStats(arr);
-  return `
-    <div class="plan-comm-stat"><b>${st.total}</b>students</div>
-    <div class="plan-comm-stat"><b>${st.male}</b>M</div>
-    <div class="plan-comm-stat"><b>${st.female}</b>F</div>
-    ${st.nb?`<div class="plan-comm-stat"><b>${st.nb}</b>NB</div>`:''}
-    <div class="plan-comm-stat"><b>${st.atsi}</b>ATSI</div>`;
+// ── Render sidebar for current plan community
+function renderPlanSidebar(){
+  const commData = getPlanCommData(planComm);
+  const allStudents = commData.flatMap(g=>g.students);
+  const st = planStats(allStudents);
+
+  // Stats grid
+  const statsEl = document.getElementById('planSbStats');
+  if(statsEl) statsEl.innerHTML = `
+    <div class="sp"><div class="sp-v">${allStudents.length}</div><div class="sp-l">Total</div></div>
+    <div class="sp"><div class="sp-v">${st.atsi}</div><div class="sp-l">ATSI</div></div>`;
+
+  // Year levels
+  const yearsEl = document.getElementById('planSbYears');
+  if(yearsEl) yearsEl.innerHTML = Object.entries(st.byYear)
+    .sort((a,b)=>YEAR_LEVELS.indexOf(a[0])-YEAR_LEVELS.indexOf(b[0]))
+    .map(([y,n])=>`<div class="yr-row"><div class="yr-pip" style="background:${YEAR_COLORS[y]||'#94a3b8'}"></div><span class="yr-lbl">${y}</span><span class="yr-cnt">${n}</span></div>`)
+    .join('');
+
+  // Gender
+  const genderEl = document.getElementById('planSbGender');
+  if(genderEl) genderEl.innerHTML = `
+    <div class="yr-row"><div class="yr-pip" style="background:#2dd4bf"></div><span class="yr-lbl">Male</span><span class="yr-cnt">${st.male}</span></div>
+    <div class="yr-row"><div class="yr-pip" style="background:#fb923c"></div><span class="yr-lbl">Female</span><span class="yr-cnt">${st.female}</span></div>
+    <div class="yr-row"><div class="yr-pip" style="background:#a78bfa"></div><span class="yr-lbl">Gender diverse</span><span class="yr-cnt">${st.nb}</span></div>`;
+
+  // ATSI
+  const atsiEl = document.getElementById('planSbAtsi');
+  if(atsiEl) atsiEl.innerHTML = `
+    <div class="yr-row"><div class="yr-pip" style="background:#c2410c"></div><span class="yr-lbl">Aboriginal/TSI</span><span class="yr-cnt">${st.atsi}</span></div>
+    <div class="yr-row"><div class="yr-pip" style="background:#94a3b8"></div><span class="yr-lbl">Non-Indigenous</span><span class="yr-cnt">${allStudents.length-st.atsi}</span></div>`;
+
+  const lbl = document.getElementById('planCommLabel');
+  if(lbl) lbl.textContent = planComm;
 }
 
-// ── Student chip
-function renderPlanChip(s, fromGroup){
-  const draggable = !planLocked;
-  const isAlumni = fromGroup === '__alumni__';
-  const isFuture = s.future === 'Y';
-  const cls = ['pchip', draggable?'pdrag':'', isAlumni?'alumni-chip':'', isFuture?'future-chip':''].filter(Boolean).join(' ');
-  const yearColor = YEAR_COLORS[s.year]||'#94a3b8';
-  return `<div class="${cls}" 
-    id="pc-${s.id}"
-    ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'${fromGroup}')" ondragend="planDragEnd(event)"`:''}
-    title="${s.last}, ${s.first} · ${s.year}${s.origYear&&s.origYear!==s.year?' (was '+s.origYear+')':''}${isFuture?' · Pre-enrolled':''}"
-  >
-    <span class="pchip-yr" style="background:${yearColor}"></span>
-    <span class="pchip-name">${s.last}, ${s.first}</span>
-    <span class="pchip-sub">${s.year.replace('Year ','Y').replace('Kindergarten','K').replace('Reception','Rec')}</span>
-  </div>`;
+// ── Get ordered groups + students for a community
+function getPlanCommData(comm){
+  const groups = [];
+  if(comm === 'Madlurta'){
+    PLAN_STRUCT.Madlurta.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',students:plan2027[g]||[]}));
+    groups.push({key:'Kindy Entry 2027',label:'Kindy Entry 2027',type:'kindy-entry',students:plan2027['Kindy Entry 2027']||[]});
+  } else if(comm === 'Kurlana'){
+    PLAN_STRUCT.Kurlana.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',students:plan2027[g]||[]}));
+    groups.push({key:'__tobe_Kurlana',label:'To Be Placed',type:'tobe',students:plan2027['__tobe_Kurlana']||[]});
+  } else if(comm === 'Warti'){
+    PLAN_STRUCT.Warti.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',students:plan2027[g]||[]}));
+    groups.push({key:'__tobe_Warti',label:'To Be Placed',type:'tobe',students:plan2027['__tobe_Warti']||[]});
+  } else if(comm === 'Karra'){
+    PLAN_STRUCT.Karra.yearLevels.forEach(y=>groups.push({key:y,label:y,type:'year',students:plan2027[y]||[]}));
+  } else if(comm === 'Wirra'){
+    groups.push({key:'Ngakala',label:'Ngakala',type:'normal',students:plan2027['Ngakala']||[]});
+  }
+  return groups;
 }
 
-// ── Drop zone wrapper
-function planDropZone(groupKey, children, extraClass=''){
-  const locked = planLocked ? '' : `ondragover="planDragOver(event,'${groupKey}')" ondragleave="planDragLeave(event)" ondrop="planDrop(event,'${groupKey}')"`;
-  return `<div class="plan-col-body" id="pz-${groupKey.replace(/[^a-zA-Z0-9]/g,'_')}" ${locked}>${children}</div>`;
-}
+// ── Render one group as a planner-style card
+function renderPlanGroupCard(g){
+  const sorted = [...g.students].sort((a,b)=>a.last.localeCompare(b.last)||a.first.localeCompare(b.first));
+  const isSpecial = g.type === 'tobe' || g.type === 'kindy-entry';
+  const isYear = g.type === 'year';
 
-// ── Render one named group column
-function renderPlanCol(groupKey, label, students2027, special=''){
-  const sorted = [...(students2027||[])].sort((a,b)=>a.last.localeCompare(b.last)||a.first.localeCompare(b.first));
-  const chips = sorted.map(s=>renderPlanChip(s,groupKey)).join('');
-  const colClass = ['plan-col', special].filter(Boolean).join(' ');
-  return `<div class="${colClass}" id="pcol-${groupKey.replace(/[^a-zA-Z0-9]/g,'_')}">
-    <div class="plan-col-hdr">
-      <span class="plan-col-name">${label}</span>
-      <span class="plan-col-count">${sorted.length}</span>
-    </div>
-    ${planDropZone(groupKey, chips, special)}
-    ${renderPlanStats(sorted)}
-    ${special==='kindy-entry'?renderKindyAddRow():''}
-  </div>`;
-}
+  // Header colour
+  let hdrStyle = 'background:linear-gradient(135deg,var(--hdr1),var(--hdr2))';
+  if(g.type==='tobe') hdrStyle = 'background:linear-gradient(135deg,#92400e,#b45309)';
+  if(g.type==='kindy-entry') hdrStyle = 'background:linear-gradient(135deg,#4c1d95,#6d28d9)';
+  if(g.type==='year') hdrStyle = `background:linear-gradient(135deg,var(--hdr1),var(--hdr2))`;
 
-// ── Kindy Entry add-student form
-function renderKindyAddRow(){
-  return `<div class="plan-add-row">
-    <div class="plan-add-inputs">
-      <input class="plan-add-f" id="keFirst" placeholder="First" onkeydown="if(event.key==='Enter')addKindyEntry()">
-      <input class="plan-add-l" id="keLast" placeholder="Last" onkeydown="if(event.key==='Enter')addKindyEntry()">
-    </div>
-    <button class="plan-add-btn" onclick="addKindyEntry()">+ Add</button>
-  </div>`;
-}
+  // Drop zone attrs
+  const dz = planLocked ? '' : `ondragover="planDragOver(event,'${g.key.replace(/'/g,"\\'")}') " ondragleave="planDragLeave(event)" ondrop="planDrop(event,'${g.key.replace(/'/g,"\\'")}') "`;
 
-function addKindyEntry(){
-  const first = (document.getElementById('keFirst')?.value||'').trim();
-  const last  = (document.getElementById('keLast')?.value||'').trim();
-  if(!first||!last){ showToast('Enter first and last name'); return; }
-  if(!plan2027) return;
-  plan2027['Kindy Entry 2027'] = plan2027['Kindy Entry 2027']||[];
-  plan2027['Kindy Entry 2027'].push({
-    id: planNextId++, first, last,
-    year:'Kindergarten', origYear:'', gender:'', atsi:'', nccd:'',
-    origGroup:'', future:'Y',
-  });
-  savePlan2027(true); renderPlan();
-}
-
-// ── Karra year-level buckets
-function renderKarraCol(){
-  const allKarra = PLAN_STRUCT.Karra.yearLevels.flatMap(y=>(plan2027[y]||[]));
-  const st = planStats(allKarra);
-
-  const buckets = PLAN_STRUCT.Karra.yearLevels.map(y=>{
-    const ys = [...(plan2027[y]||[])].sort((a,b)=>a.last.localeCompare(b.last));
-    if(!ys.length) return '';
-    const chips = ys.map(s=>renderPlanChip(s,y)).join('');
-    const locked = planLocked?'': `ondragover="planDragOver(event,'${y}')" ondragleave="planDragLeave(event)" ondrop="planDrop(event,'${y}')"`;
-    return `<div class="plan-yr-bucket">
-      <div class="plan-yr-hdr">
-        <span class="pstat-dot" style="background:${YEAR_COLORS[y]||'#94a3b8'};width:6px;height:6px;border-radius:50%"></span>
-        ${y} <span style="margin-left:auto">${ys.length}</span>
-      </div>
-      <div class="plan-yr-body" id="pz-${y.replace(/ /g,'_')}" ${locked}>${chips}</div>
+  const chips = sorted.map(s=>{
+    const draggable = !planLocked;
+    const isFuture = s.future==='Y';
+    const yrCol = YEAR_COLORS[s.year]||'#94a3b8';
+    const chipCls = ['sc', draggable?'pdrag':'', isFuture?'new-enrol':''].filter(Boolean).join(' ');
+    const icons = isFuture ? `<span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;display:inline-block;margin-top:1px" title="New enrolment"></span>` : '';
+    return `<div class="${chipCls}" id="pc-${s.id}"
+      ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'${g.key.replace(/'/g,"\\'")}') " ondragend="planDragEnd(event)"` : ''}
+      title="${s.last}, ${s.first} · ${s.year}${s.origYear&&s.origYear!==s.year?' (was '+s.origYear+')':''}${isFuture?' · Pre-enrolled':''}"
+      ondblclick="openStudentModal(${s.id})">
+      <div class="ypip" style="background:${yrCol}"></div>
+      <span class="sc-name">${s.last}, ${s.first}</span>
+      <span class="sc-yr">${s.year.replace('Year ','Y').replace('Kindergarten','K').replace('Reception','Rec')}</span>
+      ${icons?`<div class="sc-icons">${icons}</div>`:''}
     </div>`;
   }).join('');
 
-  return `<div class="plan-comm" id="pcomm-Karra">
-    <div class="plan-comm-hdr">
-      <span class="plan-comm-name">Karra</span>
-      <span class="plan-comm-tag">${PLAN_STRUCT.Karra.band}</span>
-      <div class="plan-comm-totals">${renderCommTotals(allKarra)}</div>
-    </div>
-    <div class="plan-groups-row">
-      <div class="plan-col" style="width:100%;max-width:100%;min-width:220px">
-        <div class="plan-col-hdr">
-          <span class="plan-col-name">Senior Students by Year Level</span>
-          <span class="plan-col-count">${allKarra.length}</span>
-        </div>
-        <div style="padding:.5rem .5rem">${buckets||'<div style="font-size:.74rem;color:var(--muted);padding:.5rem">No students</div>'}</div>
-        ${renderPlanStats(allKarra)}
+  const addRow = g.type==='kindy-entry' ? `
+    <div style="padding:.35rem .5rem;border-top:1px solid var(--g200);display:flex;flex-direction:column;gap:.25rem">
+      <div style="display:flex;gap:.25rem">
+        <input class="plan-add-f" id="keFirst" placeholder="First" onkeydown="if(event.key==='Enter')addKindyEntry()">
+        <input class="plan-add-l" id="keLast" placeholder="Last" onkeydown="if(event.key==='Enter')addKindyEntry()">
       </div>
+      <button class="plan-add-btn" onclick="addKindyEntry()">+ Add student</button>
+    </div>` : '';
+
+  return `<div class="gcol ${planLocked?'locked':''}" id="pcol-${g.key.replace(/[^a-zA-Z0-9]/g,'_')}" style="flex:1;min-width:155px">
+    <div class="ghdr" style="${hdrStyle}">
+      <span class="gname">${g.label}</span>
+      <span class="gcnt">${sorted.length}</span>
     </div>
+    <div class="sc-list" id="pz-${g.key.replace(/[^a-zA-Z0-9]/g,'_')}" style="padding:.45rem .5rem;display:flex;flex-direction:column;gap:.22rem;min-height:50px" ${dz}>
+      ${chips||`<div style="font-size:.72rem;color:var(--muted);padding:.25rem;font-style:italic">Empty</div>`}
+    </div>
+    ${renderPlanStats(sorted)}
+    ${addRow}
   </div>`;
 }
 
+// ── Community tabs for plan
+let planComm = 'Madlurta';
+function buildPlanCtabs(){
+  const el = document.getElementById('planCtabs');
+  if(!el) return;
+  const comms = [...Object.keys(PLAN_STRUCT), 'Alumni'];
+  el.innerHTML = comms.map(c=>
+    `<button class="ctab ${c===planComm?'on':''}" onclick="setPlanComm('${c}')">${c}</button>`
+  ).join('');
+}
+function setPlanComm(c){ planComm=c; renderPlan(); }
+
 // ── Main render
 function renderPlan(){
-  const el = document.getElementById('planBody');
+  const el = document.getElementById('planCanvas');
   if(!el) return;
   if(!plan2027){ el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted)">Click ↺ Re-generate to build the 2027 plan from current data.</div>'; return; }
 
+  buildPlanCtabs();
+
+  if(planComm === 'Alumni'){
+    // Alumni view
+    const alumni = [...(plan2027._alumni||[])].sort((a,b)=>a.last.localeCompare(b.last));
+    const dz = planLocked?'':'ondragover="planAlumniDragOver(event)" ondragleave="planDragLeave(event)" ondrop="planAlumniDrop(event)"';
+    el.innerHTML = `
+      <div class="band">
+        <div class="band-hd">🎓 Alumni — Former Year 12 <span style="font-weight:400;font-size:.68rem">${planLocked?'· Unlock to drag back into a group':''}</span></div>
+        <div class="gcol" style="max-width:300px">
+          <div class="ghdr" style="background:linear-gradient(135deg,#374151,#4b5563)">
+            <span class="gname">Alumni</span><span class="gcnt">${alumni.length}</span>
+          </div>
+          <div style="padding:.45rem .5rem;display:flex;flex-direction:column;gap:.22rem;min-height:50px" id="pz-__alumni__" ${dz}>
+            ${alumni.map(s=>{
+              const draggable=!planLocked;
+              return `<div class="sc alumni-chip pdrag" id="pc-${s.id}"
+                ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'__alumni__') " ondragend="planDragEnd(event)"` : ''}
+                title="${s.last}, ${s.first}">
+                <div class="ypip" style="background:#94a3b8"></div>
+                <span class="sc-name">${s.last}, ${s.first}</span>
+                <span class="sc-yr" style="color:var(--muted)">Alumni</span>
+              </div>`;
+            }).join('')||'<div style="font-size:.72rem;color:var(--muted);font-style:italic">No alumni</div>'}
+          </div>
+        </div>
+      </div>`;
+    renderPlanSidebar();
+    return;
+  }
+
+  // Normal community view
+  const groups = getPlanCommData(planComm);
+  const commInfo = PLAN_STRUCT[planComm];
+
+  // For Karra, group by year level in bands; otherwise single band
   let html = '';
-
-  // ── MADLURTA
-  const madGroups = [...PLAN_STRUCT.Madlurta.groups, ...PLAN_STRUCT.Madlurta.special];
-  const madAll = madGroups.flatMap(g=>(plan2027[g]||[]));
-  html += `<div class="plan-comm" id="pcomm-Madlurta">
-    <div class="plan-comm-hdr">
-      <span class="plan-comm-name">Madlurta</span>
-      <span class="plan-comm-tag">${PLAN_STRUCT.Madlurta.band}</span>
-      <div class="plan-comm-totals">${renderCommTotals(madAll)}</div>
-    </div>
-    <div class="plan-groups-row">
-      ${PLAN_STRUCT.Madlurta.groups.map(g=>renderPlanCol(g,g,plan2027[g]||[])).join('')}
-      ${renderPlanCol('Kindy Entry 2027','Kindy Entry 2027',plan2027['Kindy Entry 2027']||[],'kindy-entry')}
-    </div>
-  </div>`;
-
-  // ── KURLANA
-  const kurGroups = [...PLAN_STRUCT.Kurlana.groups];
-  const kurTobe = plan2027['__tobe_Kurlana']||[];
-  const kurAll = [...kurGroups.flatMap(g=>plan2027[g]||[]), ...kurTobe];
-  html += `<div class="plan-comm" id="pcomm-Kurlana">
-    <div class="plan-comm-hdr">
-      <span class="plan-comm-name">Kurlana</span>
-      <span class="plan-comm-tag">${PLAN_STRUCT.Kurlana.band}</span>
-      <div class="plan-comm-totals">${renderCommTotals(kurAll)}</div>
-    </div>
-    <div class="plan-groups-row">
-      ${kurGroups.map(g=>renderPlanCol(g,g,plan2027[g]||[])).join('')}
-      ${renderPlanCol('__tobe_Kurlana','To Be Placed',kurTobe,'tobe')}
-    </div>
-  </div>`;
-
-  // ── WARTI
-  const warGroups = [...PLAN_STRUCT.Warti.groups];
-  const warTobe = plan2027['__tobe_Warti']||[];
-  const warAll = [...warGroups.flatMap(g=>plan2027[g]||[]), ...warTobe];
-  html += `<div class="plan-comm" id="pcomm-Warti">
-    <div class="plan-comm-hdr">
-      <span class="plan-comm-name">Warti</span>
-      <span class="plan-comm-tag">${PLAN_STRUCT.Warti.band}</span>
-      <div class="plan-comm-totals">${renderCommTotals(warAll)}</div>
-    </div>
-    <div class="plan-groups-row">
-      ${warGroups.map(g=>renderPlanCol(g,g,plan2027[g]||[])).join('')}
-      ${renderPlanCol('__tobe_Warti','To Be Placed',warTobe,'tobe')}
-    </div>
-  </div>`;
-
-  // ── KARRA (year level buckets)
-  html += renderKarraCol();
-
-  // ── WIRRA
-  const wirAll = plan2027['Ngakala']||[];
-  html += `<div class="plan-comm" id="pcomm-Wirra">
-    <div class="plan-comm-hdr">
-      <span class="plan-comm-name">Wirra</span>
-      <span class="plan-comm-tag">${PLAN_STRUCT.Wirra.band}</span>
-      <div class="plan-comm-totals">${renderCommTotals(wirAll)}</div>
-    </div>
-    <div class="plan-groups-row">
-      ${renderPlanCol('Ngakala','Ngakala',wirAll)}
-    </div>
-  </div>`;
-
-  // ── ALUMNI
-  const alumni = plan2027._alumni||[];
-  if(alumni.length){
-    const sortedAlumni = [...alumni].sort((a,b)=>a.last.localeCompare(b.last));
-    html += `<div class="plan-alumni">
-      <div class="plan-alumni-hdr">
-        🎓 Alumni (former Year 12) — ${alumni.length} students
-        <span style="font-size:.67rem;font-weight:400;color:var(--muted)">${planLocked?'Unlock to drag back into a group':''}</span>
-      </div>
-      <div class="plan-alumni-chips" id="pz-__alumni__"
-        ${planLocked?'':'ondragover="planAlumniDragOver(event)" ondragleave="planDragLeave(event)" ondrop="planAlumniDrop(event)"'}>
-        ${sortedAlumni.map(s=>renderPlanChip(s,'__alumni__')).join('')}
-      </div>
+  if(planComm === 'Karra'){
+    html += `<div class="band">
+      <div class="band-hd">Senior Students by Year Level</div>
+      <div class="groups-row">${groups.filter(g=>g.students.length>0).map(g=>renderPlanGroupCard(g)).join('')}</div>
+    </div>`;
+  } else {
+    html += `<div class="band">
+      <div class="band-hd">${commInfo?.band||planComm}</div>
+      <div class="groups-row">${groups.map(g=>renderPlanGroupCard(g)).join('')}</div>
     </div>`;
   }
 
   el.innerHTML = html;
+  renderPlanSidebar();
 }
 
 // ── Drag and drop for plan
@@ -3340,17 +3344,15 @@ function planDragStart(e, id, fromGroup){
 }
 
 function planDragEnd(e){
-  document.querySelectorAll('.pchip.dragging').forEach(el=>el.classList.remove('dragging'));
-  document.querySelectorAll('.plan-col.drop-over,.plan-col-body.drop-over,.plan-yr-body.drop-over,.plan-alumni-chips.drop-over')
-    .forEach(el=>el.classList.remove('drop-over'));
+  document.querySelectorAll('.sc.dragging').forEach(el=>el.classList.remove('dragging'));
+  document.querySelectorAll('[id^="pz-"]').forEach(el=>el.classList.remove('drop-over'));
   planDragId = null;
 }
 
 function planDragOver(e, toGroup){
   if(planLocked||!planDragId) return;
   e.preventDefault(); e.dataTransfer.dropEffect='move';
-  const zoneId = 'pz-'+toGroup.replace(/ /g,'_');
-  document.getElementById(zoneId)?.classList.add('drop-over');
+  e.currentTarget?.classList.add('drop-over');
 }
 
 function planDragLeave(e){
