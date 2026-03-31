@@ -41,8 +41,14 @@ function mapGradeLevel(code) {
   return "";
 }
 
+const LEAVING_GROUP = "__leaving__";
+
 function mapHomeroom(code) {
-  return HOMEROOM_MAP[code] || "__unassigned__";
+  const name = HOMEROOM_MAP[code];
+  if (!name) return "__unassigned__";
+  // Homeroom 498 = "Leaving" — return sentinel so the app routes to Departing
+  if (name.toLowerCase() === "leaving") return LEAVING_GROUP;
+  return name;
 }
 
 /**
@@ -167,4 +173,4 @@ function mapStudents(rows, profileRecords, valueLists) {
   return rows.map(row => mapStudent(row, profileMap, codeDescriptions, categoryDescriptions)).filter(Boolean);
 }
 
-module.exports = { mapStudents, mapStudent, HOMEROOM_MAP, mapGender, mapGradeLevel, mapHomeroom };
+module.exports = { mapStudents, mapStudent, HOMEROOM_MAP, mapGender, mapGradeLevel, mapHomeroom, LEAVING_GROUP };
