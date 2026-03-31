@@ -530,12 +530,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem">
           <div>
             <h3 style="font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;margin:0">🚪 Departing</h3>
-            <p style="font-size:.73rem;color:var(--muted);margin:.2rem 0 0">Students no longer in Veracross. Use <em>Mark as Left</em> once departure is confirmed.</p>
+            <p style="font-size:.73rem;color:var(--muted);margin:.2rem 0 0">Learners no longer in Veracross. Use <em>Mark as Left</em> once departure is confirmed.</p>
           </div>
           <span id="depCountBadge" style="background:#fee2e2;color:#dc2626;border-radius:12px;padding:.2rem .65rem;font-size:.75rem;font-weight:700"></span>
         </div>
         <div id="depList" style="display:flex;flex-direction:column;gap:.5rem"></div>
-        <p id="depEmpty" style="font-size:.78rem;color:var(--muted);display:none">No students currently in departing.</p>
+        <p id="depEmpty" style="font-size:.78rem;color:var(--muted);display:none">No learners currently in departing.</p>
       </div>
 
       <!-- Formerly Enrolled section -->
@@ -543,12 +543,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem">
           <div>
             <h3 style="font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;margin:0">📋 Formerly Enrolled</h3>
-            <p style="font-size:.73rem;color:var(--muted);margin:.2rem 0 0">Students whose departure has been formally confirmed.</p>
+            <p style="font-size:.73rem;color:var(--muted);margin:.2rem 0 0">Learners whose departure has been formally confirmed.</p>
           </div>
           <span id="leftCountBadge" style="background:#f1f5f9;color:#475569;border-radius:12px;padding:.2rem .65rem;font-size:.75rem;font-weight:700"></span>
         </div>
         <div id="leftList" style="display:flex;flex-direction:column;gap:.5rem"></div>
-        <p id="leftEmpty" style="font-size:.78rem;color:var(--muted);display:none">No students marked as formally left.</p>
+        <p id="leftEmpty" style="font-size:.78rem;color:var(--muted);display:none">No learners marked as formally left.</p>
       </div>
 
     </div>
@@ -713,7 +713,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       <div class="scard admin-only">
         <h3>🔄 Veracross API Sync</h3>
         <p style="font-size:.76rem;color:var(--muted);margin-bottom:.6rem">Pulls live student data directly from Veracross via the Azure Function. Runs automatically on login if data is more than 4 hours old. Use the button below or the <strong>Sync from Veracross</strong> button in the header to force an immediate pull.</p>
-        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">New students are added automatically. Students no longer in Veracross are moved to Departing. Field changes (name, year, gender) are queued for review.</p>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">New learners are added automatically. Learners no longer in Veracross are moved to Departing. Field changes (name, year, gender) are queued for review.</p>
         <div class="fg" style="margin-bottom:.75rem">
           <label>Azure Function URL <span style="font-weight:400;color:var(--muted)">(pre-configured)</span></label>
           <input class="fi" id="funcUrl" readonly style="background:var(--g50);color:var(--muted);font-size:.7rem">
@@ -798,7 +798,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       <div class="mtitle">Add Future Enrolment</div>
       <button class="mclose" onclick="closeModal('ovAdd')">✕</button>
     </div>
-    <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Adding to: <strong id="addToGroup"></strong></p>
+    <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Adding learner to: <strong id="addToGroup"></strong></p>
     <div class="frow">
       <div class="fg"><label>First Name</label><input class="fi" id="addFirst"></div>
       <div class="fg"><label>Last Name</label><input class="fi" id="addLast"></div>
@@ -1122,7 +1122,7 @@ function renderSidebar(){
   const cNonATSI=cStudents.filter(s=>s.atsi==='N').length;
 
   document.getElementById('sbStats').innerHTML=`
-    <div class="sp"><div class="sp-v">${students.length}</div><div class="sp-l">Total</div></div>
+    <div class="sp"><div class="sp-v">${students.length}</div><div class="sp-l">Total learners</div></div>
     <div class="sp"><div class="sp-v">${cStudents.length}</div><div class="sp-l">${comm}</div></div>
     <div class="sp" style="cursor:pointer" onclick="showLeavingList('departing')" title="Click to see departing students"><div class="sp-v">${departing.length}</div><div class="sp-l">Departing ↗</div></div>
     <div class="sp" style="cursor:pointer" onclick="showLeavingList('leaving')" title="Click to see possibly leaving students"><div class="sp-v">${students.filter(s=>s.leaving==='Y').length}</div><div class="sp-l">Poss. leaving ↗</div></div>`;
@@ -1273,7 +1273,7 @@ function toggleGroupView(group){
 function showLeavingList(type){
   const isDep = type==='departing';
   const list = isDep ? departing : students.filter(s=>s.leaving==='Y');
-  const title = isDep ? '🚪 Departing Students' : '🟠 Possibly Leaving';
+  const title = isDep ? '🚪 Departing Learners' : '🟠 Possibly Leaving';
   const html = list.length
     ? `<div style="display:flex;flex-wrap:wrap;gap:.4rem;padding:.5rem 0">`+
       list.map(s=>`<div style="background:${isDep?'#fee2e2':'#fff7ed'};border:1px solid ${isDep?'#fca5a5':'#fb923c'};border-radius:8px;padding:.3rem .65rem;font-size:.78rem">
@@ -1327,7 +1327,7 @@ function restoreStudent(id){
   if(!s) return;
   delete s.leftAt;
   students.push(s);
-  showToast(`${s.first} ${s.last} restored`); markUnsaved(); render();
+  showToast(`${s.first} ${s.last} restored to classes`); markUnsaved(); render();
 }
 
 function updateDepCount(){
@@ -1395,7 +1395,7 @@ function markAsLeft(id){
   left.push({...s, leftAt:new Date().toISOString()});
   markUnsaved(); saveToBlob(true);
   renderDepartingPage(); renderSidebar();
-  showToast(`${s.first} ${s.last} — confirmed as formally left`);
+  showToast(`${s.first} ${s.last} — marked as formerly enrolled`);
 }
 
 // ══════════════════════════════════════════════════
@@ -1657,7 +1657,7 @@ function renderCRModal(FIELD_LABELS){
   const newCount=items.filter(x=>x.type==='new').length;
   const conflictCount=items.filter(x=>x.type==='conflict').length;
   const missingCount=items.filter(x=>x.type==='missing').length;
-  document.getElementById('crSummary').textContent=`Found: ${newCount} new student${newCount!==1?'s':''}, ${conflictCount} field conflict${conflictCount!==1?'s':''}, ${missingCount} student${missingCount!==1?'s':''} not in Veracross export.`;
+  document.getElementById('crSummary').textContent=`Found: ${newCount} new learner${newCount!==1?'s':''}, ${conflictCount} field conflict${conflictCount!==1?'s':''}, ${missingCount} learner${missingCount!==1?'s':''} not in Veracross export.`;
 
   const FIELD_LABELS2=FIELD_LABELS||{first:'First name',last:'Last name',year:'Year level',gender:'Gender',atsi:'ATSI',nccd:'NCCD'};
 
@@ -1869,11 +1869,11 @@ function renderAnalytics(){
   if(crumb){
     const base_crumbs = [{label:'All students', idx:0}];
     const trail = [
-      `<span style="font-size:.75rem;font-weight:600;color:var(--hdr3);cursor:pointer" onclick="aDrillTo(0)">All students</span>`,
+      `<span style="font-size:.75rem;font-weight:600;color:var(--hdr3);cursor:pointer" onclick="aDrillTo(0)">All learners</span>`,
       ...aState.drillStack.map((d,i)=>
         `<span style="color:var(--muted);font-size:.75rem">›</span><span style="font-size:.75rem;font-weight:600;cursor:pointer;color:${i===aState.drillStack.length-1?'var(--txt)':'var(--hdr3)'}" onclick="aDrillTo(${i+1})">${d.label}</span>`)
     ];
-    crumb.innerHTML = trail.join('') + `<span style="margin-left:auto;font-size:.72rem;color:var(--muted)">${aGetBase().length} students</span>`;
+    crumb.innerHTML = trail.join('') + `<span style="margin-left:auto;font-size:.72rem;color:var(--muted)">${aGetBase().length} learners</span>`;
   }
 
   const charts = document.getElementById('analyCharts');
@@ -1985,7 +1985,7 @@ function renderAnalyticsOverview(charts){
   // Enrolment bar
   const yCounts = Object.fromEntries(YEAR_LEVELS.map(y=>[y,base.filter(s=>s.year===y).length]));
   const maxY = Math.max(...Object.values(yCounts), 1);
-  html += `<div class="acard" style="grid-column:1/-1"><h3>📚 Enrolments by Year Level <span style="font-size:.72rem;font-weight:400;color:var(--muted)">(${total} students${aState.commFilter!=='All'?' · '+aState.commFilter:''})</span></h3>`;
+  html += `<div class="acard" style="grid-column:1/-1"><h3>📚 Enrolments by Year Level <span style="font-size:.72rem;font-weight:400;color:var(--muted)">(${total} learners${aState.commFilter!=='All'?' · '+aState.commFilter:''})</span></h3>`;
   YEAR_LEVELS.filter(y=>yCounts[y]>0).forEach(y=>{
     html += `<div class="bc-row">
       <span class="bc-lbl" style="display:flex;align-items:center;gap:.3rem;justify-content:flex-end">
@@ -2353,64 +2353,78 @@ function updateVcBadge(){
 function processAutoSync(vcStudents){
   const newItems=[];
   const SYNC_FIELDS=['first','last','year','gender'];
+  const restorePrompts=[]; // departing learners who reappeared in a real homeroom
+
+  // ── Normalise incoming year levels
+  vcStudents = vcStudents.map(s=>({...s,year:normaliseYear(s.year)}));
 
   vcStudents.forEach(vc=>{
+    // Match against active learners first
     const existing=students.find(s=>
-      s.vcId===vc.vcId ||
+      (vc.vcId && s.vcId===vc.vcId) ||
       (s.first.toLowerCase()===vc.first.toLowerCase()&&s.last.toLowerCase()===vc.last.toLowerCase())
     );
+
     if(!existing){
-      // Auto-apply new students — land in their homeroom group or unassigned
-      newItems.push({type:'new',vc,autoApplied:true});
-      if(vc.group===LEAVING_GROUP){
-        departing.push({id:nextId++,...vc,group:vc.homeroom||'Leaving',wantsWith:[],notWith:[],family:'',leaving:'Y',future:'N'});
+      // Check if they're in departing — if so, and they're back in a real homeroom, prompt restore
+      const inDeparting = departing.find(s=>
+        (vc.vcId && s.vcId===vc.vcId)||
+        (s.first.toLowerCase()===vc.first.toLowerCase()&&s.last.toLowerCase()===vc.last.toLowerCase())
+      );
+
+      if(inDeparting){
+        if(vc.group !== LEAVING_GROUP){
+          // Reappeared in a real homeroom — queue prompt
+          restorePrompts.push({departing: inDeparting, vc});
+        } else {
+          // Still in Leaving homeroom — update ATSI/NCCD only
+          if(vc.atsi!==undefined) inDeparting.atsi=vc.atsi;
+          if(vc.nccd!==undefined) inDeparting.nccd=vc.nccd;
+        }
       } else {
-        students.push({id:nextId++,...vc,wantsWith:[],notWith:[],family:''});
+        // Brand new learner
+        newItems.push({type:'new',vc,autoApplied:true});
+        if(vc.group===LEAVING_GROUP){
+          // New learner already in Leaving homeroom → straight to Departing
+          departing.push({id:nextId++,...vc,group:vc.homeroom||'Leaving',wantsWith:[],notWith:[],family:'',leaving:'Y',future:'N'});
+        } else {
+          students.push({id:nextId++,...vc,wantsWith:[],notWith:[],family:''});
+        }
       }
     } else {
-      const diffs=SYNC_FIELDS.filter(f=>vc[f]&&vc[f].toLowerCase()!==(existing[f]||'').toLowerCase());
+      // Existing active learner
+      const diffs=SYNC_FIELDS.filter(f=>vc[f]&&vc[f].toLowerCase()!==(existing[f]||'')
+.toLowerCase());
       if(diffs.length){
-        // Queue conflicts for manual review — don't auto-apply
         newItems.push({type:'conflict',existing,vc,diffs,acceptedFields:new Set(diffs),autoApplied:false});
       }
-      // Always update vcId if we matched by name
       if(!existing.vcId && vc.vcId) existing.vcId=vc.vcId;
-      // Always update atsi and nccd from Veracross (authoritative source)
-      if(vc.atsi !== undefined) existing.atsi = vc.atsi;
-      if(vc.nccd !== undefined) existing.nccd = vc.nccd;
-      // If student's homeroom has moved to Leaving — move them to departing
+      if(vc.atsi!==undefined) existing.atsi=vc.atsi;
+      if(vc.nccd!==undefined) existing.nccd=vc.nccd;
+      // Learner moved into Leaving homeroom → move to Departing
       if(vc.group===LEAVING_GROUP){
         const idx=students.indexOf(existing);
         if(idx!==-1){
           students.splice(idx,1);
           departing.push({...existing,leaving:'Y'});
-          newItems.push({type:'departed_to_leaving',student:existing,autoApplied:true});
+          newItems.push({type:'to_leaving',student:existing,autoApplied:true});
         }
       }
     }
   });
-  // Also check if any existing student in departing array needs updating from VC
+
+  // ── Update ATSI/NCCD for learners already in departing
   departing.forEach(s=>{
-    const vc=vcStudents.find(v=>v.vcId===s.vcId||(v.first.toLowerCase()===s.first.toLowerCase()&&v.last.toLowerCase()===s.last.toLowerCase()));
-    if(vc){
-      if(vc.atsi!==undefined) s.atsi=vc.atsi;
-      if(vc.nccd!==undefined) s.nccd=vc.nccd;
-    }
+    const vc=vcStudents.find(v=>(v.vcId&&v.vcId===s.vcId)||(v.first.toLowerCase()===s.first.toLowerCase()&&v.last.toLowerCase()===s.last.toLowerCase()));
+    if(vc){ if(vc.atsi!==undefined) s.atsi=vc.atsi; if(vc.nccd!==undefined) s.nccd=vc.nccd; }
   });
 
-  // Handle students in app but absent from Veracross
-  // future:'Y' = manually pre-enrolled, not yet in Veracross — leave alone
-  // everyone else missing from Veracross → auto-move to Departing
+  // ── Learners in app but absent from Veracross entirely
   const toDepart=[];
   students.forEach(s=>{
-    if(s.future==='Y') return; // pre-enrolment — intentionally not in VC yet
-    const inVC=vcStudents.find(vc=>
-      (vc.vcId && vc.vcId===s.vcId) ||
-      (vc.first.toLowerCase()===s.first.toLowerCase()&&vc.last.toLowerCase()===s.last.toLowerCase())
-    );
-    if(!inVC){
-      toDepart.push(s);
-    }
+    if(s.future==='Y') return; // pre-enrolment — not in VC yet
+    const inVC=vcStudents.find(vc=>(vc.vcId&&vc.vcId===s.vcId)||(vc.first.toLowerCase()===s.first.toLowerCase()&&vc.last.toLowerCase()===s.last.toLowerCase()));
+    if(!inVC) toDepart.push(s);
   });
   toDepart.forEach(s=>{
     const idx=students.indexOf(s);
@@ -2419,25 +2433,97 @@ function processAutoSync(vcStudents){
     newItems.push({type:'missing',student:s,autoApplied:true});
   });
 
-  const added    = newItems.filter(i=>i.type==='new').length;
-  const conflicts= newItems.filter(i=>i.type==='conflict').length;
-  const departed = newItems.filter(i=>i.type==='missing').length;
+  // ── Learners in Departing who are now completely gone from Veracross → Formerly Enrolled
+  const toLeft=[];
+  departing.forEach(s=>{
+    if(s.future==='Y') return;
+    const inVC=vcStudents.find(vc=>(vc.vcId&&vc.vcId===s.vcId)||(vc.first.toLowerCase()===s.first.toLowerCase()&&vc.last.toLowerCase()===s.last.toLowerCase()));
+    if(!inVC) toLeft.push(s);
+  });
+  toLeft.forEach(s=>{
+    const idx=departing.indexOf(s);
+    if(idx!==-1) departing.splice(idx,1);
+    left.push({...s,leftAt:new Date().toISOString()});
+    newItems.push({type:'to_left',student:s,autoApplied:true});
+  });
 
-  // Store conflicts for manual review
+  const added     = newItems.filter(i=>i.type==='new').length;
+  const conflicts = newItems.filter(i=>i.type==='conflict').length;
+  const departed  = newItems.filter(i=>i.type==='missing'||i.type==='to_leaving').length;
+  const toLeftCnt = newItems.filter(i=>i.type==='to_left').length;
+
   pendingAutoItems = newItems.filter(i=>i.type==='conflict');
   updateVcBadge();
 
-  if(added||conflicts||departed){
-    markUnsaved();
-    render();
+  // ── Prompt for restore if any departing learners reappeared in a real homeroom
+  if(restorePrompts.length){
+    showRestorePrompts(restorePrompts);
+  }
+
+  if(added||conflicts||departed||toLeftCnt){
+    markUnsaved(); render(); saveToBlob(true);
     const parts=[];
-    if(added)     parts.push(`<strong>+${added}</strong> new student${added!==1?'s':''} added`);
-    if(departed)  parts.push(`<strong>${departed}</strong> moved to Departing (not in Veracross)`);
-    if(conflicts) parts.push(`<strong>${conflicts}</strong> field change${conflicts!==1?'s':''} need review — click Veracross Sync to resolve`);
-    showSyncBanner('☁ Veracross sync complete — '+parts.join(', ')+(conflicts?'':' '), conflicts?'warn':'ok');
+    if(added)     parts.push(`<strong>+${added}</strong> new learner${added!==1?'s':''} added`);
+    if(departed)  parts.push(`<strong>${departed}</strong> moved to Departing`);
+    if(toLeftCnt) parts.push(`<strong>${toLeftCnt}</strong> moved to Formerly Enrolled`);
+    if(conflicts) parts.push(`<strong>${conflicts}</strong> field change${conflicts!==1?'s':''} need review`);
+    showSyncBanner('☁ Veracross sync — '+parts.join(', '), conflicts?'warn':'ok');
   } else {
     showSyncBanner('☁ Veracross: no changes', 'ok');
   }
+}
+
+// ── Prompt to restore a departing learner who reappeared in Veracross
+function showRestorePrompts(prompts){
+  // Use generic modal to show restore options
+  const body = `
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem">
+      The following learners were in Departing but have reappeared in Veracross with a real homeroom. 
+      Do you want to restore them to their new class?
+    </p>
+    <div style="display:flex;flex-direction:column;gap:.5rem">
+      ${prompts.map((p,i)=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--g50);border:1px solid var(--g200);border-radius:7px;padding:.5rem .75rem;gap:.75rem">
+          <div>
+            <div style="font-weight:600;font-size:.82rem">${p.vc.last}, ${p.vc.first}</div>
+            <div style="font-size:.7rem;color:var(--muted)">${p.vc.year} · New homeroom: ${p.vc.group}</div>
+          </div>
+          <div style="display:flex;gap:.35rem;flex-shrink:0">
+            <button class="mbtn mbtn-primary" style="font-size:.72rem" onclick="confirmRestore(${i})">↩ Restore</button>
+            <button class="mbtn mbtn-ghost" style="font-size:.72rem" onclick="dismissRestore(${i})">Keep in Departing</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  document.getElementById('genModalTitle').textContent = '↩ Learners Back in Veracross';
+  document.getElementById('genModalBody').innerHTML = body;
+  // Store prompts for callbacks
+  window._restorePrompts = prompts;
+  openModal('genModal');
+}
+
+function confirmRestore(i){
+  const p = window._restorePrompts?.[i];
+  if(!p) return;
+  const idx = departing.findIndex(s=>s===p.departing);
+  if(idx!==-1){
+    const s = departing.splice(idx,1)[0];
+    const newGroup = ALL_GROUPS.includes(p.vc.group) ? p.vc.group : UNASSIGNED_GROUP;
+    students.push({...s, group:newGroup, year:p.vc.year, leaving:'N'});
+    markUnsaved(); saveToBlob(true); render();
+    showToast(`${s.first} ${s.last} restored to ${newGroup}`);
+  }
+  // Remove this prompt from the modal
+  window._restorePrompts[i] = null;
+  const remaining = window._restorePrompts.filter(Boolean);
+  if(!remaining.length){ closeModal('genModal'); }
+  else { showRestorePrompts(remaining); window._restorePrompts = remaining; }
+}
+
+function dismissRestore(i){
+  window._restorePrompts[i] = null;
+  const remaining = window._restorePrompts.filter(Boolean);
+  if(!remaining.length){ closeModal('genModal'); }
+  else { showRestorePrompts(remaining); window._restorePrompts = remaining; }
 }
 
 // Main auto-sync function — called on app open
@@ -2792,7 +2878,7 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
       <div class="doc-hdr-r">
         <strong>${today}</strong><br>
         Ngutu College<br>
-        ${list.length} student${list.length!==1?'s':''}
+        ${list.length} learner${list.length!==1?'s':''}
       </div>
     </div>
     ${purpose?`<div class="doc-purpose"><b>${purpose}</b> &nbsp;·&nbsp; ${group} &nbsp;·&nbsp; ${comm} &nbsp;·&nbsp; ${list.length} students</div>`:''}
@@ -2800,7 +2886,7 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
       <table class="roll-rtable${list.length>24?' compact':''}">
         <thead><tr>
           <th class="rc-num">#</th>
-          <th class="rc-name">Student Name</th>
+          <th class="rc-name">Learner Name</th>
           ${opts.year?'<th class="rc-year">Year Level</th>':''}
           ${colLabels.map(l=>`<th class="rc-chk">${l}</th>`).join('')}
           ${opts.notes?'<th>Notes</th>':''}
@@ -2820,7 +2906,7 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
     </div>
     <div class="doc-ftr">
       <div>
-        <div class="ftr-n">${list.length}<span>students</span></div>
+        <div class="ftr-n">${list.length}<span>learners</span></div>
         ${leavingCount?`<div style="font-size:.67rem;color:#fb923c;margin-top:.12rem">⚠ ${leavingCount} poss. leaving included</div>`:''}
       </div>
       <div class="ftr-note">Wardlirna Planner · ${purpose||'Roll'}<br>${today} · Internal use only</div>
@@ -2860,7 +2946,7 @@ function buildRollYearPage(year, yearStudents, opts, purpose, today, addBreak){
       <div class="doc-hdr-r">
         <strong>${today}</strong><br>
         Ngutu College<br>
-        ${list.length} student${list.length!==1?'s':''}
+        ${list.length} learner${list.length!==1?'s':''}
       </div>
     </div>
     ${purpose?`<div class="doc-purpose"><b>${purpose}</b> &nbsp;·&nbsp; ${year} &nbsp;·&nbsp; ${list.length} students</div>`:''}
@@ -2868,7 +2954,7 @@ function buildRollYearPage(year, yearStudents, opts, purpose, today, addBreak){
       <table class="roll-rtable${list.length>28?' compact':''}">
         <thead><tr>
           <th class="rc-num">#</th>
-          <th class="rc-name">Student Name</th>
+          <th class="rc-name">Learner Name</th>
           <th class="rc-year">Year Level</th>
           <th style="min-width:90px">Home Group</th>
           ${colLabels.map(l=>`<th class="rc-chk">${l}</th>`).join('')}
@@ -2890,7 +2976,7 @@ function buildRollYearPage(year, yearStudents, opts, purpose, today, addBreak){
     </div>
     <div class="doc-ftr">
       <div>
-        <div class="ftr-n">${list.length}<span>students</span></div>
+        <div class="ftr-n">${list.length}<span>learners</span></div>
         ${leavingCount?`<div style="font-size:.67rem;color:#fb923c;margin-top:.12rem">⚠ ${leavingCount} poss. leaving included</div>`:''}
       </div>
       <div class="ftr-note">Wardlirna Planner · ${purpose||'Roll'}<br>${today} · Internal use only</div>
@@ -2919,7 +3005,7 @@ function renderRoll(){
     const html = pages.map(({year,ys},i) =>
       buildRollYearPage(year, ys, opts, purpose, today, opts.pageBreak && i<pages.length-1)
     ).join('');
-    el.innerHTML = html || '<div class="preview-empty">No students found for selected year levels.</div>';
+    el.innerHTML = html || '<div class="preview-empty">No learners found for selected year levels.</div>';
 
   } else {
     // ── Group mode
@@ -2932,7 +3018,7 @@ function renderRoll(){
       if(rollSel.has(g)) pages.push({group:g,gs:students.filter(s=>s.group===g)});
     })));
     const html=pages.map(({group,gs},i)=>buildRollPage(group,gs,opts,purpose,today,opts.pageBreak&&i<pages.length-1)).join('');
-    el.innerHTML=html||'<div class="preview-empty">No students in selected groups.</div>';
+    el.innerHTML=html||'<div class="preview-empty">No learners in selected groups.</div>';
   }
 }
 
@@ -2985,6 +3071,32 @@ let plan2027 = null;
 let planLocked = true;
 let planDragId = null; // id of student being dragged in plan
 let planNextId = 90000; // separate ID space from main students
+
+function addKindyEntry(){
+  const first  = (document.getElementById('keFirst')?.value||'').trim();
+  const last   = (document.getElementById('keLast')?.value||'').trim();
+  const gender = document.getElementById('keGender')?.value||'';
+  const atsi   = document.getElementById('keAtsi')?.value||'N';
+  if(!first||!last){ showToast('Enter first and last name'); return; }
+  if(!plan2027) return;
+  plan2027['Kindy Entry 2027'] = plan2027['Kindy Entry 2027']||[];
+  plan2027['Kindy Entry 2027'].push({
+    id: planNextId++,
+    first, last, gender, atsi,
+    year: 'Kindergarten',
+    origYear: '',
+    nccd: 'nil',
+    origGroup: '',
+    future: 'Y',
+  });
+  // Clear fields
+  ['keFirst','keLast'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const kg=document.getElementById('keGender'); if(kg) kg.value='';
+  const ka=document.getElementById('keAtsi'); if(ka) ka.value='N';
+  savePlan2027(true);
+  renderPlan();
+  showToast(`${first} ${last} added to Kindy Entry 2027`);
+}
 
 function togglePlanLock(){
   planLocked = !planLocked;
@@ -3094,6 +3206,61 @@ function initPlan2027(force=false){
   savePlan2027(true);
 }
 
+function syncUpdatesPlan(){
+  if(!plan2027){ initPlan2027(true); return; }
+
+  const added=[], removed=[];
+  const ALL_PLAN_KEYS = [
+    ...PLAN_STRUCT.Madlurta.groups, 'Kindy Entry 2027',
+    ...PLAN_STRUCT.Kurlana.groups, '__tobe_Kurlana',
+    ...PLAN_STRUCT.Warti.groups, '__tobe_Warti',
+    ...PLAN_STRUCT.Karra.yearLevels,
+    ...PLAN_STRUCT.Wirra.groups,
+  ];
+
+  // Get all learner IDs currently in the plan (excluding alumni and manually-added kindy)
+  const planIds = new Set(
+    ALL_PLAN_KEYS.flatMap(k=>(plan2027[k]||[]).filter(s=>s.future!=='Y').map(s=>s.id))
+  );
+
+  // Add new learners from current year that aren't in the plan yet
+  students.forEach(s=>{
+    if(s.future==='Y') return; // skip pre-enrolments
+    const inPlan = ALL_PLAN_KEYS.some(k=>(plan2027[k]||[]).some(p=>p.id===s.id||
+      (p.first.toLowerCase()===s.first.toLowerCase()&&p.last.toLowerCase()===s.last.toLowerCase())));
+    const inAlumni = (plan2027._alumni||[]).some(p=>p.id===s.id);
+    if(!inPlan && !inAlumni){
+      const dest = plan2027GroupFor(s);
+      const planS = {id:s.id,first:s.first,last:s.last,year:PLAN_NEXT_YEAR[s.year]||s.year,
+        origYear:s.year,gender:s.gender,atsi:s.atsi,nccd:s.nccd,origGroup:s.group,future:'N'};
+      if(dest.comm==='__alumni__'){ plan2027._alumni=plan2027._alumni||[]; plan2027._alumni.push(planS); }
+      else if(dest.group==='__tobe__'){ const k='__tobe_'+dest.comm; plan2027[k]=plan2027[k]||[]; plan2027[k].push(planS); }
+      else if(dest.group==='__yr__'){ plan2027[dest.year]=plan2027[dest.year]||[]; plan2027[dest.year].push(planS); }
+      else { plan2027[dest.group]=plan2027[dest.group]||[]; plan2027[dest.group].push(planS); }
+      added.push(s);
+    }
+  });
+
+  // Remove learners from plan who are now in departing or left
+  const goneIds = new Set([...departing,...left].map(s=>s.id));
+  ALL_PLAN_KEYS.forEach(k=>{
+    if(!plan2027[k]) return;
+    const before = plan2027[k].length;
+    plan2027[k] = plan2027[k].filter(p=>{
+      if(goneIds.has(p.id)){ removed.push(p); return false; }
+      return true;
+    });
+  });
+
+  savePlan2027(true);
+  renderPlan();
+
+  const parts=[];
+  if(added.length) parts.push(`+${added.length} new learner${added.length!==1?'s':''} added to plan`);
+  if(removed.length) parts.push(`${removed.length} departed learner${removed.length!==1?'s':''} removed from plan`);
+  showToast(parts.length ? parts.join(', ') : 'Plan already up to date');
+}
+
 function confirmRegenPlan(){
   if(confirm('Re-generate the 2027 plan from current student data? This will overwrite any manual changes you have made.'))
     initPlan2027(true);
@@ -3160,7 +3327,7 @@ function renderPlanSidebar(){
   // Stats grid
   const statsEl = document.getElementById('planSbStats');
   if(statsEl) statsEl.innerHTML = `
-    <div class="sp"><div class="sp-v">${allStudents.length}</div><div class="sp-l">Total</div></div>
+    <div class="sp"><div class="sp-v">${allStudents.length}</div><div class="sp-l">Total learners</div></div>
     <div class="sp"><div class="sp-v">${st.atsi}</div><div class="sp-l">ATSI</div></div>`;
 
   // Year levels
@@ -3240,10 +3407,24 @@ function renderPlanGroupCard(g){
   }).join('');
 
   const addRow = g.type==='kindy-entry' ? `
-    <div style="padding:.35rem .5rem;border-top:1px solid var(--g200);display:flex;flex-direction:column;gap:.25rem">
+    <div style="padding:.4rem .5rem;border-top:1px solid var(--g200);display:flex;flex-direction:column;gap:.25rem">
       <div style="display:flex;gap:.25rem">
-        <input class="plan-add-f" id="keFirst" placeholder="First" onkeydown="if(event.key==='Enter')addKindyEntry()">
-        <input class="plan-add-l" id="keLast" placeholder="Last" onkeydown="if(event.key==='Enter')addKindyEntry()">
+        <input class="plan-add-f" id="keFirst" placeholder="First name" style="flex:1">
+        <input class="plan-add-l" id="keLast" placeholder="Last name" style="flex:1">
+      </div>
+      <div style="display:flex;gap:.25rem">
+        <select id="keGender" style="flex:1;padding:.2rem .28rem;border:1px solid var(--g200);border-radius:4px;font-size:.69rem;font-family:'DM Sans',sans-serif">
+          <option value="">Gender…</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Non-binary">Non-binary</option>
+        </select>
+        <select id="keAtsi" style="flex:1;padding:.2rem .28rem;border:1px solid var(--g200);border-radius:4px;font-size:.69rem;font-family:'DM Sans',sans-serif">
+          <option value="N">Non-Indigenous</option>
+          <option value="aboriginal">Aboriginal</option>
+          <option value="tsi">Torres Strait Islander</option>
+          <option value="both">Aboriginal &amp; TSI</option>
+        </select>
       </div>
       <button class="plan-add-btn" onclick="addKindyEntry()">+ Add student</button>
     </div>` : '';
