@@ -663,7 +663,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       <div id="planCtabs" style="display:flex;gap:.25rem;margin-left:.5rem"></div>
       <span style="font-size:.72rem;color:var(--muted);margin-left:.5rem">Saved separately from current year data.</span>
       <button class="plan-lock-btn" id="planLockBtn" onclick="togglePlanLock()">🔒 Locked</button>
-      <button class="mbtn mbtn-ghost" style="font-size:.72rem;margin-left:auto" onclick="confirmRegenPlan()">↺ Re-generate</button>
+      <button class="tbtn" onclick="syncUpdatesPlan()" title="Add new learners and remove departed ones — preserves all manual placements" style="color:var(--hdr3);font-weight:600;margin-left:auto">⟳ Sync updates</button>
+      <button class="mbtn mbtn-ghost" style="font-size:.72rem" onclick="confirmRegenPlan()">↺ Re-generate</button>
       <button class="mbtn mbtn-primary admin-only" style="font-size:.72rem" onclick="savePlan2027()">💾 Save Plan</button>
     </div>
     <!-- Plan body: sidebar + canvas -->
@@ -3219,9 +3220,81 @@ function initPlan2027(force=false){
   if(plan2027 && !force){
     renderPlan(); return;
   }
+  // Preserve manually-added Kindy Entry kids and any manual placements before rebuilding
+  const savedKindyEntry = plan2027?.['Kindy Entry 2027']?.filter(s=>s.future==='Y') || [];
+  // Preserve manual group overrides: track which learners were manually moved
+  // by comparing their origGroup to their current group in the plan
+  const manualPlacements = {}; // id → group key they were manually placed in
+  if(plan2027){
+    const ALL_PLAN_KEYS = [
+      ...PLAN_STRUCT.Madlurta.groups, 'Kindy Entry 2027',
+      ...PLAN_STRUCT.Kurlana.groups, '__tobe_Kurlana',
+      ...PLAN_STRUCT.Warti.groups, '__tobe_Warti',
+      ...PLAN_STRUCT.Karra.yearLevels,
+      ...PLAN_STRUCT.Wirra.groups,
+    ];
+    ALL_PLAN_KEYS.forEach(k=>{
+      (plan2027[k]||[]).forEach(s=>{
+        // If their current plan group differs from where they'd auto-route → manual placement
+        const autoGroup = getAutoGroup(s);
+        if(autoGroup && autoGroup !== k){
+          manualPlacements[s.id] = k;
+        }
+      });
+    });
+  }
+
   plan2027 = buildInitialPlan();
+
+  // Re-apply manual placements
+  if(Object.keys(manualPlacements).length){
+    const ALL_PLAN_KEYS2 = [
+      ...PLAN_STRUCT.Madlurta.groups, 'Kindy Entry 2027',
+      ...PLAN_STRUCT.Kurlana.groups, '__tobe_Kurlana',
+      ...PLAN_STRUCT.Warti.groups, '__tobe_Warti',
+      ...PLAN_STRUCT.Karra.yearLevels,
+      ...PLAN_STRUCT.Wirra.groups,
+    ];
+    Object.entries(manualPlacements).forEach(([id, targetKey])=>{
+      const numId = Number(id);
+      // Find and remove from wherever auto-placed
+      let moved = null;
+      ALL_PLAN_KEYS2.forEach(k=>{
+        if(moved) return;
+        const idx = (plan2027[k]||[]).findIndex(s=>s.id===numId);
+        if(idx!==-1){ moved = plan2027[k].splice(idx,1)[0]; }
+      });
+      if(moved){
+        plan2027[targetKey] = plan2027[targetKey]||[];
+        plan2027[targetKey].push(moved);
+      }
+    });
+  }
+
+  // Restore manually-added Kindy Entry kids (not from current students)
+  if(savedKindyEntry.length){
+    plan2027['Kindy Entry 2027'] = plan2027['Kindy Entry 2027']||[];
+    // Add back any that aren't already there (avoid duplicates)
+    savedKindyEntry.forEach(s=>{
+      const exists = plan2027['Kindy Entry 2027'].some(p=>p.id===s.id||
+        (p.first.toLowerCase()===s.first.toLowerCase()&&p.last.toLowerCase()===s.last.toLowerCase()));
+      if(!exists) plan2027['Kindy Entry 2027'].push(s);
+    });
+  }
+
   renderPlan();
   savePlan2027(true);
+}
+
+// Helper: get the auto-routed group key for a plan learner based on their origGroup/origYear
+function getAutoGroup(planS){
+  if(!planS.origYear) return null;
+  const mockStudent = {year: planS.origYear, group: planS.origGroup||'', future:'N'};
+  const dest = plan2027GroupFor(mockStudent);
+  if(dest.comm==='__alumni__') return '__alumni__';
+  if(dest.group==='__tobe__') return '__tobe_'+dest.comm;
+  if(dest.group==='__yr__') return dest.year;
+  return dest.group||null;
 }
 
 function syncUpdatesPlan(){
@@ -3242,8 +3315,10 @@ function syncUpdatesPlan(){
   );
 
   // Add new learners from current year that aren't in the plan yet
+  // Include future:'Y' learners who have been placed in a real group (expected enrolments)
+  // Skip future:'Y' learners with no group — not yet confirmed
   students.forEach(s=>{
-    if(s.future==='Y') return; // skip pre-enrolments
+    if(s.future==='Y' && (!s.group || s.group===UNASSIGNED_GROUP)) return; // skip unplaced pre-enrolments
     const inPlan = ALL_PLAN_KEYS.some(k=>(plan2027[k]||[]).some(p=>p.id===s.id||
       (p.first.toLowerCase()===s.first.toLowerCase()&&p.last.toLowerCase()===s.last.toLowerCase())));
     const inAlumni = (plan2027._alumni||[]).some(p=>p.id===s.id);
@@ -3280,8 +3355,14 @@ function syncUpdatesPlan(){
 }
 
 function confirmRegenPlan(){
-  if(confirm('Re-generate the 2027 plan from current student data? This will overwrite any manual changes you have made.'))
-    initPlan2027(true);
+  if(confirm('Re-generate the 2027 plan from current learner data? Your manually placed learners and Kindy Entry kids will be preserved.')){
+    // Load saved plan first if not in memory, so we can preserve manual placements
+    if(!plan2027){
+      loadPlan2027().then(()=>initPlan2027(true));
+    } else {
+      initPlan2027(true);
+    }
+  }
 }
 
 // ── Blob save/load for plan
