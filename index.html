@@ -529,8 +529,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       <div class="acard">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem">
           <div>
-            <h3 style="font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;margin:0">🚪 Departing</h3>
-            <p style="font-size:.73rem;color:var(--muted);margin:.2rem 0 0">Learners no longer in Veracross. Use <em>Mark as Left</em> once departure is confirmed.</p>
+            <h3 style="font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;margin:0">🚪 Departing Learners</h3>
+            <p style="font-size:.73rem;color:var(--muted);margin:.2rem 0 0">Learners in the <strong>Leaving</strong> homeroom in Veracross. Use <em>Mark as Left</em> once departure is confirmed.</p>
           </div>
           <span id="depCountBadge" style="background:#fee2e2;color:#dc2626;border-radius:12px;padding:.2rem .65rem;font-size:.75rem;font-weight:700"></span>
         </div>
@@ -2216,9 +2216,17 @@ async function loadFromBlob(){
     const res=await fetch(blobUrl('groupings.json'));
     if(res.ok){
       const d=await res.json();
-      students=(d.students||[]).map(s=>({...s,year:normaliseYear(s.year)}));
+      // Normalise year levels and move any students whose saved group starts with 'Leaving'
+      const rawStudents = (d.students||[]).map(s=>({...s,year:normaliseYear(s.year)}));
+      const leavingOnLoad = rawStudents.filter(s=>s.group&&s.group.toLowerCase().startsWith('leaving'));
+      students = rawStudents.filter(s=>!s.group||!s.group.toLowerCase().startsWith('leaving'));
       departing=(d.departing||[]).map(s=>({...s,year:normaliseYear(s.year)}));
       left=(d.left||[]).map(s=>({...s,year:normaliseYear(s.year)}));
+      // Move Leaving:* group learners into departing if not already there
+      leavingOnLoad.forEach(s=>{
+        const already = departing.some(d=>d.id===s.id||(d.first.toLowerCase()===s.first.toLowerCase()&&d.last.toLowerCase()===s.last.toLowerCase()));
+        if(!already) departing.push({...s,leaving:'Y'});
+      });
       lockedGroups=new Set(d.lockedGroups||[]);
       nextId=Math.max(...[...students,...departing,...(left||[])].map(s=>s.id),0)+1;
       setBlobStatus('ok'); clearUnsaved(); showToast('Loaded from Blob'); render();
@@ -2419,17 +2427,18 @@ function processAutoSync(vcStudents){
     if(vc){ if(vc.atsi!==undefined) s.atsi=vc.atsi; if(vc.nccd!==undefined) s.nccd=vc.nccd; }
   });
 
-  // ── Learners in app but absent from Veracross entirely
-  const toDepart=[];
+  // ── Learners in app but absent from Veracross entirely → straight to Formerly Enrolled
+  // (they didn't go through Leaving homeroom — they've simply gone)
+  const toLeft2=[];
   students.forEach(s=>{
     if(s.future==='Y') return; // pre-enrolment — not in VC yet
     const inVC=vcStudents.find(vc=>(vc.vcId&&vc.vcId===s.vcId)||(vc.first.toLowerCase()===s.first.toLowerCase()&&vc.last.toLowerCase()===s.last.toLowerCase()));
-    if(!inVC) toDepart.push(s);
+    if(!inVC) toLeft2.push(s);
   });
-  toDepart.forEach(s=>{
+  toLeft2.forEach(s=>{
     const idx=students.indexOf(s);
     if(idx!==-1) students.splice(idx,1);
-    departing.push({...s,leaving:'Y'});
+    left.push({...s,leftAt:new Date().toISOString()});
     newItems.push({type:'missing',student:s,autoApplied:true});
   });
 
@@ -2449,8 +2458,8 @@ function processAutoSync(vcStudents){
 
   const added     = newItems.filter(i=>i.type==='new').length;
   const conflicts = newItems.filter(i=>i.type==='conflict').length;
-  const departed  = newItems.filter(i=>i.type==='missing'||i.type==='to_leaving').length;
-  const toLeftCnt = newItems.filter(i=>i.type==='to_left').length;
+  const departed  = newItems.filter(i=>i.type==='to_leaving').length;
+  const toLeftCnt = newItems.filter(i=>i.type==='to_left'||i.type==='missing').length;
 
   pendingAutoItems = newItems.filter(i=>i.type==='conflict');
   updateVcBadge();
