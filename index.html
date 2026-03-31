@@ -1459,6 +1459,12 @@ function saveStudent(){
   s.wantsWith=document.getElementById('smWants').value.split(',').map(x=>x.trim()).filter(Boolean);
   s.notWith=document.getElementById('smNot').value.split(',').map(x=>x.trim()).filter(Boolean);
   s.family=document.getElementById('smFamily').value.trim();
+  // Also sync leaving flag to plan2027 if this learner appears there
+  if(plan2027){
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===editingId); if(p){ p.leaving=s.leaving; p.future=s.future; } });
+    if(document.getElementById('page-plan')?.classList.contains('on')) renderPlan();
+  }
   closeModal('ovStudent'); markUnsaved(); showToast('Saved'); render();
 }
 function markDeparting(){
@@ -3494,17 +3500,20 @@ function renderPlanGroupCard(g){
   const chips = sorted.map(s=>{
     const draggable = !planLocked;
     const isFuture = s.future==='Y';
+    const isLeaving = s.leaving==='Y';
     const yrCol = YEAR_COLORS[s.year]||'#94a3b8';
-    const chipCls = ['sc', draggable?'pdrag':'', isFuture?'new-enrol':''].filter(Boolean).join(' ');
-    const icons = isFuture ? `<span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;display:inline-block;margin-top:1px" title="New enrolment"></span>` : '';
+    const chipCls = ['sc', draggable?'pdrag':'', isFuture?'new-enrol':'', isLeaving?'leaving':''].filter(Boolean).join(' ');
+    const icons = [];
+    if(isFuture) icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;display:inline-block;margin-top:1px" title="New enrolment"></span>');
+    if(isLeaving) icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#fb923c;display:inline-block;margin-top:1px" title="Possibly leaving"></span>');
     return `<div class="${chipCls}" id="pc-${s.id}"
       ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'${g.key.replace(/'/g,"\\'")}') " ondragend="planDragEnd(event)"` : ''}
-      title="${s.last}, ${s.first} · ${s.year}${s.origYear&&s.origYear!==s.year?' (was '+s.origYear+')':''}${isFuture?' · Pre-enrolled':''}"
+      title="${s.last}, ${s.first} · ${s.year}${s.origYear&&s.origYear!==s.year?' (was '+s.origYear+')':''}${isFuture?' · Pre-enrolled':''}${isLeaving?' · Possibly leaving':''}"
       ondblclick="openStudentModal(${s.id})">
       <div class="ypip" style="background:${yrCol}"></div>
       <span class="sc-name">${s.last}, ${s.first}</span>
       <span class="sc-yr">${s.year.replace('Year ','Y').replace('Kindergarten','K').replace('Reception','Rec')}</span>
-      ${icons?`<div class="sc-icons">${icons}</div>`:''}
+      ${icons.length?`<div class="sc-icons">${icons.join('')}</div>`:''}
     </div>`;
   }).join('');
 
