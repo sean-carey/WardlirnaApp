@@ -258,7 +258,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 ::-webkit-scrollbar-thumb{background:var(--g200);border-radius:2px}
 
 /* ══ ROLL PRINT ══ */
-.roll-controls{width:238px;flex-shrink:0;background:#fff;border-right:1px solid var(--g200);display:flex;flex-direction:column;overflow-y:auto}
+.roll-controls{width:238px;flex-shrink:0;background:#fff;border-right:1px solid var(--g200);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
 .ctrl-block{padding:.75rem .85rem;border-bottom:1px solid var(--g100)}
 .ctrl-label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.45rem;display:block}
 .preset-row{display:flex;gap:.3rem}
@@ -568,24 +568,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         </div>
       </div>
 
-      <!-- Quick select (shared) -->
-      <div class="ctrl-block">
-        <span class="ctrl-label">Quick Select</span>
-        <div class="preset-row">
-          <button class="preset-btn" onclick="rollQuickAll()">All</button>
-          <button class="preset-btn" onclick="rollQuickNone()">Clear</button>
-        </div>
-      </div>
-
       <!-- Group mode: community accordion -->
-      <div class="ctrl-block" id="rGroupPanel" style="flex:1;min-height:0;overflow-y:auto">
-        <span class="ctrl-label">Communities &amp; Groups</span>
+      <div class="ctrl-block" id="rGroupPanel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem">
+          <span class="ctrl-label" style="margin-bottom:0">Communities &amp; Groups</span>
+          <div style="display:flex;gap:.25rem">
+            <button class="preset-btn" style="padding:.18rem .4rem;font-size:.68rem" onclick="rollQuickAll()">All</button>
+            <button class="preset-btn" style="padding:.18rem .4rem;font-size:.68rem" onclick="rollQuickNone()">Clear</button>
+          </div>
+        </div>
         <div id="rollAccordion"></div>
       </div>
 
       <!-- Year level mode: year checkboxes -->
-      <div class="ctrl-block" id="rYearPanel" style="flex:1;min-height:0;overflow-y:auto;display:none">
-        <span class="ctrl-label">Year Levels</span>
+      <div class="ctrl-block" id="rYearPanel" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem">
+          <span class="ctrl-label" style="margin-bottom:0">Year Levels</span>
+          <div style="display:flex;gap:.25rem">
+            <button class="preset-btn" style="padding:.18rem .4rem;font-size:.68rem" onclick="rollQuickAll()">All</button>
+            <button class="preset-btn" style="padding:.18rem .4rem;font-size:.68rem" onclick="rollQuickNone()">Clear</button>
+          </div>
+        </div>
         <div id="rollYearList"></div>
       </div>
 
