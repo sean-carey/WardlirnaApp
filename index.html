@@ -3509,7 +3509,8 @@ function renderPlanGroupCard(g){
     return `<div class="${chipCls}" id="pc-${s.id}"
       ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'${g.key.replace(/'/g,"\\'")}') " ondragend="planDragEnd(event)"` : ''}
       title="${s.last}, ${s.first} · ${s.year}${s.origYear&&s.origYear!==s.year?' (was '+s.origYear+')':''}${isFuture?' · Pre-enrolled':''}${isLeaving?' · Possibly leaving':''}"
-      ondblclick="openStudentModal(${s.id})">
+      ondblclick="openStudentModal(${s.id})"
+      oncontextmenu="openPlanCtxMenu(event,${s.id},'${g.key.replace(/'/g,"\\'")}')">
       <div class="ypip" style="background:${yrCol}"></div>
       <span class="sc-name">${s.last}, ${s.first}</span>
       <span class="sc-yr">${s.year.replace('Year ','Y').replace('Kindergarten','K').replace('Reception','Rec')}</span>
@@ -3566,6 +3567,97 @@ function buildPlanCtabs(){
 function setPlanComm(c){ planComm=c; renderPlan(); }
 
 // ── Main render
+
+// All valid plan destination groups for the move menu
+function getPlanMoveTargets(){
+  const targets = [];
+  // Madlurta
+  PLAN_STRUCT.Madlurta.groups.forEach(g=>targets.push({key:g, label:g, comm:'Madlurta'}));
+  targets.push({key:'Kindy Entry 2027', label:'Kindy Entry 2027', comm:'Madlurta'});
+  // Kurlana
+  PLAN_STRUCT.Kurlana.groups.forEach(g=>targets.push({key:g, label:g, comm:'Kurlana'}));
+  targets.push({key:'__tobe_Kurlana', label:'To Be Placed (Kurlana)', comm:'Kurlana'});
+  // Warti
+  PLAN_STRUCT.Warti.groups.forEach(g=>targets.push({key:g, label:g, comm:'Warti'}));
+  targets.push({key:'__tobe_Warti', label:'To Be Placed (Warti)', comm:'Warti'});
+  // Karra year levels
+  PLAN_STRUCT.Karra.yearLevels.forEach(y=>targets.push({key:y, label:y, comm:'Karra'}));
+  // Wirra
+  PLAN_STRUCT.Wirra.groups.forEach(g=>targets.push({key:g, label:g, comm:'Wirra'}));
+  // Alumni
+  targets.push({key:'__alumni__', label:'Alumni', comm:'Alumni'});
+  return targets;
+}
+
+function openPlanCtxMenu(e, id, fromKey){
+  e.preventDefault();
+  e.stopPropagation();
+  const menu = document.getElementById('ctxMenu');
+  const targets = getPlanMoveTargets().filter(t=>t.key!==fromKey);
+
+  // Group targets by community
+  const byComm = {};
+  targets.forEach(t=>{ if(!byComm[t.comm]) byComm[t.comm]=[];  byComm[t.comm].push(t); });
+
+  let html = `<div class="ctxi" onclick="openStudentModal(${id});closeCtxMenu()">✏️ Edit details</div>
+    <div class="ctxi-sep"></div>
+    <div style="padding:.2rem .85rem;font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Move to…</div>`;
+
+  Object.entries(byComm).forEach(([comm, items])=>{
+    html += `<div style="padding:.15rem .85rem;font-size:.63rem;font-weight:700;color:var(--hdr3);text-transform:uppercase;letter-spacing:.04em">${comm}</div>`;
+    items.forEach(t=>{
+      html += `<div class="ctxi" onclick="movePlanLearner(${id},'${fromKey.replace(/'/g,"\'")}','${t.key.replace(/'/g,"\'")}');closeCtxMenu()">${t.label}</div>`;
+    });
+  });
+
+  menu.innerHTML = html;
+  // Position menu
+  const x = Math.min(e.clientX, window.innerWidth-180);
+  const y = Math.min(e.clientY, window.innerHeight-300);
+  menu.style.left = x+'px';
+  menu.style.top  = y+'px';
+  menu.classList.add('show');
+  setTimeout(()=>document.addEventListener('click',closeCtxMenu,{once:true}),10);
+}
+
+function movePlanLearner(id, fromKey, toKey){
+  if(!plan2027) return;
+
+  // Find in source
+  let learner = null;
+  if(fromKey==='__alumni__'){
+    const idx=(plan2027._alumni||[]).findIndex(s=>s.id===id);
+    if(idx!==-1) learner=plan2027._alumni.splice(idx,1)[0];
+  } else {
+    const arr=plan2027[fromKey];
+    if(arr){ const idx=arr.findIndex(s=>s.id===id); if(idx!==-1) learner=arr.splice(idx,1)[0]; }
+  }
+  if(!learner) return;
+
+  // Update year if moving to/from Karra year buckets
+  if(PLAN_STRUCT.Karra.yearLevels.includes(toKey)) learner.year=toKey;
+  if(toKey==='__alumni__') learner.year='Alumni';
+
+  // Add to destination
+  if(toKey==='__alumni__'){
+    plan2027._alumni=plan2027._alumni||[];
+    plan2027._alumni.push(learner);
+  } else {
+    plan2027[toKey]=plan2027[toKey]||[];
+    plan2027[toKey].push(learner);
+  }
+
+  // Switch to the destination community if it's a different one
+  const destComm = getPlanMoveTargets().find(t=>t.key===toKey)?.comm;
+  if(destComm && destComm!=='Alumni' && destComm!==planComm){
+    planComm=destComm;
+  }
+
+  savePlan2027(true);
+  renderPlan();
+  showToast(`Moved to ${toKey==='__alumni__'?'Alumni':toKey.replace('__tobe_','To Be Placed — ')}`);
+}
+
 function renderPlan(){
   const el = document.getElementById('planCanvas');
   if(!el) return;
