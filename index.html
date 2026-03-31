@@ -1520,10 +1520,13 @@ const normaliseYear = y => {
 
 function parseHomroomToGroup(homeroom){
   if(!homeroom || homeroom.trim()==='') return UNASSIGNED_GROUP;
-  // "Leaving:Carey" or any homeroom starting with "Leaving" → departing
-  if(homeroom.trim().toLowerCase().startsWith('leaving')) return LEAVING_GROUP;
+  const trimmed = homeroom.trim();
+  // Sentinel already set by Azure Function
+  if(trimmed === LEAVING_GROUP) return LEAVING_GROUP;
+  // Any homeroom starting with "Leaving" → departing
+  if(trimmed.toLowerCase().startsWith('leaving')) return LEAVING_GROUP;
   // "Purli Wardli: Johnson" → "Purli"
-  const parts = homeroom.split(' Wardli');
+  const parts = trimmed.split(' Wardli');
   const name = parts[0].trim();
   // confirm it's a known group
   return ALL_GROUPS.includes(name) ? name : UNASSIGNED_GROUP;
@@ -2218,8 +2221,12 @@ async function loadFromBlob(){
       const d=await res.json();
       // Normalise year levels and move any students whose saved group starts with 'Leaving'
       const rawStudents = (d.students||[]).map(s=>({...s,year:normaliseYear(s.year)}));
-      const leavingOnLoad = rawStudents.filter(s=>s.group&&s.group.toLowerCase().startsWith('leaving'));
-      students = rawStudents.filter(s=>!s.group||!s.group.toLowerCase().startsWith('leaving'));
+      const isLeavingGroup = s => s.group && (
+        s.group === '__leaving__' ||
+        s.group.toLowerCase().startsWith('leaving')
+      );
+      const leavingOnLoad = rawStudents.filter(isLeavingGroup);
+      students = rawStudents.filter(s=>!isLeavingGroup(s));
       departing=(d.departing||[]).map(s=>({...s,year:normaliseYear(s.year)}));
       left=(d.left||[]).map(s=>({...s,year:normaliseYear(s.year)}));
       // Move Leaving:* group learners into departing if not already there
@@ -2360,6 +2367,8 @@ function updateVcBadge(){
 // - Field conflicts queued for later manual review
 function processAutoSync(vcStudents){
   const newItems=[];
+  // Helper: treat both '__leaving__' and plain 'Leaving' as the leaving sentinel
+  const isLeaving = g => g === LEAVING_GROUP || (g && g.toLowerCase() === 'leaving');
   const SYNC_FIELDS=['first','last','year','gender'];
   const restorePrompts=[]; // departing learners who reappeared in a real homeroom
 
@@ -2392,7 +2401,7 @@ function processAutoSync(vcStudents){
       } else {
         // Brand new learner
         newItems.push({type:'new',vc,autoApplied:true});
-        if(vc.group===LEAVING_GROUP){
+        if(isLeaving(vc.group)){
           // New learner already in Leaving homeroom → straight to Departing
           departing.push({id:nextId++,...vc,group:vc.homeroom||'Leaving',wantsWith:[],notWith:[],family:'',leaving:'Y',future:'N'});
         } else {
@@ -2410,7 +2419,7 @@ function processAutoSync(vcStudents){
       if(vc.atsi!==undefined) existing.atsi=vc.atsi;
       if(vc.nccd!==undefined) existing.nccd=vc.nccd;
       // Learner moved into Leaving homeroom → move to Departing
-      if(vc.group===LEAVING_GROUP){
+      if(isLeaving(vc.group)){
         const idx=students.indexOf(existing);
         if(idx!==-1){
           students.splice(idx,1);
