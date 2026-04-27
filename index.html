@@ -1742,14 +1742,11 @@ const METRICS = [
 ];
 
 function aGetBase(){
-  // Include active students + departing (Leaving homeroom) in all analytics
-  const departingActive = departing.filter(s=>s.leaving==='Y');
-  let all = [...students, ...departingActive];
-  let base = all.filter(s => {
+  // Active enrolled learners only — students array (includes poss. leaving, excludes Leaving homeroom)
+  let base = students.filter(s => {
     if(!showKindy && s.year==='Kindergarten') return false;
     if(aState.commFilter !== 'All'){
       const cg = STRUCT[aState.commFilter]?.flatMap(b=>b.groups) || [];
-      // Departing learners may not have a matching group — include them in All only
       if(!cg.includes(s.group)) return false;
     }
     return true;
@@ -1823,18 +1820,38 @@ function aRefresh(){ renderAnalytics(); }
 function aSetMetric(v){ aState.metric=v; renderAnalytics(); }
 function aSetComm(v){ aState.commFilter=v; renderAnalytics(); }
 
+// Analytics sidebar button helper — defined outside renderAnalytics to avoid re-definition
+function aBtn(active, label, icon){
+  return `<span style="display:flex;align-items:center;gap:.4rem;padding:.28rem .45rem;border-radius:5px;background:${active?'var(--hdr3)':'transparent'};color:${active?'#fff':'var(--txt)'}">
+    <span style="width:12px;height:12px;border-radius:50%;border:2px solid ${active?'#fff':'#94a3b8'};flex-shrink:0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      ${active?'<span style="width:5px;height:5px;border-radius:50%;background:#fff;display:block"></span>':''}
+    </span>${icon?icon+' ':''}${label}</span>`;
+}
+
 function renderAnalytics(){
-  // ── Sidebar buttons
-  function afBtn(active, label, icon, fn){
-    return `<div onclick="${fn}" style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;cursor:pointer;padding:.28rem .45rem;border-radius:5px;background:${active?'var(--hdr3)':'transparent'};color:${active?'#fff':'var(--txt)'};user-select:none">
-      <span style="width:12px;height:12px;border-radius:50%;border:2px solid ${active?'#fff':'#94a3b8'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
-        ${active?'<span style="width:5px;height:5px;border-radius:50%;background:#fff;display:block"></span>':''}
-      </span>${icon?icon+' ':''}${label}</div>`;
-  }
+  // ── Sidebar metric buttons
   const afM = document.getElementById('afMetric');
-  if(afM) afM.innerHTML = METRICS.map(m=>afBtn(aState.metric===m.id, m.label, m.icon, `aSetMetric('${m.id}')`)).join('');
+  if(afM){
+    afM.innerHTML = '';
+    METRICS.forEach(m=>{
+      const btn = document.createElement('div');
+      btn.innerHTML = aBtn(aState.metric===m.id, m.label, m.icon);
+      btn.style.cssText = 'cursor:pointer;font-size:.75rem;user-select:none';
+      btn.onclick = ()=>aSetMetric(m.id);
+      afM.appendChild(btn);
+    });
+  }
   const afC = document.getElementById('afComm');
-  if(afC) afC.innerHTML = ['All',...Object.keys(STRUCT)].map(c=>afBtn(aState.commFilter===c, c, '', `aSetComm('${c}')`)).join('');
+  if(afC){
+    afC.innerHTML = '';
+    ['All',...Object.keys(STRUCT)].forEach(c=>{
+      const btn = document.createElement('div');
+      btn.innerHTML = aBtn(aState.commFilter===c, c, '');
+      btn.style.cssText = 'cursor:pointer;font-size:.75rem;user-select:none';
+      btn.onclick = ()=>aSetComm(c);
+      afC.appendChild(btn);
+    });
+  }
 
   // Kindy toggle
   const kt = document.getElementById('kindyToggle');
@@ -1848,15 +1865,23 @@ function renderAnalytics(){
   const total = base.length || 1;
 
   // ── Header summary strip
-  const leavingCount = departing.filter(s=>s.leaving==='Y').length;
+  const leavingHomeroom = departing.filter(s=>s.leaving==='Y').length;
+  const possLeaving = base.filter(s=>s.leaving==='Y').length;
+  function statBox(n, label, color){
+    return `<div style="background:var(--g50);border-radius:8px;padding:.5rem .85rem;text-align:center;border:1px solid var(--g200)">
+      <div style="font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:800;color:${color};line-height:1">${n}</div>
+      <div style="font-size:.65rem;color:var(--muted);margin-top:.2rem;white-space:nowrap">${label}</div>
+    </div>`;
+  }
   let html = `<div class="acard" style="margin-bottom:.75rem">
-    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center">
-      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:var(--hdr2)">${base.length}</div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Total learners</div></div>
-      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#2dd4bf">${base.filter(s=>s.gender==='Male').length}</div><div style="font-size:.68rem;color:var(--muted)">Male</div></div>
-      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#fb923c">${base.filter(s=>s.gender==='Female').length}</div><div style="font-size:.68rem;color:var(--muted)">Female</div></div>
-      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#a78bfa">${base.filter(s=>s.gender==='Non-binary').length}</div><div style="font-size:.68rem;color:var(--muted)">Non-binary</div></div>
-      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#c2410c">${base.filter(s=>isATSI(s)).length}</div><div style="font-size:.68rem;color:var(--muted)">Aboriginal/TSI</div></div>
-      ${leavingCount?`<div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#fb923c">${leavingCount}</div><div style="font-size:.68rem;color:var(--muted)">In Leaving homeroom</div></div>`:''}
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:stretch">
+      ${statBox(base.length,'Enrolled','var(--hdr2)')}
+      ${statBox(base.filter(s=>s.gender==='Male').length,'Male','#2dd4bf')}
+      ${statBox(base.filter(s=>s.gender==='Female').length,'Female','#fb923c')}
+      ${statBox(base.filter(s=>s.gender==='Non-binary').length,'Non-binary','#a78bfa')}
+      ${statBox(base.filter(s=>isATSI(s)).length,'Aboriginal/TSI','#c2410c')}
+      ${possLeaving?statBox(possLeaving,'Poss. leaving','#fb923c'):''}
+      ${leavingHomeroom?statBox(leavingHomeroom,'Leaving homeroom','#ef4444'):''}
     </div>
   </div>`;
 
