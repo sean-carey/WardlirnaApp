@@ -1736,9 +1736,7 @@ let aState = {
 
 const METRICS = [
   {id:'overview', label:'Overview', icon:'📊'},
-  {id:'gender',   label:'Gender',   icon:'⚥'},
-  {id:'atsi',     label:'ATSI',     icon:'🌏'},
-  {id:'nccd',     label:'NCCD',     icon:'🎯'},
+  {id:'nccd',     label:'NCCD Support', icon:'🎯'},
 ];
 
 function aGetBase(){
@@ -1821,6 +1819,18 @@ function aSetMetric(v){ aState.metric=v; renderAnalytics(); }
 function aSetComm(v){ aState.commFilter=v; renderAnalytics(); }
 
 // Analytics sidebar button helper — defined outside renderAnalytics to avoid re-definition
+function aDonutSVG(segments, size=90){
+  const r=32,cx=45,cy=45,circ=2*Math.PI*r;
+  let offset=0, paths='';
+  const tot = segments.reduce((a,b)=>a+b.val,0)||1;
+  segments.forEach(({val,color,label})=>{
+    const dash=(val/tot)*circ;
+    paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"><title>${label}: ${val}</title></circle>`;
+    offset+=dash;
+  });
+  return `<svg class="donut-svg" width="${size}" height="${size}" viewBox="0 0 90 90">${paths}<text x="45" y="49" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">${tot}</text></svg>`;
+}
+
 function aBtn(active, label, icon){
   return `<span style="display:flex;align-items:center;gap:.4rem;padding:.28rem .45rem;border-radius:5px;background:${active?'var(--hdr3)':'transparent'};color:${active?'#fff':'var(--txt)'}">
     <span style="width:12px;height:12px;border-radius:50%;border:2px solid ${active?'#fff':'#94a3b8'};flex-shrink:0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -1865,34 +1875,59 @@ function renderAnalytics(){
   const total = base.length || 1;
 
   // ── Header summary strip
-  const leavingHomeroom = departing.filter(s=>s.leaving==='Y').length;
   const possLeaving = base.filter(s=>s.leaving==='Y').length;
-  function statBox(n, label, color){
-    return `<div style="background:var(--g50);border-radius:8px;padding:.5rem .85rem;text-align:center;border:1px solid var(--g200)">
-      <div style="font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:800;color:${color};line-height:1">${n}</div>
-      <div style="font-size:.65rem;color:var(--muted);margin-top:.2rem;white-space:nowrap">${label}</div>
+  const atsiCount   = base.filter(s=>isATSI(s)).length;
+  const nonIndigenous = base.filter(s=>!isATSI(s)).length;
+
+  function statBox(n, label, color, size='1.5rem'){
+    return `<div style="background:var(--g50);border-radius:8px;padding:.5rem .85rem;text-align:center;border:1px solid var(--g200);min-width:64px">
+      <div style="font-family:'Outfit',sans-serif;font-size:${size};font-weight:800;color:${color};line-height:1">${n}</div>
+      <div style="font-size:.62rem;color:var(--muted);margin-top:.25rem;white-space:nowrap">${label}</div>
     </div>`;
   }
+  function groupGap(){ return `<div style="width:1.25rem"></div>`; }
+
   let html = `<div class="acard" style="margin-bottom:.75rem">
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:stretch">
-      ${statBox(base.length,'Enrolled','var(--hdr2)')}
+    <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:stretch">
+      ${statBox(base.length,'Total learners','var(--hdr2)','2rem')}
+      ${groupGap()}
       ${statBox(base.filter(s=>s.gender==='Male').length,'Male','#2dd4bf')}
       ${statBox(base.filter(s=>s.gender==='Female').length,'Female','#fb923c')}
       ${statBox(base.filter(s=>s.gender==='Non-binary').length,'Non-binary','#a78bfa')}
-      ${statBox(base.filter(s=>isATSI(s)).length,'Aboriginal/TSI','#c2410c')}
-      ${possLeaving?statBox(possLeaving,'Poss. leaving','#fb923c'):''}
-      ${leavingHomeroom?statBox(leavingHomeroom,'Leaving homeroom','#ef4444'):''}
+      ${groupGap()}
+      ${statBox(atsiCount,'Aboriginal/TSI','#c2410c')}
+      ${statBox(nonIndigenous,'Non-Indigenous','var(--muted)')}
+      ${possLeaving ? groupGap()+''+statBox(possLeaving,'Poss. leaving','#fb923c') : ''}
     </div>
   </div>`;
 
   if(aState.metric === 'overview'){
-    // ── Overview: year level table across communities
+    // ── Table helpers
+    function thGroup(label, cols, color=''){
+      return `<th colspan="${cols}" style="text-align:center;border-bottom:2px solid var(--g200);padding-bottom:.3rem;${color?'color:'+color:''}">${label}</th>`;
+    }
+
+    // ── Year level table
     html += `<div class="acard wide"><h3>📊 Learners by Year Level — ${scope}</h3>`;
-    html += `<table class="enrol-table"><thead><tr>
-      <th>Year Level</th><th>Total</th>
-      <th style="color:#2dd4bf">Male</th><th style="color:#fb923c">Female</th><th style="color:#a78bfa">Non-binary</th>
-      <th style="color:#c2410c">ATSI</th><th>% ATSI</th><th>Poss. Leaving</th>
-    </tr></thead><tbody>`;
+    html += `<table class="enrol-table">
+      <thead>
+        <tr>
+          <th rowspan="2" style="vertical-align:bottom">Year Level</th>
+          <th rowspan="2" style="vertical-align:bottom;text-align:center">Total</th>
+          <th colspan="3" style="text-align:center;color:var(--muted);font-size:.62rem;border-bottom:1px solid var(--g200);padding-bottom:.2rem">Gender</th>
+          <th colspan="3" style="text-align:center;color:var(--muted);font-size:.62rem;border-bottom:1px solid var(--g200);padding-bottom:.2rem">Aboriginal &amp; TSI</th>
+          <th rowspan="2" style="vertical-align:bottom;text-align:center;color:#fb923c">Poss.<br>Leaving</th>
+        </tr>
+        <tr>
+          <th style="color:#2dd4bf;text-align:center">M</th>
+          <th style="color:#fb923c;text-align:center">F</th>
+          <th style="color:#a78bfa;text-align:center">NB</th>
+          <th style="color:#c2410c;text-align:center">ATSI</th>
+          <th style="color:var(--muted);text-align:center">Non-Ind.</th>
+          <th style="color:var(--muted);text-align:center">%</th>
+        </tr>
+      </thead><tbody>`;
+
     YEAR_LEVELS.forEach(y=>{
       const ys = base.filter(s=>s.year===y);
       if(!ys.length) return;
@@ -1900,117 +1935,215 @@ function renderAnalytics(){
       const f=ys.filter(s=>s.gender==='Female').length;
       const nb=ys.filter(s=>s.gender==='Non-binary').length;
       const a=ys.filter(s=>isATSI(s)).length;
+      const ni=ys.length-a;
       const pl=ys.filter(s=>s.leaving==='Y').length;
-      const pcts = lrRound([m,f,nb], ys.length);
       html += `<tr>
         <td style="font-weight:600;color:${YEAR_COLORS[y]||'#94a3b8'}">${y}</td>
-        <td style="font-weight:700">${ys.length}</td>
-        <td>${m}</td><td>${f}</td><td>${nb}</td>
-        <td style="color:#c2410c;font-weight:600">${a}</td>
-        <td style="color:var(--muted)">${ys.length?Math.round(a/ys.length*100)+'%':''}</td>
-        <td style="color:#fb923c">${pl||''}</td>
+        <td style="font-weight:700;text-align:center">${ys.length}</td>
+        <td style="text-align:center">${m||''}</td>
+        <td style="text-align:center">${f||''}</td>
+        <td style="text-align:center">${nb||''}</td>
+        <td style="text-align:center;color:#c2410c;font-weight:600">${a||''}</td>
+        <td style="text-align:center;color:var(--muted)">${ni}</td>
+        <td style="text-align:center;color:var(--muted);font-size:.72rem">${a?Math.round(a/ys.length*100)+'%':''}</td>
+        <td style="text-align:center;color:#fb923c">${pl||''}</td>
       </tr>`;
     });
-    // Totals row
-    const tm=base.filter(s=>s.gender==='Male').length, tf=base.filter(s=>s.gender==='Female').length, tnb=base.filter(s=>s.gender==='Non-binary').length, ta=base.filter(s=>isATSI(s)).length, tpl=base.filter(s=>s.leaving==='Y').length;
+
+    const tm=base.filter(s=>s.gender==='Male').length;
+    const tf=base.filter(s=>s.gender==='Female').length;
+    const tnb=base.filter(s=>s.gender==='Non-binary').length;
+    const ta=base.filter(s=>isATSI(s)).length;
+    const tni=base.length-ta;
+    const tpl=base.filter(s=>s.leaving==='Y').length;
     html += `<tr style="font-weight:700;border-top:2px solid var(--g200);background:var(--g50)">
-      <td>Total</td><td>${base.length}</td>
-      <td>${tm}</td><td>${tf}</td><td>${tnb}</td>
-      <td style="color:#c2410c">${ta}</td>
-      <td style="color:var(--muted)">${base.length?Math.round(ta/base.length*100)+'%':''}</td>
-      <td style="color:#fb923c">${tpl||''}</td>
+      <td>Total</td>
+      <td style="text-align:center">${base.length}</td>
+      <td style="text-align:center">${tm}</td>
+      <td style="text-align:center">${tf}</td>
+      <td style="text-align:center">${tnb||''}</td>
+      <td style="text-align:center;color:#c2410c">${ta}</td>
+      <td style="text-align:center;color:var(--muted)">${tni}</td>
+      <td style="text-align:center;color:var(--muted);font-size:.72rem">${Math.round(ta/base.length*100)}%</td>
+      <td style="text-align:center;color:#fb923c">${tpl||''}</td>
     </tr>`;
     html += `</tbody></table></div>`;
 
     // ── Community breakdown table
     if(aState.commFilter==='All'){
       html += `<div class="acard wide"><h3>📊 Learners by Learning Community</h3>`;
-      html += `<table class="enrol-table"><thead><tr>
-        <th>Community</th><th>Total</th>
-        <th style="color:#2dd4bf">Male</th><th style="color:#fb923c">Female</th><th style="color:#a78bfa">Non-binary</th>
-        <th style="color:#c2410c">ATSI</th><th>% ATSI</th>
-      </tr></thead><tbody>`;
+      html += `<table class="enrol-table">
+        <thead>
+          <tr>
+            <th rowspan="2" style="vertical-align:bottom">Community</th>
+            <th rowspan="2" style="vertical-align:bottom;text-align:center">Total</th>
+            <th colspan="3" style="text-align:center;color:var(--muted);font-size:.62rem;border-bottom:1px solid var(--g200);padding-bottom:.2rem">Gender</th>
+            <th colspan="3" style="text-align:center;color:var(--muted);font-size:.62rem;border-bottom:1px solid var(--g200);padding-bottom:.2rem">Aboriginal &amp; TSI</th>
+            <th rowspan="2" style="vertical-align:bottom;text-align:center;color:#fb923c">Poss.<br>Leaving</th>
+          </tr>
+          <tr>
+            <th style="color:#2dd4bf;text-align:center">M</th>
+            <th style="color:#fb923c;text-align:center">F</th>
+            <th style="color:#a78bfa;text-align:center">NB</th>
+            <th style="color:#c2410c;text-align:center">ATSI</th>
+            <th style="color:var(--muted);text-align:center">Non-Ind.</th>
+            <th style="color:var(--muted);text-align:center">%</th>
+          </tr>
+        </thead><tbody>`;
       Object.entries(STRUCT).forEach(([comm,bands])=>{
         const cg=bands.flatMap(b=>b.groups);
         const cs=base.filter(s=>cg.includes(s.group));
         if(!cs.length) return;
-        const m=cs.filter(s=>s.gender==='Male').length, f=cs.filter(s=>s.gender==='Female').length, nb=cs.filter(s=>s.gender==='Non-binary').length, a=cs.filter(s=>isATSI(s)).length;
-        html += `<tr><td style="font-weight:600">${comm}</td><td style="font-weight:700">${cs.length}</td>
-          <td>${m}</td><td>${f}</td><td>${nb}</td>
-          <td style="color:#c2410c;font-weight:600">${a}</td>
-          <td style="color:var(--muted)">${cs.length?Math.round(a/cs.length*100)+'%':''}</td></tr>`;
+        const m=cs.filter(s=>s.gender==='Male').length;
+        const f=cs.filter(s=>s.gender==='Female').length;
+        const nb=cs.filter(s=>s.gender==='Non-binary').length;
+        const a=cs.filter(s=>isATSI(s)).length;
+        const ni=cs.length-a;
+        const pl=cs.filter(s=>s.leaving==='Y').length;
+        html += `<tr>
+          <td style="font-weight:600">${comm}</td>
+          <td style="font-weight:700;text-align:center">${cs.length}</td>
+          <td style="text-align:center">${m||''}</td>
+          <td style="text-align:center">${f||''}</td>
+          <td style="text-align:center">${nb||''}</td>
+          <td style="text-align:center;color:#c2410c;font-weight:600">${a||''}</td>
+          <td style="text-align:center;color:var(--muted)">${ni}</td>
+          <td style="text-align:center;color:var(--muted);font-size:.72rem">${a?Math.round(a/cs.length*100)+'%':''}</td>
+          <td style="text-align:center;color:#fb923c">${pl||''}</td>
+        </tr>`;
       });
       html += `</tbody></table></div>`;
     }
-  } else {
-    // ── Gender / ATSI / NCCD breakdown by year level
-    const metric = aState.metric;
-    const metricInfo = METRICS.find(m=>m.id===metric);
-    const segs = [...new Set(base.map(s=>s[metric]).filter(Boolean))].sort();
 
-    // Donut summary
-    html += `<div class="acard" style="margin-bottom:.75rem"><h3>${metricInfo?.icon} ${metricInfo?.label} — ${scope}</h3>
-      <div class="donut-wrap">${aDonutSVG(segs.map(v=>({val:base.filter(s=>s[metric]===v).length, color:aColor(metric,v), label:aLabel(metric,v)})))}
-      <div class="donut-legend">`;
+    // ── Campus breakdown table
+    const campuses = {
+      'Junior Campus': ['Kindergarten','Reception','Year 1','Year 2','Year 3','Year 4','Year 5','Year 6'],
+      'Senior Campus': ['Year 7','Year 8','Year 9','Year 10','Year 11','Year 12'],
+    };
+    html += `<div class="acard wide"><h3>📊 Learners by Campus — ${scope}</h3>`;
+    html += `<table class="enrol-table">
+      <thead>
+        <tr>
+          <th rowspan="2" style="vertical-align:bottom">Campus</th>
+          <th rowspan="2" style="vertical-align:bottom;text-align:center">Total</th>
+          <th colspan="3" style="text-align:center;color:var(--muted);font-size:.62rem;border-bottom:1px solid var(--g200);padding-bottom:.2rem">Gender</th>
+          <th colspan="3" style="text-align:center;color:var(--muted);font-size:.62rem;border-bottom:1px solid var(--g200);padding-bottom:.2rem">Aboriginal &amp; TSI</th>
+          <th rowspan="2" style="vertical-align:bottom;text-align:center;color:#fb923c">Poss.<br>Leaving</th>
+        </tr>
+        <tr>
+          <th style="color:#2dd4bf;text-align:center">M</th>
+          <th style="color:#fb923c;text-align:center">F</th>
+          <th style="color:#a78bfa;text-align:center">NB</th>
+          <th style="color:#c2410c;text-align:center">ATSI</th>
+          <th style="color:var(--muted);text-align:center">Non-Ind.</th>
+          <th style="color:var(--muted);text-align:center">%</th>
+        </tr>
+      </thead><tbody>`;
+    Object.entries(campuses).forEach(([campus, years])=>{
+      const cs = base.filter(s=>years.includes(s.year));
+      if(!cs.length) return;
+      const m=cs.filter(s=>s.gender==='Male').length;
+      const f=cs.filter(s=>s.gender==='Female').length;
+      const nb=cs.filter(s=>s.gender==='Non-binary').length;
+      const a=cs.filter(s=>isATSI(s)).length;
+      const ni=cs.length-a;
+      const pl=cs.filter(s=>s.leaving==='Y').length;
+      html += `<tr>
+        <td style="font-weight:600">${campus}</td>
+        <td style="font-weight:700;text-align:center">${cs.length}</td>
+        <td style="text-align:center">${m||''}</td>
+        <td style="text-align:center">${f||''}</td>
+        <td style="text-align:center">${nb||''}</td>
+        <td style="text-align:center;color:#c2410c;font-weight:600">${a||''}</td>
+        <td style="text-align:center;color:var(--muted)">${ni}</td>
+        <td style="text-align:center;color:var(--muted);font-size:.72rem">${a?Math.round(a/cs.length*100)+'%':''}</td>
+        <td style="text-align:center;color:#fb923c">${pl||''}</td>
+      </tr>`;
+    });
+    // Totals
+    const ct=base.length, cm=base.filter(s=>s.gender==='Male').length, cf=base.filter(s=>s.gender==='Female').length;
+    const cnb=base.filter(s=>s.gender==='Non-binary').length, ca=base.filter(s=>isATSI(s)).length;
+    const cni=ct-ca, cpl=base.filter(s=>s.leaving==='Y').length;
+    html += `<tr style="font-weight:700;border-top:2px solid var(--g200);background:var(--g50)">
+      <td>Total</td>
+      <td style="text-align:center">${ct}</td>
+      <td style="text-align:center">${cm}</td>
+      <td style="text-align:center">${cf}</td>
+      <td style="text-align:center">${cnb||''}</td>
+      <td style="text-align:center;color:#c2410c">${ca}</td>
+      <td style="text-align:center;color:var(--muted)">${cni}</td>
+      <td style="text-align:center;color:var(--muted);font-size:.72rem">${Math.round(ca/ct*100)}%</td>
+      <td style="text-align:center;color:#fb923c">${cpl||''}</td>
+    </tr>`;
+    html += `</tbody></table></div>`;
+
+  } else {
+    // ── NCCD breakdown
+    const NCCD_SEG_LABELS = {supp:'Supplementary',subs:'Substantial',ext:'Extensive',qual:'Qualified',nil:'No support'};
+    const NCCD_SEG_COLORS = {supp:'#60a5fa',subs:'#f59e0b',ext:'#ef4444',qual:'#8b5cf6',nil:'#94a3b8'};
+    const segs = ['supp','subs','ext','qual'].filter(v=>base.some(s=>s.nccd===v));
+
+    // Donut
+    html += `<div class="acard" style="margin-bottom:.75rem"><h3>🎯 NCCD Support — ${scope}</h3>
+      <div class="donut-wrap">
+        ${aDonutSVG(segs.map(v=>({val:base.filter(s=>s.nccd===v).length, color:NCCD_SEG_COLORS[v], label:NCCD_SEG_LABELS[v]})))}
+        <div class="donut-legend">`;
     segs.forEach(v=>{
-      const n=base.filter(s=>s[metric]===v).length;
-      html += `<div class="dl-row"><div class="dl-dot" style="background:${aColor(metric,v)}"></div>
-        <span>${aLabel(metric,v)}: <strong>${n}</strong> <span style="color:var(--muted);font-size:.68rem">${Math.round(n/total*100)}%</span></span></div>`;
+      const n=base.filter(s=>s.nccd===v).length;
+      html += `<div class="dl-row"><div class="dl-dot" style="background:${NCCD_SEG_COLORS[v]}"></div>
+        <span>${NCCD_SEG_LABELS[v]}: <strong>${n}</strong> <span style="color:var(--muted);font-size:.68rem">${Math.round(n/total*100)}%</span></span></div>`;
     });
     html += `</div></div></div>`;
 
     // Table by year level
-    html += `<div class="acard wide"><h3>${metricInfo?.label} by Year Level — ${scope}</h3>`;
+    html += `<div class="acard wide"><h3>🎯 NCCD by Year Level — ${scope}</h3>`;
     html += `<table class="enrol-table"><thead><tr>
-      <th>Year Level</th><th>Total</th>
-      ${segs.map(v=>`<th style="color:${aColor(metric,v)}">${aLabel(metric,v)}</th>`).join('')}
-      ${segs.map(v=>`<th style="color:${aColor(metric,v)};font-size:.62rem">% ${aLabel(metric,v)}</th>`).join('')}
+      <th>Year Level</th><th style="text-align:center">Total</th>
+      ${segs.map(v=>`<th style="text-align:center;color:${NCCD_SEG_COLORS[v]}">${NCCD_SEG_LABELS[v]}</th>`).join('')}
+      <th style="text-align:center;color:var(--muted)">% on plan</th>
     </tr></thead><tbody>`;
     YEAR_LEVELS.forEach(y=>{
       const ys=base.filter(s=>s.year===y);
       if(!ys.length) return;
-      const counts=segs.map(v=>ys.filter(s=>s[metric]===v).length);
-      const pcts=lrRound(counts, ys.length);
-      html += `<tr><td style="font-weight:600;color:${YEAR_COLORS[y]||'#94a3b8'}">${y}</td>
-        <td style="font-weight:700">${ys.length}</td>
-        ${counts.map(n=>`<td>${n||''}</td>`).join('')}
-        ${pcts.map(p=>`<td style="color:var(--muted)">${ys.length?p+'%':''}</td>`).join('')}
+      const counts=segs.map(v=>ys.filter(s=>s.nccd===v).length);
+      const onPlan=counts.reduce((a,b)=>a+b,0);
+      html += `<tr>
+        <td style="font-weight:600;color:${YEAR_COLORS[y]||'#94a3b8'}">${y}</td>
+        <td style="text-align:center;font-weight:700">${ys.length}</td>
+        ${counts.map((n,i)=>`<td style="text-align:center;${n?'color:'+NCCD_SEG_COLORS[segs[i]]:''}">${n||''}</td>`).join('')}
+        <td style="text-align:center;color:var(--muted)">${ys.length?Math.round(onPlan/ys.length*100)+'%':''}</td>
       </tr>`;
     });
-    // Totals
-    const totals=segs.map(v=>base.filter(s=>s[metric]===v).length);
-    const totpcts=lrRound(totals,base.length);
+    const totCounts=segs.map(v=>base.filter(s=>s.nccd===v).length);
+    const totOnPlan=totCounts.reduce((a,b)=>a+b,0);
     html += `<tr style="font-weight:700;border-top:2px solid var(--g200);background:var(--g50)">
-      <td>Total</td><td>${base.length}</td>
-      ${totals.map(n=>`<td>${n}</td>`).join('')}
-      ${totpcts.map(p=>`<td style="color:var(--muted)">${p}%</td>`).join('')}
+      <td>Total</td><td style="text-align:center">${base.length}</td>
+      ${totCounts.map((n,i)=>`<td style="text-align:center;color:${NCCD_SEG_COLORS[segs[i]]}">${n}</td>`).join('')}
+      <td style="text-align:center;color:var(--muted)">${Math.round(totOnPlan/base.length*100)}%</td>
     </tr>`;
     html += `</tbody></table></div>`;
 
-    // Table by home group
-    if(aState.commFilter==='All' || true){
-      const groups = Object.values(STRUCT).flatMap(bands=>bands.flatMap(b=>b.groups));
-      const groupsWithData = groups.filter(g=>base.some(s=>s.group===g));
-      if(groupsWithData.length){
-        html += `<div class="acard wide"><h3>${metricInfo?.label} by Home Group — ${scope}</h3>`;
-        html += `<table class="enrol-table"><thead><tr>
-          <th>Group</th><th>Community</th><th>Total</th>
-          ${segs.map(v=>`<th style="color:${aColor(metric,v)}">${aLabel(metric,v)}</th>`).join('')}
-        </tr></thead><tbody>`;
-        Object.entries(STRUCT).forEach(([comm,bands])=>{
-          bands.forEach(band=>band.groups.forEach(g=>{
-            const gs=base.filter(s=>s.group===g);
-            if(!gs.length) return;
-            const counts=segs.map(v=>gs.filter(s=>s[metric]===v).length);
-            html += `<tr><td style="font-weight:600">${g}</td><td style="color:var(--muted);font-size:.72rem">${comm}</td>
-              <td style="font-weight:700">${gs.length}</td>
-              ${counts.map(n=>`<td>${n||''}</td>`).join('')}
-            </tr>`;
-          }));
-        });
-        html += `</tbody></table></div>`;
-      }
-    }
+    // Table by community
+    html += `<div class="acard wide"><h3>🎯 NCCD by Learning Community — ${scope}</h3>`;
+    html += `<table class="enrol-table"><thead><tr>
+      <th>Community</th><th style="text-align:center">Total</th>
+      ${segs.map(v=>`<th style="text-align:center;color:${NCCD_SEG_COLORS[v]}">${NCCD_SEG_LABELS[v]}</th>`).join('')}
+      <th style="text-align:center;color:var(--muted)">% on plan</th>
+    </tr></thead><tbody>`;
+    Object.entries(STRUCT).forEach(([comm,bands])=>{
+      const cg=bands.flatMap(b=>b.groups);
+      const cs=base.filter(s=>cg.includes(s.group));
+      if(!cs.length) return;
+      const counts=segs.map(v=>cs.filter(s=>s.nccd===v).length);
+      const onPlan=counts.reduce((a,b)=>a+b,0);
+      html += `<tr>
+        <td style="font-weight:600">${comm}</td>
+        <td style="text-align:center;font-weight:700">${cs.length}</td>
+        ${counts.map((n,i)=>`<td style="text-align:center;${n?'color:'+NCCD_SEG_COLORS[segs[i]]:''}">${n||''}</td>`).join('')}
+        <td style="text-align:center;color:var(--muted)">${cs.length?Math.round(onPlan/cs.length*100)+'%':''}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
   }
 
   charts.innerHTML = html;
