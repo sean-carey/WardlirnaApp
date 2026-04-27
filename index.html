@@ -437,7 +437,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 <div class="nav">
   <div class="ntab active" data-page="planner" onclick="showPage('planner')">📋 Wardlirna</div>
   <div class="ntab" data-page="analytics" onclick="showPage('analytics')">📊 Analytics</div>
-  <div class="ntab" data-page="departing" onclick="showPage('departing')">🚪 Departing <span id="depCount">(0)</span></div>
+  <div class="ntab" data-page="departing" onclick="showPage('departing')">🚪 Leaving <span id="depCount">(0)</span></div>
   <div class="ntab" data-page="roll" onclick="showPage('roll')">🖨 Roll Print</div>
   <div class="ntab" data-page="plan" onclick="showPage('plan')">📅 2027 Planning</div>
   <div class="ntab" data-page="settings" onclick="showPage('settings')">🔧 Settings</div>
@@ -501,7 +501,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
     <div id="analyFilter" style="width:210px;background:#fff;border-right:1px solid var(--g200);flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column;padding:.75rem .8rem;gap:.75rem">
 
       <div><div class="tlabel" style="margin-bottom:.4rem">Primary Metric</div><div id="afMetric" style="display:flex;flex-direction:column;gap:.25rem"></div></div>
-      <div><div class="tlabel" style="margin-bottom:.4rem">Break down by</div><div id="afBreak" style="display:flex;flex-direction:column;gap:.25rem"></div></div>
       <div><div class="tlabel" style="margin-bottom:.4rem">Filter Community</div><div id="afComm" style="display:flex;flex-direction:column;gap:.25rem"></div></div>
       <div>
         <div class="tlabel" style="margin-bottom:.4rem">Year Levels</div>
@@ -1731,46 +1730,27 @@ function crApply(){
 
 // --- State ---
 let aState = {
-  metric: 'overview',    // overview | gender | atsi | nccd
-  breakBy: 'year',       // year | group | community | combo
-  commFilter: 'All',     // All | Madlurta | Kurlana | Warti | Karra
-  drillStack: [],        // [{label, metric, value}]
+  metric: 'overview',  // overview | gender | atsi | nccd
+  commFilter: 'All',
 };
 
 const METRICS = [
   {id:'overview', label:'Overview', icon:'📊'},
-  {id:'gender', label:'Gender', icon:'⚥'},
-  {id:'atsi',   label:'ATSI Status', icon:'🌏'},
-  {id:'nccd',   label:'NCCD Support', icon:'🎯'},
-];
-const BREAKDOWNS = [
-  {id:'year',      label:'By Year Level'},
-  {id:'group',     label:'By Class/Group'},
-  {id:'community', label:'By Community'},
-  {id:'combo',     label:'Combination (ATSI × Gender)'},
+  {id:'gender',   label:'Gender',   icon:'⚥'},
+  {id:'atsi',     label:'ATSI',     icon:'🌏'},
+  {id:'nccd',     label:'NCCD',     icon:'🎯'},
 ];
 
 function aGetBase(){
-  const excKindy = false;
-  const excRec   = false;
-  let base = students.filter(s => {
+  // Include active students + departing (Leaving homeroom) in all analytics
+  const departingActive = departing.filter(s=>s.leaving==='Y');
+  let all = [...students, ...departingActive];
+  let base = all.filter(s => {
     if(!showKindy && s.year==='Kindergarten') return false;
-    if(excRec   && s.year==='Reception') return false;
     if(aState.commFilter !== 'All'){
       const cg = STRUCT[aState.commFilter]?.flatMap(b=>b.groups) || [];
+      // Departing learners may not have a matching group — include them in All only
       if(!cg.includes(s.group)) return false;
-    }
-    // apply drill filters
-    for(const d of aState.drillStack){
-      if(d.metric==='gender' && s.gender !== d.value) return false;
-      if(d.metric==='atsi'   && s.atsi   !== d.value) return false;
-      if(d.metric==='nccd'   && s.nccd   !== d.value) return false;
-      if(d.metric==='year'   && s.year   !== d.value) return false;
-      if(d.metric==='group'  && s.group  !== d.value) return false;
-      if(d.metric==='community'){
-        const cg2 = STRUCT[d.value]?.flatMap(b=>b.groups)||[];
-        if(!cg2.includes(s.group)) return false;
-      }
     }
     return true;
   });
@@ -1840,277 +1820,178 @@ function aAxisColor(breakBy, val){
 }
 
 function aRefresh(){ renderAnalytics(); }
-function aSetMetric(v){ aState.metric=v; aState.drillStack=[]; renderAnalytics(); }
-function aSetBreak(v){
-  // Overview only works with certain breakdowns — guard
-  if(aState.metric==='overview' && v==='combo') return;
-  aState.breakBy=v; aState.drillStack=[]; renderAnalytics();
-}
-function aSetComm(v){ aState.commFilter=v; aState.drillStack=[]; renderAnalytics(); }
-
-function aDrill(metric, value, label){
-  aState.drillStack.push({metric, value, label});
-  renderAnalytics();
-}
-
-function aDrillTo(idx){
-  aState.drillStack = aState.drillStack.slice(0, idx);
-  renderAnalytics();
-}
+function aSetMetric(v){ aState.metric=v; renderAnalytics(); }
+function aSetComm(v){ aState.commFilter=v; renderAnalytics(); }
 
 function renderAnalytics(){
-  // Init filter UI once
-  // Use div buttons instead of radio inputs — radios inside innerHTML lose state on re-render
+  // ── Sidebar buttons
   function afBtn(active, label, icon, fn){
     return `<div onclick="${fn}" style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;cursor:pointer;padding:.28rem .45rem;border-radius:5px;background:${active?'var(--hdr3)':'transparent'};color:${active?'#fff':'var(--txt)'};user-select:none">
       <span style="width:12px;height:12px;border-radius:50%;border:2px solid ${active?'#fff':'#94a3b8'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
-        ${active?`<span style="width:5px;height:5px;border-radius:50%;background:#fff;display:block"></span>`:''}
+        ${active?'<span style="width:5px;height:5px;border-radius:50%;background:#fff;display:block"></span>':''}
       </span>${icon?icon+' ':''}${label}</div>`;
   }
-
   const afM = document.getElementById('afMetric');
   if(afM) afM.innerHTML = METRICS.map(m=>afBtn(aState.metric===m.id, m.label, m.icon, `aSetMetric('${m.id}')`)).join('');
-
-  const afB = document.getElementById('afBreak');
-  if(afB) afB.innerHTML = BREAKDOWNS.map(b=>afBtn(aState.breakBy===b.id, b.label, '', `aSetBreak('${b.id}')`)).join('');
-
   const afC = document.getElementById('afComm');
   if(afC) afC.innerHTML = ['All',...Object.keys(STRUCT)].map(c=>afBtn(aState.commFilter===c, c, '', `aSetComm('${c}')`)).join('');
 
-  // Breadcrumb
-  const crumb = document.getElementById('analyCrumb');
-  if(crumb){
-    const base_crumbs = [{label:'All students', idx:0}];
-    const trail = [
-      `<span style="font-size:.75rem;font-weight:600;color:var(--hdr3);cursor:pointer" onclick="aDrillTo(0)">All learners</span>`,
-      ...aState.drillStack.map((d,i)=>
-        `<span style="color:var(--muted);font-size:.75rem">›</span><span style="font-size:.75rem;font-weight:600;cursor:pointer;color:${i===aState.drillStack.length-1?'var(--txt)':'var(--hdr3)'}" onclick="aDrillTo(${i+1})">${d.label}</span>`)
-    ];
-    crumb.innerHTML = trail.join('') + `<span style="margin-left:auto;font-size:.72rem;color:var(--muted)">${aGetBase().length} learners</span>`;
-  }
+  // Kindy toggle
+  const kt = document.getElementById('kindyToggle');
+  if(kt) kt.checked = showKindy;
 
   const charts = document.getElementById('analyCharts');
   if(!charts) return;
 
+  const base = aGetBase();
+  const scope = aState.commFilter==='All' ? 'All communities' : aState.commFilter;
+  const total = base.length || 1;
+
+  // ── Header summary strip
+  const leavingCount = departing.filter(s=>s.leaving==='Y').length;
+  let html = `<div class="acard" style="margin-bottom:.75rem">
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center">
+      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:var(--hdr2)">${base.length}</div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Total learners</div></div>
+      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#2dd4bf">${base.filter(s=>s.gender==='Male').length}</div><div style="font-size:.68rem;color:var(--muted)">Male</div></div>
+      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#fb923c">${base.filter(s=>s.gender==='Female').length}</div><div style="font-size:.68rem;color:var(--muted)">Female</div></div>
+      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#a78bfa">${base.filter(s=>s.gender==='Non-binary').length}</div><div style="font-size:.68rem;color:var(--muted)">Non-binary</div></div>
+      <div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#c2410c">${base.filter(s=>isATSI(s)).length}</div><div style="font-size:.68rem;color:var(--muted)">Aboriginal/TSI</div></div>
+      ${leavingCount?`<div style="text-align:center"><div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#fb923c">${leavingCount}</div><div style="font-size:.68rem;color:var(--muted)">In Leaving homeroom</div></div>`:''}
+    </div>
+  </div>`;
+
   if(aState.metric === 'overview'){
-    renderAnalyticsOverview(charts);
-    return;
-  }
+    // ── Overview: year level table across communities
+    html += `<div class="acard wide"><h3>📊 Learners by Year Level — ${scope}</h3>`;
+    html += `<table class="enrol-table"><thead><tr>
+      <th>Year Level</th><th>Total</th>
+      <th style="color:#2dd4bf">Male</th><th style="color:#fb923c">Female</th><th style="color:#a78bfa">Non-binary</th>
+      <th style="color:#c2410c">ATSI</th><th>% ATSI</th><th>Poss. Leaving</th>
+    </tr></thead><tbody>`;
+    YEAR_LEVELS.forEach(y=>{
+      const ys = base.filter(s=>s.year===y);
+      if(!ys.length) return;
+      const m=ys.filter(s=>s.gender==='Male').length;
+      const f=ys.filter(s=>s.gender==='Female').length;
+      const nb=ys.filter(s=>s.gender==='Non-binary').length;
+      const a=ys.filter(s=>isATSI(s)).length;
+      const pl=ys.filter(s=>s.leaving==='Y').length;
+      const pcts = lrRound([m,f,nb], ys.length);
+      html += `<tr>
+        <td style="font-weight:600;color:${YEAR_COLORS[y]||'#94a3b8'}">${y}</td>
+        <td style="font-weight:700">${ys.length}</td>
+        <td>${m}</td><td>${f}</td><td>${nb}</td>
+        <td style="color:#c2410c;font-weight:600">${a}</td>
+        <td style="color:var(--muted)">${ys.length?Math.round(a/ys.length*100)+'%':''}</td>
+        <td style="color:#fb923c">${pl||''}</td>
+      </tr>`;
+    });
+    // Totals row
+    const tm=base.filter(s=>s.gender==='Male').length, tf=base.filter(s=>s.gender==='Female').length, tnb=base.filter(s=>s.gender==='Non-binary').length, ta=base.filter(s=>isATSI(s)).length, tpl=base.filter(s=>s.leaving==='Y').length;
+    html += `<tr style="font-weight:700;border-top:2px solid var(--g200);background:var(--g50)">
+      <td>Total</td><td>${base.length}</td>
+      <td>${tm}</td><td>${tf}</td><td>${tnb}</td>
+      <td style="color:#c2410c">${ta}</td>
+      <td style="color:var(--muted)">${base.length?Math.round(ta/base.length*100)+'%':''}</td>
+      <td style="color:#fb923c">${tpl||''}</td>
+    </tr>`;
+    html += `</tbody></table></div>`;
 
-  if(aState.breakBy === 'combo'){
-    renderAnalyticsCombo(charts);
-    return;
-  }
+    // ── Community breakdown table
+    if(aState.commFilter==='All'){
+      html += `<div class="acard wide"><h3>📊 Learners by Learning Community</h3>`;
+      html += `<table class="enrol-table"><thead><tr>
+        <th>Community</th><th>Total</th>
+        <th style="color:#2dd4bf">Male</th><th style="color:#fb923c">Female</th><th style="color:#a78bfa">Non-binary</th>
+        <th style="color:#c2410c">ATSI</th><th>% ATSI</th>
+      </tr></thead><tbody>`;
+      Object.entries(STRUCT).forEach(([comm,bands])=>{
+        const cg=bands.flatMap(b=>b.groups);
+        const cs=base.filter(s=>cg.includes(s.group));
+        if(!cs.length) return;
+        const m=cs.filter(s=>s.gender==='Male').length, f=cs.filter(s=>s.gender==='Female').length, nb=cs.filter(s=>s.gender==='Non-binary').length, a=cs.filter(s=>isATSI(s)).length;
+        html += `<tr><td style="font-weight:600">${comm}</td><td style="font-weight:700">${cs.length}</td>
+          <td>${m}</td><td>${f}</td><td>${nb}</td>
+          <td style="color:#c2410c;font-weight:600">${a}</td>
+          <td style="color:var(--muted)">${cs.length?Math.round(a/cs.length*100)+'%':''}</td></tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+  } else {
+    // ── Gender / ATSI / NCCD breakdown by year level
+    const metric = aState.metric;
+    const metricInfo = METRICS.find(m=>m.id===metric);
+    const segs = [...new Set(base.map(s=>s[metric]).filter(Boolean))].sort();
 
-  const base = aGetBase();
-  const segs = aSegments(aState.metric, base);
-  const axisKeys = aAxisKeys(aState.breakBy, base);
-  const total = base.length || 1;
-
-  // Summary donut + big numbers row
-  let summaryHTML = `<div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-start">`;
-
-  // Donut
-  summaryHTML += `<div class="acard" style="flex-shrink:0"><h3>${METRICS.find(m=>m.id===aState.metric)?.icon} ${METRICS.find(m=>m.id===aState.metric)?.label} — ${aState.commFilter==='All'?'All communities':aState.commFilter}</h3><div class="donut-wrap">`;
-  summaryHTML += aDonutSVG(segs.map(v=>({val:base.filter(s=>s[aState.metric]===v).length, color:aColor(aState.metric,v), label:aLabel(aState.metric,v)})));
-  summaryHTML += `<div class="donut-legend">`;
-  segs.forEach(v=>{
-    const n = base.filter(s=>s[aState.metric]===v).length;
-    const pct = (n/total*100).toFixed(1);
-    summaryHTML += `<div class="dl-row" style="cursor:pointer" onclick="aDrill('${aState.metric}','${v}','${aLabel(aState.metric,v)}')">
-      <div class="dl-dot" style="background:${aColor(aState.metric,v)}"></div>
-      <span>${aLabel(aState.metric,v)}: <strong>${n}</strong> <span style="color:var(--muted);font-size:.68rem">${pct}%</span></span>
-      <span style="margin-left:.3rem;font-size:.68rem;color:var(--hdr3)">drill ›</span>
-    </div>`;
-  });
-  summaryHTML += `</div></div></div>`;
-
-  // Stacked bar chart by axis
-  summaryHTML += `<div class="acard" style="flex:1;min-width:300px"><h3>Breakdown by ${BREAKDOWNS.find(b=>b.id===aState.breakBy)?.label?.replace('By ','')}</h3>`;
-  axisKeys.forEach(key=>{
-    const keyStudents = base.filter(s=>aAxisVal(aState.breakBy,s)===key);
-    const kt = keyStudents.length||1;
-    summaryHTML += `<div class="sb-row" style="cursor:pointer" onclick="aDrill('${aState.breakBy}','${key.replace(/'/g,"\\'")}','${key.replace(/'/g,"\\'")}')">
-      <span class="sb-lbl" style="color:${aAxisColor(aState.breakBy,key)};font-weight:600">${key.replace('Year ','Yr ')}</span>
-      <div class="sb-track">`;
+    // Donut summary
+    html += `<div class="acard" style="margin-bottom:.75rem"><h3>${metricInfo?.icon} ${metricInfo?.label} — ${scope}</h3>
+      <div class="donut-wrap">${aDonutSVG(segs.map(v=>({val:base.filter(s=>s[metric]===v).length, color:aColor(metric,v), label:aLabel(metric,v)})))}
+      <div class="donut-legend">`;
     segs.forEach(v=>{
-      const n = keyStudents.filter(s=>s[aState.metric]===v).length;
-      if(n>0) summaryHTML += `<div class="sb-seg" style="width:${(n/kt*100).toFixed(1)}%;background:${aColor(aState.metric,v)}" title="${aLabel(aState.metric,v)}: ${n}"></div>`;
+      const n=base.filter(s=>s[metric]===v).length;
+      html += `<div class="dl-row"><div class="dl-dot" style="background:${aColor(metric,v)}"></div>
+        <span>${aLabel(metric,v)}: <strong>${n}</strong> <span style="color:var(--muted);font-size:.68rem">${Math.round(n/total*100)}%</span></span></div>`;
     });
-    summaryHTML += `</div>
-      <span style="font-size:.68rem;font-weight:700;color:var(--muted);width:24px">${keyStudents.length}</span>
-      <span style="font-size:.68rem;color:var(--hdr3);width:30px">drill›</span>
-    </div>`;
-  });
-  summaryHTML += `</div>`;
-  summaryHTML += `</div>`;
+    html += `</div></div></div>`;
 
-  // Detail table
-  summaryHTML += `<div class="acard wide"><h3>Data Table — ${METRICS.find(m=>m.id===aState.metric)?.label} × ${BREAKDOWNS.find(b=>b.id===aState.breakBy)?.label?.replace('By ','')}</h3>`;
-  summaryHTML += `<table class="enrol-table" id="aMainTable"><thead><tr>
-    <th>${BREAKDOWNS.find(b=>b.id===aState.breakBy)?.label?.replace('By ','')}</th>
-    <th>Total</th>
-    ${segs.map(v=>`<th style="color:${aColor(aState.metric,v)}">${aLabel(aState.metric,v)}</th>`).join('')}
-    ${segs.map(v=>`<th style="color:${aColor(aState.metric,v)};font-size:.62rem">% ${aLabel(aState.metric,v)}</th>`).join('')}
-  </tr></thead><tbody>`;
-  axisKeys.forEach(key=>{
-    const ks = base.filter(s=>aAxisVal(aState.breakBy,s)===key);
-    const kt = ks.length||1;
-    summaryHTML += `<tr style="cursor:pointer" onclick="aDrill('${aState.breakBy}','${key.replace(/'/g,"\\'")}','${key.replace(/'/g,"\\'")}')">
-      <td style="font-weight:600;color:${aAxisColor(aState.breakBy,key)}">${key}</td>
-      <td><strong>${ks.length}</strong></td>
-      ${segs.map(v=>`<td>${ks.filter(s=>s[aState.metric]===v).length}</td>`).join('')}
-      ${(()=>{const counts=segs.map(v=>ks.filter(s=>s[aState.metric]===v).length);const pcts=lrRound(counts,kt);return segs.map((_,i)=>`<td style="color:var(--muted)">${pcts[i]}%</td>`).join('');})()}
+    // Table by year level
+    html += `<div class="acard wide"><h3>${metricInfo?.label} by Year Level — ${scope}</h3>`;
+    html += `<table class="enrol-table"><thead><tr>
+      <th>Year Level</th><th>Total</th>
+      ${segs.map(v=>`<th style="color:${aColor(metric,v)}">${aLabel(metric,v)}</th>`).join('')}
+      ${segs.map(v=>`<th style="color:${aColor(metric,v)};font-size:.62rem">% ${aLabel(metric,v)}</th>`).join('')}
+    </tr></thead><tbody>`;
+    YEAR_LEVELS.forEach(y=>{
+      const ys=base.filter(s=>s.year===y);
+      if(!ys.length) return;
+      const counts=segs.map(v=>ys.filter(s=>s[metric]===v).length);
+      const pcts=lrRound(counts, ys.length);
+      html += `<tr><td style="font-weight:600;color:${YEAR_COLORS[y]||'#94a3b8'}">${y}</td>
+        <td style="font-weight:700">${ys.length}</td>
+        ${counts.map(n=>`<td>${n||''}</td>`).join('')}
+        ${pcts.map(p=>`<td style="color:var(--muted)">${ys.length?p+'%':''}</td>`).join('')}
+      </tr>`;
+    });
+    // Totals
+    const totals=segs.map(v=>base.filter(s=>s[metric]===v).length);
+    const totpcts=lrRound(totals,base.length);
+    html += `<tr style="font-weight:700;border-top:2px solid var(--g200);background:var(--g50)">
+      <td>Total</td><td>${base.length}</td>
+      ${totals.map(n=>`<td>${n}</td>`).join('')}
+      ${totpcts.map(p=>`<td style="color:var(--muted)">${p}%</td>`).join('')}
     </tr>`;
-  });
-  // Totals row
-  summaryHTML += `<tr style="background:var(--g100);font-weight:700">
-    <td>Total</td><td>${base.length}</td>
-    ${segs.map(v=>`<td>${base.filter(s=>s[aState.metric]===v).length}</td>`).join('')}
-    ${(()=>{const counts=segs.map(v=>base.filter(s=>s[aState.metric]===v).length);const pcts=lrRound(counts,total);return segs.map((_,i)=>`<td style="color:var(--muted)">${pcts[i]}%</td>`).join('');})()}
-  </tr></tbody></table></div>`;
+    html += `</tbody></table></div>`;
 
-  charts.innerHTML = summaryHTML;
-}
+    // Table by home group
+    if(aState.commFilter==='All' || true){
+      const groups = Object.values(STRUCT).flatMap(bands=>bands.flatMap(b=>b.groups));
+      const groupsWithData = groups.filter(g=>base.some(s=>s.group===g));
+      if(groupsWithData.length){
+        html += `<div class="acard wide"><h3>${metricInfo?.label} by Home Group — ${scope}</h3>`;
+        html += `<table class="enrol-table"><thead><tr>
+          <th>Group</th><th>Community</th><th>Total</th>
+          ${segs.map(v=>`<th style="color:${aColor(metric,v)}">${aLabel(metric,v)}</th>`).join('')}
+        </tr></thead><tbody>`;
+        Object.entries(STRUCT).forEach(([comm,bands])=>{
+          bands.forEach(band=>band.groups.forEach(g=>{
+            const gs=base.filter(s=>s.group===g);
+            if(!gs.length) return;
+            const counts=segs.map(v=>gs.filter(s=>s[metric]===v).length);
+            html += `<tr><td style="font-weight:600">${g}</td><td style="color:var(--muted);font-size:.72rem">${comm}</td>
+              <td style="font-weight:700">${gs.length}</td>
+              ${counts.map(n=>`<td>${n||''}</td>`).join('')}
+            </tr>`;
+          }));
+        });
+        html += `</tbody></table></div>`;
+      }
+    }
+  }
 
-function renderAnalyticsOverview(charts){
-  const base = aGetBase();
-  const total = base.length || 1;
-
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem">';
-
-  // Summary cards
-  ['gender','atsi','nccd'].forEach(metric=>{
-    const segs = aSegments(metric, base);
-    const m = METRICS.find(x=>x.id===metric);
-    html += `<div class="acard" style="cursor:pointer" onclick="aState.metric='${metric}';aState.drillStack=[];aRefresh()">
-      <h3>${m.icon} ${m.label} <span style="font-size:.68rem;font-weight:400;color:var(--hdr3)">click to explore ›</span></h3>
-      <div class="donut-wrap">
-        ${aDonutSVG(segs.map(v=>({val:base.filter(s=>s[metric]===v).length,color:aColor(metric,v),label:aLabel(metric,v)})))}
-        <div class="donut-legend">${segs.map(v=>{
-          const n=base.filter(s=>s[metric]===v).length;
-          return `<div class="dl-row"><div class="dl-dot" style="background:${aColor(metric,v)}"></div><span>${aLabel(metric,v)}: <strong>${n}</strong> <span style="color:var(--muted);font-size:.67rem">${(n/total*100).toFixed(0)}%</span></span></div>`;
-        }).join('')}</div>
-      </div>
-    </div>`;
-  });
-
-  // Enrolment bar
-  const yCounts = Object.fromEntries(YEAR_LEVELS.map(y=>[y,base.filter(s=>s.year===y).length]));
-  const maxY = Math.max(...Object.values(yCounts), 1);
-  html += `<div class="acard" style="grid-column:1/-1"><h3>📚 Enrolments by Year Level <span style="font-size:.72rem;font-weight:400;color:var(--muted)">(${total} learners${aState.commFilter!=='All'?' · '+aState.commFilter:''})</span></h3>`;
-  YEAR_LEVELS.filter(y=>yCounts[y]>0).forEach(y=>{
-    html += `<div class="bc-row">
-      <span class="bc-lbl" style="display:flex;align-items:center;gap:.3rem;justify-content:flex-end">
-        <span style="width:8px;height:8px;border-radius:50%;background:${YEAR_COLORS[y]};display:inline-block"></span>${y}
-      </span>
-      <div class="bc-track"><div class="bc-fill" style="width:${(yCounts[y]/maxY*100).toFixed(1)}%;background:${YEAR_COLORS[y]}"></div></div>
-      <span class="bc-val">${yCounts[y]}</span>
-      <span style="font-size:.65rem;color:var(--muted);width:36px">${(yCounts[y]/total*100).toFixed(1)}%</span>
-    </div>`;
-  });
-  html += '</div>';
-
-  html += '</div>';
   charts.innerHTML = html;
 }
 
-function renderAnalyticsCombo(charts){
-  const base = aGetBase();
-  const total = base.length || 1;
-
-  // ATSI × Gender × Year full cross-tab
-  const years = YEAR_LEVELS.filter(y=>base.some(s=>s.year===y));
-
-  let html = `<div style="display:flex;flex-direction:column;gap:1rem">`;
-
-  // ATSI × Gender summary matrix
-  html += `<div class="acard"><h3>🌏 × ⚥ ATSI × Gender Matrix</h3>
-    <table class="enrol-table"><thead><tr>
-      <th></th><th>Total</th><th style="color:#60a5fa">Male</th><th style="color:#f472b6">Female</th><th style="color:#a78bfa">Other</th><th>% of total</th>
-    </tr></thead><tbody>`;
-  [['Y','Aboriginal/TSI','#f59e0b'],['N','Non-Indigenous','#94a3b8']].forEach(([v,lbl,col])=>{
-    const g = base.filter(s=>s.atsi===v);
-    html += `<tr>
-      <td style="font-weight:700;color:${col}">${lbl}</td>
-      <td><strong>${g.length}</strong></td>
-      <td>${g.filter(s=>s.gender==='Male').length}</td>
-      <td>${g.filter(s=>s.gender==='Female').length}</td>
-      <td>${g.filter(s=>s.gender==='Non-binary').length}</td>
-      <td style="color:var(--muted)">${(g.length/total*100).toFixed(1)}%</td>
-    </tr>`;
-  });
-  html += `</tbody></table></div>`;
-
-  // ATSI × Gender × Year full table
-  html += `<div class="acard wide" id="aMainTable"><h3>🌏 × ⚥ × 📚 ATSI × Gender by Year Level</h3>
-    <table class="enrol-table"><thead><tr>
-      <th>Year</th><th>Total</th>
-      <th style="color:#f59e0b">ATSI</th><th style="color:#f59e0b">ATSI M</th><th style="color:#f59e0b">ATSI F</th>
-      <th>Non-ATSI</th><th>Non-ATSI M</th><th>Non-ATSI F</th>
-      <th>% ATSI</th>
-    </tr></thead><tbody>`;
-  years.forEach(y=>{
-    const ys=base.filter(s=>s.year===y);
-    const a=ys.filter(s=>isATSI(s)), na=ys.filter(s=>s.atsi==='N');
-    html += `<tr>
-      <td style="font-weight:600;color:${YEAR_COLORS[y]}">${y}</td>
-      <td><strong>${ys.length}</strong></td>
-      <td style="color:#f59e0b;font-weight:700">${a.length}</td>
-      <td>${a.filter(s=>s.gender==='Male').length}</td>
-      <td>${a.filter(s=>s.gender==='Female').length}</td>
-      <td>${na.length}</td>
-      <td>${na.filter(s=>s.gender==='Male').length}</td>
-      <td>${na.filter(s=>s.gender==='Female').length}</td>
-      <td style="color:var(--muted)">${ys.length?(a.length/ys.length*100).toFixed(0)+'%':'—'}</td>
-    </tr>`;
-  });
-  const a=base.filter(s=>isATSI(s)), na=base.filter(s=>s.atsi==='N');
-  html += `<tr style="background:var(--g100);font-weight:700">
-    <td>Total</td><td>${base.length}</td>
-    <td style="color:#f59e0b">${a.length}</td>
-    <td>${a.filter(s=>s.gender==='Male').length}</td>
-    <td>${a.filter(s=>s.gender==='Female').length}</td>
-    <td>${na.length}</td>
-    <td>${na.filter(s=>s.gender==='Male').length}</td>
-    <td>${na.filter(s=>s.gender==='Female').length}</td>
-    <td style="color:var(--muted)">${(a.length/total*100).toFixed(1)}%</td>
-  </tr></tbody></table></div>`;
-
-  // NCCD × ATSI by year
-  html += `<div class="acard wide"><h3>🎯 × 🌏 NCCD by ATSI Status by Year</h3>
-    <table class="enrol-table"><thead><tr>
-      <th>Year</th>
-      ${Object.keys(NCCD_COLORS).map(k=>`<th style="color:${NCCD_COLORS[k]}">${NCCD_LABELS[k]}</th><th style="color:${NCCD_COLORS[k]};font-size:.6rem">ATSI</th>`).join('')}
-    </tr></thead><tbody>`;
-  years.forEach(y=>{
-    const ys=base.filter(s=>s.year===y);
-    html += `<tr><td style="font-weight:600;color:${YEAR_COLORS[y]}">${y}</td>`;
-    Object.keys(NCCD_COLORS).forEach(k=>{
-      const n=ys.filter(s=>s.nccd===k);
-      html += `<td>${n.length}</td><td style="color:#f59e0b">${n.filter(s=>isATSI(s)).length}</td>`;
-    });
-    html += `</tr>`;
-  });
-  html += `</tbody></table></div>`;
-
-  html += '</div>';
-  charts.innerHTML = html;
-}
-
-function aDonutSVG(segments, size=90){
-  const r=32,cx=45,cy=45,circ=2*Math.PI*r;
-  let offset=0, paths='';
-  const tot = segments.reduce((a,b)=>a+b.val,0)||1;
-  segments.forEach(({val,color,label})=>{
-    const dash=(val/tot)*circ;
-    paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"><title>${label}: ${val}</title></circle>`;
-    offset+=dash;
-  });
-  return `<svg class="donut-svg" width="${size}" height="${size}" viewBox="0 0 90 90">${paths}<text x="45" y="49" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">${tot}</text></svg>`;
-}
-
-// ── EXPORT ──
+// ── EXPORT ──// ── EXPORT ──
 async function aExportPNG(){
   const charts = document.getElementById('analyCharts');
   if(!charts){ showToast('No chart to export'); return; }
