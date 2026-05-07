@@ -310,6 +310,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .roll-rtable.compact td{padding:.32rem .52rem;font-size:.72rem}
 .roll-rtable.compact th{padding:.26rem .52rem;font-size:.57rem}
 .roll-rtable.compact .rypill{font-size:.67rem}
+/* Roll print — suppress status colours, clean output only */
+.roll-preview .sc.leaving, .roll-preview .sc.new-enrol,
+.print-page .sc.leaving, .print-page .sc.new-enrol{
+  background:#fff !important; border-color:var(--g200) !important;
+}
+.roll-preview .sc.leaving .ypip, .roll-preview .sc.new-enrol .ypip,
+.print-page .sc.leaving .ypip, .print-page .sc.new-enrol .ypip{
+  box-shadow:none !important;
+}
+.roll-preview .sc-icons, .print-page .sc-icons{ display:none !important; }
+.roll-preview .rrl{ background:#fff !important; }
+.roll-preview .rltag, .print-page .rltag{ display:none !important; }
 .roll-rtable{width:100%;border-collapse:collapse;font-size:.77rem}
 .roll-rtable thead tr{background:var(--g50);border-bottom:2px solid var(--g200)}
 .roll-rtable th{padding:.36rem .52rem;text-align:left;font-size:.61rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
@@ -2960,9 +2972,9 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
           ${opts.sig?'<th class="rc-sig">Signature</th>':''}
         </tr></thead>
         <tbody>
-          ${list.map((s,i)=>`<tr class="${s.leaving==='Y'?'rrl':''}">
+          ${list.map((s,i)=>`<tr>
             <td class="rn">${String(i+1).padStart(2,'0')}</td>
-            <td><span class="rnlast">${s.last},</span><span class="rnfirst">${s.first}</span>${s.leaving==='Y'?'<span class="rltag">poss. leaving</span>':''}</td>
+            <td><span class="rnlast">${s.last},</span><span class="rnfirst">${s.first}</span></td>
             ${opts.year?`<td><span class="rypill"><span class="rydot" style="background:${YEAR_COLORS[s.year]||'#94a3b8'};border:2px solid ${YEAR_COLORS[s.year]||'#94a3b8'}"></span>${s.year}</span></td>`:''}
             ${[...Array(nChk)].map(()=>'<td style="text-align:center"><span class="rchkbox"></span></td>').join('')}
             ${opts.notes?'<td><span class="rnoteline"></span></td>':''}
@@ -2974,7 +2986,7 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
     <div class="doc-ftr">
       <div>
         <div class="ftr-n">${list.length}<span>learners</span></div>
-        ${leavingCount?`<div style="font-size:.67rem;color:#fb923c;margin-top:.12rem">⚠ ${leavingCount} poss. leaving included</div>`:''}
+        
       </div>
       <div class="ftr-note">Wardlirna Planner · ${purpose||'Roll'}<br>${today} · Internal use only</div>
     </div>
@@ -3029,9 +3041,9 @@ function buildRollYearPage(year, yearStudents, opts, purpose, today, addBreak){
           ${opts.sig?'<th class="rc-sig">Signature</th>':''}
         </tr></thead>
         <tbody>
-          ${list.map((s,i)=>`<tr class="${s.leaving==='Y'?'rrl':''}">
+          ${list.map((s,i)=>`<tr>
             <td class="rn">${String(i+1).padStart(2,'0')}</td>
-            <td><span class="rnlast">${s.last},</span><span class="rnfirst">${s.first}</span>${s.leaving==='Y'?'<span class="rltag">poss. leaving</span>':''}</td>
+            <td><span class="rnlast">${s.last},</span><span class="rnfirst">${s.first}</span></td>
             <td><span class="rypill"><span class="rydot" style="background:${YEAR_COLORS[s.year]||'#94a3b8'};border:2px solid ${YEAR_COLORS[s.year]||'#94a3b8'}"></span>${s.year}</span></td>
             <td style="font-size:.71rem;color:var(--muted)">${s.group}</td>
             ${[...Array(nChk)].map(()=>'<td style="text-align:center"><span class="rchkbox"></span></td>').join('')}
@@ -3044,7 +3056,7 @@ function buildRollYearPage(year, yearStudents, opts, purpose, today, addBreak){
     <div class="doc-ftr">
       <div>
         <div class="ftr-n">${list.length}<span>learners</span></div>
-        ${leavingCount?`<div style="font-size:.67rem;color:#fb923c;margin-top:.12rem">⚠ ${leavingCount} poss. leaving included</div>`:''}
+        
       </div>
       <div class="ftr-note">Wardlirna Planner · ${purpose||'Roll'}<br>${today} · Internal use only</div>
     </div>
