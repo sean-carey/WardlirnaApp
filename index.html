@@ -764,7 +764,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       <div id="planCtabs" style="display:flex;gap:.25rem;margin-left:.5rem"></div>
       <span style="font-size:.72rem;color:var(--muted);margin-left:.5rem">Saved separately from current year data.</span>
       <button class="plan-lock-btn" id="planLockBtn" onclick="togglePlanLock()">🔒 Locked</button>
-      <button class="tbtn" onclick="syncUpdatesPlan()" title="Add new learners and remove departed ones — preserves all manual placements" style="color:var(--hdr3);font-weight:600;margin-left:auto">⟳ Sync updates</button>
+      <button class="tbtn" onclick="syncUpdatesPlan()" title="2027 syncs automatically on open — click to manually check now" style="color:var(--muted);font-size:.7rem;margin-left:auto">⟳ Refresh from Wardlirna</button>
       <button class="mbtn" id="planSyncFlagBtn" style="font-size:.72rem;background:#fffbeb;border-color:#f59e0b;color:#b45309;display:none" onclick="clearSyncFlags()" title="Veracross sync moved or flagged these learners — review their chips then dismiss">⚠ Review sync changes</button>
       <button class="mbtn mbtn-ghost" style="font-size:.72rem" onclick="confirmRegenPlan()">↺ Re-generate</button>
       <button class="mbtn mbtn-primary admin-only" style="font-size:.72rem" onclick="savePlan2027()">💾 Save Plan</button>
@@ -3410,9 +3410,10 @@ function plan2027GroupStats(students){
   const male   = active.filter(s => s.gender === 'Male').length;
   const female = active.filter(s => s.gender === 'Female').length;
   const nb     = active.filter(s => s.gender === 'Non-binary').length;
-  const atsiY  = active.filter(s => s.atsi === true || s.atsi === 'Y').length;
-  const atsiN  = active.filter(s => s.atsi === false || s.atsi === 'N').length;
-  const atsiUnk = total - atsiY - atsiN;
+  // Use isATSI() to catch all ATSI values: 'Y', 'aboriginal', 'tsi', 'both', true
+  const atsiY  = active.filter(s => isATSI(s)).length;
+  const atsiN  = total - atsiY;
+  const atsiUnk = 0; // isATSI covers all known positive values; everything else is non-ATSI
   const byYear = {};
   active.forEach(s => { byYear[s.year] = (byYear[s.year]||0)+1; });
   return {total, male, female, nb, atsiY, atsiN, atsiUnk, byYear};
@@ -3454,12 +3455,14 @@ function build2027OverviewHTML(today){
       const displayName = KARRA_KEY_LABEL[g.name] || g.name.replace('__tobe_Karra_','To Be Placed — Year ').replace('__tobe_','To Be Placed — ');
       const atsiPct = st.total ? Math.round(st.atsiY/st.total*100) : 0;
       const yearCells = yearCols.map(y => `<td style="text-align:center;font-size:.72rem">${st.byYear[y]||'—'}</td>`).join('');
+      const nonAtsiPct = st.total ? Math.round((st.total-st.atsiY)/st.total*100) : 0;
       summaryRows += `<tr>
         <td style="padding-left:1rem;font-size:.78rem">${displayName}</td>
         <td style="text-align:center;font-weight:600">${st.total}</td>
         <td style="text-align:center;font-size:.72rem">${st.male}</td>
         <td style="text-align:center;font-size:.72rem">${st.female}</td>
         <td style="text-align:center;font-size:.72rem">${st.atsiY}${atsiPct?` <span style="color:var(--muted)">(${atsiPct}%)</span>`:``}</td>
+        <td style="text-align:center;font-size:.72rem">${st.total-st.atsiY}${nonAtsiPct?` <span style="color:var(--muted)">(${nonAtsiPct}%)</span>`:``}</td>
         ${yearCells}
       </tr>`;
       grandTotal += st.total; grandMale += st.male; grandFemale += st.female;
@@ -3484,7 +3487,7 @@ function build2027OverviewHTML(today){
       const yearRows = yearCols.filter(y => st.byYear[y]).map(y => {
         const ys = active.filter(s => s.year === y);
         const byG = genders.map(gn => ys.filter(s=>s.gender===gn).length);
-        const atsiY = ys.filter(s=>s.atsi===true||s.atsi==='Y').length;
+        const atsiY = ys.filter(s=>isATSI(s)).length;
         return `<tr>
           <td style="font-size:.7rem;color:var(--muted)">${y}</td>
           ${byG.map(n=>`<td style="text-align:center;font-size:.72rem">${n||'—'}</td>`).join('')}
@@ -3537,7 +3540,7 @@ function build2027OverviewHTML(today){
       <div>
         <div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.15rem">Ngutu College · 2027 Class Overview</div>
         <div style="font-size:1.1rem;font-weight:700;color:#0f172a;line-height:1.1">All Communities</div>
-        <div style="font-size:.72rem;color:#475569;margin-top:.2rem"><strong>${grandTotal}</strong> learner${grandTotal!==1?'s':''} placed${confirmedLeavingCount?` · ${confirmedLeavingCount} confirmed leaving (not counted)`:''}</div>
+        <div style="font-size:.72rem;color:#475569;margin-top:.2rem"><strong>${grandTotal}</strong> learner${grandTotal!==1?'s':''} placed${confirmedLeavingCount?` · ${confirmedLeavingCount} confirmed leaving (not counted)`:''} · ATSI: <strong>${grandATSI}</strong> (${grandTotal?Math.round(grandATSI/grandTotal*100):0}%) · Non-ATSI: <strong>${grandTotal-grandATSI}</strong> (${grandTotal?Math.round((grandTotal-grandATSI)/grandTotal*100):0}%)</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:.72rem;color:#475569">${today}</div>
@@ -3555,6 +3558,7 @@ function build2027OverviewHTML(today){
           <th style="text-align:center">M</th>
           <th style="text-align:center">F</th>
           <th style="text-align:center">ATSI</th>
+          <th style="text-align:center">Non-ATSI</th>
           ${yearCols.map(y=>`<th style="text-align:center;font-size:.68rem">${y.replace('Year ','Yr ')}</th>`).join('')}
         </tr></thead>
         <tbody>
@@ -3565,6 +3569,7 @@ function build2027OverviewHTML(today){
             <td style="text-align:center;font-size:.72rem">${grandMale}</td>
             <td style="text-align:center;font-size:.72rem">${grandFemale}</td>
             <td style="text-align:center;font-size:.72rem">${grandATSI}</td>
+            <td style="text-align:center;font-size:.72rem">${grandTotal-grandATSI}</td>
             ${grandYearCells}
           </tr>
         </tbody>
@@ -3602,14 +3607,11 @@ function get2027PrintGroups(){
     if(comm==='Kurlana')  addGroup(comm,'__tobe_Kurlana');
     if(comm==='Warti')    addGroup(comm,'__tobe_Warti');
     if(comm==='Karra'){
-      // Print: named classes + TBP per year, ordered by year band
+      // Named classes (one key per class name e.g. 'Kardi'), then TBP per year
       PLAN_STRUCT.Karra.yearBands.forEach(band => {
-        band.years.forEach(y => {
-          const yShort = y.replace('Year ','Y');
-          band.classes.forEach(cls => addGroup(comm, cls+'_'+yShort));
-          addGroup(comm, '__tobe_Karra_'+yShort);
-        });
+        band.classes.forEach(cls => addGroup(comm, cls));
       });
+      PLAN_STRUCT.Karra.yearLevels.forEach(y => addGroup(comm, '__tobe_Karra_'+y.replace('Year ','Y')));
     }
   });
 
@@ -3739,10 +3741,8 @@ const PLAN_STRUCT = {
 };
 
 // Karra plan key helpers — derived from PLAN_STRUCT.Karra.yearBands
-// Named class keys (e.g. 'Kardi_Y7', 'Nakudla_Y7', 'Ngungana_Y9' …)
-const KARRA_CLASS_KEYS = PLAN_STRUCT.Karra.yearBands.flatMap(band =>
-  band.years.flatMap(y => band.classes.map(cls => cls + '_' + y.replace('Year ','Y')))
-);
+// Named class keys: one per class name (e.g. 'Kardi', 'Nakudla', 'Ngungana', 'Yampu', 'Winta')
+const KARRA_CLASS_KEYS = PLAN_STRUCT.Karra.yearBands.flatMap(band => band.classes);
 // TBP keys — one per year level (e.g. '__tobe_Karra_Y7')
 const KARRA_TBP_KEYS = PLAN_STRUCT.Karra.yearLevels.map(y => '__tobe_Karra_' + y.replace('Year ','Y'));
 // All Karra plan keys combined
@@ -3750,20 +3750,21 @@ const KARRA_ALL_KEYS = [...KARRA_CLASS_KEYS, ...KARRA_TBP_KEYS];
 // Map: plan key → display label
 const KARRA_KEY_LABEL = {};
 PLAN_STRUCT.Karra.yearBands.forEach(band => {
+  const bandLabel = band.years.map(y=>y.replace('Year ','')).join('/');
+  band.classes.forEach(cls => { KARRA_KEY_LABEL[cls] = cls + ' (Yr ' + bandLabel + ')'; });
   band.years.forEach(y => {
-    const yShort = y.replace('Year ','Y');
-    band.classes.forEach(cls => { KARRA_KEY_LABEL[cls+'_'+yShort] = cls+' ('+y+')'; });
-    KARRA_KEY_LABEL['__tobe_Karra_'+yShort] = 'To Be Placed ('+y+')';
+    KARRA_KEY_LABEL['__tobe_Karra_'+y.replace('Year ','Y')] = 'To Be Placed (' + y + ')';
   });
 });
-// Map: plan key → which year level it belongs to (for year updates on drag)
-const KARRA_KEY_YEAR = {};
+// Map: named class key → the band's years array (for display / drag label)
+const KARRA_CLASS_BAND = {};
 PLAN_STRUCT.Karra.yearBands.forEach(band => {
-  band.years.forEach(y => {
-    const yShort = y.replace('Year ','Y');
-    band.classes.forEach(cls => { KARRA_KEY_YEAR[cls+'_'+yShort] = y; });
-    KARRA_KEY_YEAR['__tobe_Karra_'+yShort] = y;
-  });
+  band.classes.forEach(cls => { KARRA_CLASS_BAND[cls] = band.years; });
+});
+// KARRA_KEY_YEAR is only used for TBP keys (so dropping into a TBP sets the year on the chip)
+const KARRA_KEY_YEAR = {};
+PLAN_STRUCT.Karra.yearLevels.forEach(y => {
+  KARRA_KEY_YEAR['__tobe_Karra_'+y.replace('Year ','Y')] = y;
 });
 
 const PLAN_NEXT_YEAR = {
@@ -3805,6 +3806,38 @@ function addKindyEntry(){
   savePlan2027(true);
   renderPlan();
   showToast(`${first} ${last} added to Kindy Entry 2027`);
+}
+
+// Add a brand-new 2027 enrolment (not in Wardlirna) to a Karra TBP slot
+function addNewEnrol2027(tbpKey, year){
+  const fEl = document.getElementById('ne2027First_'+tbpKey);
+  const lEl = document.getElementById('ne2027Last_'+tbpKey);
+  const gEl = document.getElementById('ne2027Gender_'+tbpKey);
+  const aEl = document.getElementById('ne2027Atsi_'+tbpKey);
+  const first = (fEl?.value||'').trim();
+  const last  = (lEl?.value||'').trim();
+  if(!first||!last){ showToast('Enter first and last name'); return; }
+  if(!plan2027) return;
+  plan2027[tbpKey] = plan2027[tbpKey]||[];
+  plan2027[tbpKey].push({
+    id: planNextId++,
+    first, last,
+    gender: gEl?.value||'',
+    atsi:   aEl?.value||'N',
+    year:   year||'',
+    origYear: '',
+    nccd: 'nil',
+    origGroup: '',
+    future: 'Y',   // marks as new enrolment → blue chip
+    leaving: 'N',
+  });
+  if(fEl) fEl.value='';
+  if(lEl) lEl.value='';
+  if(gEl) gEl.value='';
+  if(aEl) aEl.value='N';
+  savePlan2027(true);
+  renderPlan();
+  showToast(`${first} ${last} added as new 2027 enrolment`);
 }
 
 function togglePlanLock(){
@@ -3985,7 +4018,7 @@ function getAutoGroup(planS){
   return dest.group||null;
 }
 
-function syncUpdatesPlan(){
+function syncUpdatesPlan(silent=false){
   if(!plan2027){ initPlan2027(true); return; }
 
   const added=[], removed=[];
@@ -4039,7 +4072,7 @@ function syncUpdatesPlan(){
   const parts=[];
   if(added.length) parts.push(`+${added.length} new learner${added.length!==1?'s':''} added to plan`);
   if(removed.length) parts.push(`${removed.length} departed learner${removed.length!==1?'s':''} removed from plan`);
-  showToast(parts.length ? parts.join(', ') : 'Plan already up to date');
+  if(!silent || parts.length) showToast(parts.length ? parts.join(', ') : 'Plan already up to date');
 }
 
 function confirmRegenPlan(){
@@ -4096,6 +4129,21 @@ async function loadPlan2027(){
     if(res.ok){
       const d = await res.json();
       plan2027 = deserialisePlan(d.plan2027);
+      // Migrate old per-year class keys (e.g. 'Kardi_Y7', 'Kardi_Y8') → single class key ('Kardi')
+      if(plan2027){
+        PLAN_STRUCT.Karra.yearBands.forEach(band => {
+          band.classes.forEach(cls => {
+            band.years.forEach(y => {
+              const oldKey = cls + '_' + y.replace('Year ','Y');
+              if(plan2027[oldKey] && plan2027[oldKey].length > 0){
+                plan2027[cls] = plan2027[cls] || [];
+                plan2027[cls].push(...plan2027[oldKey]);
+                delete plan2027[oldKey];
+              }
+            });
+          });
+        });
+      }
       // Patch leaving/future flags from live students onto loaded chip objects.
       // Chips stored before the leaving-flag fix don't have these fields, so
       // every load refreshes them from the current roll regardless of blob age.
@@ -4171,7 +4219,7 @@ function renderPlanSidebar(){
   // Stats grid
   const statsEl = document.getElementById('planSbStats');
   if(statsEl) statsEl.innerHTML = `
-    <div class="sp"><div class="sp-v">${allStudents.length}</div><div class="sp-l">Total learners</div></div>
+    <div class="sp"><div class="sp-v">${st.total}</div><div class="sp-l">Total learners</div></div>
     <div class="sp"><div class="sp-v">${st.atsi}</div><div class="sp-l">ATSI</div></div>`;
 
   // Year levels
@@ -4192,7 +4240,7 @@ function renderPlanSidebar(){
   const atsiEl = document.getElementById('planSbAtsi');
   if(atsiEl) atsiEl.innerHTML = `
     <div class="yr-row"><div class="yr-pip" style="background:#c2410c"></div><span class="yr-lbl">Aboriginal/TSI</span><span class="yr-cnt">${st.atsi}</span></div>
-    <div class="yr-row"><div class="yr-pip" style="background:#94a3b8"></div><span class="yr-lbl">Non-Indigenous</span><span class="yr-cnt">${allStudents.length-st.atsi}</span></div>`;
+    <div class="yr-row"><div class="yr-pip" style="background:#94a3b8"></div><span class="yr-lbl">Non-Indigenous</span><span class="yr-cnt">${st.total-st.atsi}</span></div>`;
 
   const lbl = document.getElementById('planCommLabel');
   if(lbl) lbl.textContent = planComm;
@@ -4211,18 +4259,17 @@ function getPlanCommData(comm){
     PLAN_STRUCT.Warti.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',students:plan2027[g]||[]}));
     groups.push({key:'__tobe_Warti',label:'To Be Placed',type:'tobe',students:plan2027['__tobe_Warti']||[]});
   } else if(comm === 'Karra'){
+    // One group card per named class (key = class name, e.g. 'Kardi')
     PLAN_STRUCT.Karra.yearBands.forEach(band => {
-      band.years.forEach(y => {
-        const yShort = y.replace('Year ','Y');
-        // Named classes for this year
-        band.classes.forEach(cls => {
-          const key = cls + '_' + yShort;
-          groups.push({key, label: cls + ' (' + y + ')', type:'karra-class', bandYears: band.years, year: y, students: plan2027[key]||[]});
-        });
-        // TBP for this year
-        const tbpKey = '__tobe_Karra_' + yShort;
-        groups.push({key: tbpKey, label: 'To Be Placed (' + y + ')', type:'karra-tobe', year: y, students: plan2027[tbpKey]||[]});
+      band.classes.forEach(cls => {
+        const bandLabel = band.years.map(y=>y.replace('Year ','')).join('/');
+        groups.push({key: cls, label: cls + ' (Yr ' + bandLabel + ')', type:'karra-class', bandYears: band.years, students: plan2027[cls]||[]});
       });
+    });
+    // TBP: one per year level
+    PLAN_STRUCT.Karra.yearLevels.forEach(y => {
+      const tbpKey = '__tobe_Karra_' + y.replace('Year ','Y');
+      groups.push({key: tbpKey, label: 'To Be Placed (' + y + ')', type:'karra-tobe', year: y, students: plan2027[tbpKey]||[]});
     });
   } else if(comm === 'Wirra'){
     groups.push({key:'Ngakala',label:'Ngakala',type:'normal',students:plan2027['Ngakala']||[]});
@@ -4287,6 +4334,7 @@ function renderPlanGroupCard(g){
     </div>`;
   }).join('');
 
+  const safeKey = g.key.replace(/'/g,"\\'");
   const addRow = g.type==='kindy-entry' ? `
     <div style="padding:.4rem .5rem;border-top:1px solid var(--g200);display:flex;flex-direction:column;gap:.25rem">
       <div style="display:flex;gap:.25rem">
@@ -4308,7 +4356,31 @@ function renderPlanGroupCard(g){
         </select>
       </div>
       <button class="plan-add-btn" onclick="addKindyEntry()">+ Add student</button>
-    </div>` : '';
+    </div>`
+  : g.type==='karra-tobe' ? `
+    <div style="padding:.35rem .5rem;border-top:1px solid var(--g200);display:flex;flex-direction:column;gap:.2rem">
+      <div style="font-size:.6rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">New 2027 enrolment</div>
+      <div style="display:flex;gap:.22rem">
+        <input class="plan-add-f" id="ne2027First_${safeKey}" placeholder="First" style="flex:1">
+        <input class="plan-add-l" id="ne2027Last_${safeKey}" placeholder="Last" style="flex:1">
+      </div>
+      <div style="display:flex;gap:.22rem">
+        <select id="ne2027Gender_${safeKey}" style="flex:1;padding:.2rem .28rem;border:1px solid var(--g200);border-radius:4px;font-size:.69rem;font-family:'DM Sans',sans-serif">
+          <option value="">Gender…</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Non-binary">Non-binary</option>
+        </select>
+        <select id="ne2027Atsi_${safeKey}" style="flex:1;padding:.2rem .28rem;border:1px solid var(--g200);border-radius:4px;font-size:.69rem;font-family:'DM Sans',sans-serif">
+          <option value="N">Non-Indigenous</option>
+          <option value="aboriginal">Aboriginal</option>
+          <option value="tsi">Torres Strait Islander</option>
+          <option value="both">Aboriginal &amp; TSI</option>
+        </select>
+      </div>
+      <button class="plan-add-btn" onclick="addNewEnrol2027('${safeKey}','${(g.year||'').replace(/'/g,"\\'")}')">+ Add new student</button>
+    </div>`
+  : '';
 
   const hasConfLeavers = sorted.some(s=>s.leaving==='confirmed');
   const hasSyncFlags = sorted.some(s=>plan2027?._syncFlags?.departed?.has(s.id)||plan2027?._syncFlags?.yearChanged?.has(s.id));
@@ -4356,13 +4428,13 @@ function getPlanMoveTargets(){
   // Warti
   PLAN_STRUCT.Warti.groups.forEach(g=>targets.push({key:g, label:g, comm:'Warti'}));
   targets.push({key:'__tobe_Warti', label:'To Be Placed (Warti)', comm:'Warti'});
-  // Karra named classes and TBP slots
+  // Karra named classes (one key per class) and TBP slots (one per year level)
   PLAN_STRUCT.Karra.yearBands.forEach(band => {
-    band.years.forEach(y => {
-      const yShort = y.replace('Year ','Y');
-      band.classes.forEach(cls => targets.push({key: cls+'_'+yShort, label: cls+' ('+y+')', comm:'Karra'}));
-      targets.push({key: '__tobe_Karra_'+yShort, label: 'To Be Placed ('+y+')', comm:'Karra'});
-    });
+    const bandLabel = band.years.map(y=>y.replace('Year ','')).join('/');
+    band.classes.forEach(cls => targets.push({key: cls, label: cls+' (Yr '+bandLabel+')', comm:'Karra'}));
+  });
+  PLAN_STRUCT.Karra.yearLevels.forEach(y => {
+    targets.push({key: '__tobe_Karra_'+y.replace('Year ','Y'), label: 'To Be Placed ('+y+')', comm:'Karra'});
   });
   // Wirra
   PLAN_STRUCT.Wirra.groups.forEach(g=>targets.push({key:g, label:g, comm:'Wirra'}));
@@ -4520,44 +4592,41 @@ function renderPlan(){
   const groups = getPlanCommData(planComm);
   const commInfo = PLAN_STRUCT[planComm];
 
-  // For Karra, render year-level bands with named classes + one toggleable TBP column
+  // For Karra, render year-level bands with named classes + one shared TBP column (Y7-Y12 toggle)
   let html = '';
   if(planComm === 'Karra'){
+    // Build all band rows (named classes only)
+    let bandRows = '';
     PLAN_STRUCT.Karra.yearBands.forEach(band => {
       const bandLabel = band.years.join(' & ');
-      // Named class cards for this band (all years)
-      const classCards = [];
-      band.years.forEach(y => {
-        const yShort = y.replace('Year ','Y');
-        band.classes.forEach(cls => {
-          const key = cls + '_' + yShort;
-          const g = groups.find(x=>x.key===key);
-          if(g) classCards.push(renderPlanGroupCard(g));
-        });
-      });
-      // TBP toggle for this band — show TBP for karraYearFilter if it belongs to this band
-      const tbpYears = band.years;
-      const activeTbpYear = tbpYears.includes(karraYearFilter) ? karraYearFilter : tbpYears[0];
-      const tbpKey = '__tobe_Karra_' + activeTbpYear.replace('Year ','Y');
-      const tbpGroup = groups.find(x=>x.key===tbpKey) || {key:tbpKey, label:'To Be Placed ('+activeTbpYear+')', type:'karra-tobe', year:activeTbpYear, students:[]};
-      const tbpToggleBtns = tbpYears.map(y =>
-        `<button class="sort-btn${y===activeTbpYear?' active':''}" onclick="karraYearFilter='${y}';renderPlan()" style="font-size:.65rem;padding:.15rem .45rem">${y}</button>`
-      ).join('');
-      const tbpCard = renderPlanGroupCard(tbpGroup);
-      html += `<div class="band" style="margin-bottom:1rem">
-        <div class="band-hd">${bandLabel} — ${band.classes.join(' & ')}</div>
-        <div class="groups-row">
-          ${classCards.join('')}
-          <div style="display:flex;flex-direction:column;gap:.3rem">
-            <div style="display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;padding:.1rem 0">
-              <span style="font-size:.63rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">TBP Year:</span>
-              ${tbpToggleBtns}
-            </div>
-            ${tbpCard}
-          </div>
-        </div>
+      const classCards = band.classes.map(cls => {
+        const g = groups.find(x=>x.key===cls);
+        return g ? renderPlanGroupCard(g) : '';
+      }).join('');
+      bandRows += `<div class="band" style="margin-bottom:.6rem">
+        <div class="band-hd">${bandLabel} — ${band.classes.join(' &amp; ')}</div>
+        <div class="groups-row">${classCards}</div>
       </div>`;
     });
+
+    // Single TBP column — toggle across all year levels Y7–Y12
+    const allYears = PLAN_STRUCT.Karra.yearLevels;
+    const activeTbpYear = allYears.includes(karraYearFilter) ? karraYearFilter : allYears[0];
+    const tbpKey = '__tobe_Karra_' + activeTbpYear.replace('Year ','Y');
+    const tbpGroup = groups.find(x=>x.key===tbpKey) || {key:tbpKey, label:'To Be Placed ('+activeTbpYear+')', type:'karra-tobe', year:activeTbpYear, students:[]};
+    const tbpToggleBtns = allYears.map(y =>
+      `<button class="sort-btn${y===activeTbpYear?' active':''}" onclick="karraYearFilter='${y}';renderPlan()" style="font-size:.63rem;padding:.12rem .38rem">${y.replace('Year ','Yr ')}</button>`
+    ).join('');
+    const tbpCard = renderPlanGroupCard(tbpGroup);
+
+    html = `<div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">${bandRows}</div>
+      <div style="min-width:220px">
+        <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">To Be Placed</div>
+        <div style="display:flex;gap:.22rem;flex-wrap:wrap;margin-bottom:.35rem">${tbpToggleBtns}</div>
+        ${tbpCard}
+      </div>
+    </div>`;
   } else {
     html += `<div class="band">
       <div class="band-hd">${commInfo?.band||planComm}</div>
@@ -4641,7 +4710,8 @@ async function initPlan2027Page(){
   if(!loaded || !plan2027){
     initPlan2027(true);
   } else {
-    renderPlan();
+    // Auto-sync: pull in new learners and remove departed ones silently each time the tab opens
+    syncUpdatesPlan(true);
   }
 }
 
