@@ -766,6 +766,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       <button class="plan-lock-btn" id="planLockBtn" onclick="togglePlanLock()">🔒 Locked</button>
       <button class="tbtn" onclick="syncUpdatesPlan()" title="2027 syncs automatically on open — click to manually check now" style="color:var(--muted);font-size:.7rem;margin-left:auto">⟳ Refresh from Wardlirna</button>
       <button class="mbtn" id="planSyncFlagBtn" style="font-size:.72rem;background:#fffbeb;border-color:#f59e0b;color:#b45309;display:none" onclick="clearSyncFlags()" title="Veracross sync moved or flagged these learners — review their chips then dismiss">⚠ Review sync changes</button>
+      <button class="mbtn mbtn-ghost" style="font-size:.72rem" onclick="printPlanOverview()">🖨 Print Overview</button>
       <button class="mbtn mbtn-ghost" style="font-size:.72rem" onclick="confirmRegenPlan()">↺ Re-generate</button>
       <button class="mbtn mbtn-primary admin-only" style="font-size:.72rem" onclick="savePlan2027()">💾 Save Plan</button>
     </div>
@@ -3056,6 +3057,25 @@ function doRollPrint(){
   } else {
     window.print();
   }
+}
+
+function printPlanOverview(){
+  if(!plan2027){ showToast('No 2027 plan loaded yet'); return; }
+  const root = document.getElementById('printRoot') || (() => {
+    const d = document.createElement('div'); d.id='printRoot'; d.style.display='none';
+    document.body.appendChild(d); return d;
+  })();
+  const today = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  root.innerHTML = build2027OverviewHTML(today);
+  root.style.display = '';
+  document.body.classList.add('printing');
+  window.print();
+  window.addEventListener('afterprint', function cleanup(){
+    document.body.classList.remove('printing');
+    root.style.display = 'none';
+    root.innerHTML = '';
+    window.removeEventListener('afterprint', cleanup);
+  });
 }
 
 function rollSetMode(mode){
