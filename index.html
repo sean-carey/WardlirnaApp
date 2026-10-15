@@ -492,7 +492,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <div class="ntab" data-page="analytics" onclick="showPage('analytics')">📊 Analytics</div>
   <div class="ntab" data-page="departing" onclick="showPage('departing')">🚪 Leaving <span id="depCount">(0)</span></div>
   <div class="ntab" data-page="roll" onclick="showPage('roll')">🖨 Roll Print</div>
-  <div class="ntab" data-page="plan" onclick="showPage('plan')">📅 2027 Planning</div>
+  <div class="ntab admin-only" data-page="plan" onclick="showPage('plan')">📅 2027 Planning</div>
   <div class="ntab" data-page="settings" onclick="showPage('settings')">🔧 Settings</div>
 </div>
 
@@ -629,7 +629,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         <span class="ctrl-label">Source</span>
         <div class="sort-row">
           <button class="sort-btn on" id="rsrc-current" onclick="rollSetSource('current')">Current Rolls</button>
-          <button class="sort-btn" id="rsrc-plan2027" onclick="rollSetSource('plan2027')">2027 Plan</button>
+          <button class="sort-btn admin-only" id="rsrc-plan2027" onclick="rollSetSource('plan2027')">2027 Plan</button>
         </div>
       </div>
 
