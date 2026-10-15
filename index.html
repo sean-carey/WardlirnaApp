@@ -1559,7 +1559,7 @@ function toggleLeaving(id){
   s.leaving=s.leaving==='Y'?'N':'Y';
   // Sync to plan2027
   if(plan2027){
-    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
     planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.leaving=s.leaving; });
   }
   markUnsaved(); updateDepCount(); renderCanvas(); saveToBlob(true);
@@ -1568,7 +1568,7 @@ function confirmLeaving(id){
   const s=students.find(x=>x.id===id); if(!s) return;
   s.leaving = s.leaving==='confirmed' ? 'N' : 'confirmed';
   if(plan2027){
-    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
     planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.leaving=s.leaving; });
     if(document.getElementById('page-plan')?.classList.contains('on')) renderPlan();
   }
@@ -1626,7 +1626,7 @@ function saveStudent(){
   s.family=document.getElementById('smFamily').value.trim();
   // Also sync leaving flag to plan2027 if this learner appears there
   if(plan2027){
-    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
     planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===editingId); if(p){ p.leaving=s.leaving; p.future=s.future; } });
     if(document.getElementById('page-plan')?.classList.contains('on')) renderPlan();
   }
@@ -1638,7 +1638,7 @@ function markDeparting(){
   s.leaving='confirmed';
   // Sync to plan2027
   if(plan2027){
-    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
     planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===editingId); if(p) p.leaving='confirmed'; });
   }
   closeModal('ovStudent'); updateDepCount(); markUnsaved(); showToast(`${s.first} confirmed leaving — still on roll`); render();
@@ -1648,7 +1648,7 @@ function markDepartingById(id){
   const s=students.find(x=>x.id===id); if(!s) return;
   s.leaving='confirmed';
   if(plan2027){
-    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
     planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.leaving='confirmed'; });
   }
   updateDepCount(); markUnsaved(); showToast(`${s.first} confirmed leaving — still on roll`); render();
@@ -2659,7 +2659,7 @@ function processAutoSync(vcStudents){
         existing.leaving = 'confirmed';
         // Sync confirmed state into 2027 plan chips
         if(plan2027){
-          const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+          const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
           planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===existing.id); if(p) p.leaving='confirmed'; });
           // Flag in syncFlags so the 2027 plan highlights this chip for review
           if(!plan2027._syncFlags) plan2027._syncFlags = {departed: new Set(), yearChanged: new Map()};
@@ -2702,7 +2702,7 @@ function processAutoSync(vcStudents){
   toLeft2.forEach(s=>{
     s.leaving = 'confirmed';
     if(plan2027){
-      const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+      const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
       planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===s.id); if(p) p.leaving='confirmed'; });
       if(!plan2027._syncFlags) plan2027._syncFlags = {departed: new Set(), yearChanged: new Map()};
       if(!(plan2027._syncFlags.departed instanceof Set)) plan2027._syncFlags.departed = new Set(plan2027._syncFlags.departed);
@@ -3429,7 +3429,7 @@ function build2027OverviewHTML(today){
   const planKeys = [...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',
     ...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',
     ...PLAN_STRUCT.Warti.groups,'__tobe_Warti',
-    ...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    ...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
   const confirmedLeavingCount = planKeys.reduce((sum,k)=>
     sum + (plan2027[k]||[]).filter(s=>s.leaving==='confirmed').length, 0);
 
@@ -3451,7 +3451,7 @@ function build2027OverviewHTML(today){
     summaryRows += `<tr class="ov-comm-row"><td colspan="${5 + yearCols.length}" style="background:#f1f5f9;font-weight:700;font-size:.72rem;color:#475569;padding:.3rem .5rem;letter-spacing:.04em">${comm.toUpperCase()}</td></tr>`;
     commGroups.forEach(g => {
       const st = plan2027GroupStats(g.students);
-      const displayName = g.name.replace('__tobe_','To Be Placed — ');
+      const displayName = KARRA_KEY_LABEL[g.name] || g.name.replace('__tobe_Karra_','To Be Placed — Year ').replace('__tobe_','To Be Placed — ');
       const atsiPct = st.total ? Math.round(st.atsiY/st.total*100) : 0;
       const yearCells = yearCols.map(y => `<td style="text-align:center;font-size:.72rem">${st.byYear[y]||'—'}</td>`).join('');
       summaryRows += `<tr>
@@ -3477,7 +3477,7 @@ function build2027OverviewHTML(today){
     const cards = commGroups.map(g => {
       const st = plan2027GroupStats(g.students);
       const active = g.students.filter(s => s.leaving !== 'confirmed');
-      const displayName = g.name.replace('__tobe_','To Be Placed — ');
+      const displayName = KARRA_KEY_LABEL[g.name] || g.name.replace('__tobe_Karra_','To Be Placed — Year ').replace('__tobe_','To Be Placed — ');
 
       // Year × Gender breakdown
       const genders = ['Male','Female','Non-binary'];
@@ -3601,7 +3601,16 @@ function get2027PrintGroups(){
     if(comm==='Madlurta') addGroup(comm,'Kindy Entry 2027');
     if(comm==='Kurlana')  addGroup(comm,'__tobe_Kurlana');
     if(comm==='Warti')    addGroup(comm,'__tobe_Warti');
-    if(info.yearLevels)   info.yearLevels.forEach(y=>addGroup(comm,y));
+    if(comm==='Karra'){
+      // Print: named classes + TBP per year, ordered by year band
+      PLAN_STRUCT.Karra.yearBands.forEach(band => {
+        band.years.forEach(y => {
+          const yShort = y.replace('Year ','Y');
+          band.classes.forEach(cls => addGroup(comm, cls+'_'+yShort));
+          addGroup(comm, '__tobe_Karra_'+yShort);
+        });
+      });
+    }
   });
 
   return groups;
@@ -3712,7 +3721,14 @@ const PLAN_STRUCT = {
   },
   Karra: {
     band: 'Year 7–12',
-    groups: [],                       // seniors shown by year level only
+    groups: [],
+    // Named classes per year-level band
+    yearBands: [
+      { years: ['Year 7','Year 8'],           classes: ['Kardi','Nakudla'] },
+      { years: ['Year 9','Year 10'],          classes: ['Ngungana','Yampu'] },
+      { years: ['Year 11','Year 12'],         classes: ['Winta'] },
+    ],
+    // Keep for back-compat in any legacy references
     yearLevels: ['Year 7','Year 8','Year 9','Year 10','Year 11','Year 12'],
   },
   Wirra: {
@@ -3721,6 +3737,34 @@ const PLAN_STRUCT = {
     special: [],
   },
 };
+
+// Karra plan key helpers — derived from PLAN_STRUCT.Karra.yearBands
+// Named class keys (e.g. 'Kardi_Y7', 'Nakudla_Y7', 'Ngungana_Y9' …)
+const KARRA_CLASS_KEYS = PLAN_STRUCT.Karra.yearBands.flatMap(band =>
+  band.years.flatMap(y => band.classes.map(cls => cls + '_' + y.replace('Year ','Y')))
+);
+// TBP keys — one per year level (e.g. '__tobe_Karra_Y7')
+const KARRA_TBP_KEYS = PLAN_STRUCT.Karra.yearLevels.map(y => '__tobe_Karra_' + y.replace('Year ','Y'));
+// All Karra plan keys combined
+const KARRA_ALL_KEYS = [...KARRA_CLASS_KEYS, ...KARRA_TBP_KEYS];
+// Map: plan key → display label
+const KARRA_KEY_LABEL = {};
+PLAN_STRUCT.Karra.yearBands.forEach(band => {
+  band.years.forEach(y => {
+    const yShort = y.replace('Year ','Y');
+    band.classes.forEach(cls => { KARRA_KEY_LABEL[cls+'_'+yShort] = cls+' ('+y+')'; });
+    KARRA_KEY_LABEL['__tobe_Karra_'+yShort] = 'To Be Placed ('+y+')';
+  });
+});
+// Map: plan key → which year level it belongs to (for year updates on drag)
+const KARRA_KEY_YEAR = {};
+PLAN_STRUCT.Karra.yearBands.forEach(band => {
+  band.years.forEach(y => {
+    const yShort = y.replace('Year ','Y');
+    band.classes.forEach(cls => { KARRA_KEY_YEAR[cls+'_'+yShort] = y; });
+    KARRA_KEY_YEAR['__tobe_Karra_'+yShort] = y;
+  });
+});
 
 const PLAN_NEXT_YEAR = {
   'Kindergarten':'Reception','Reception':'Year 1','Year 1':'Year 2',
@@ -3799,13 +3843,14 @@ function plan2027GroupFor(s){
   // Year 5 → Year 6: stays in same group (Warti)
   if(s.year === 'Year 5') return { comm:'Warti', group: curGroup, year: nextYear };
 
-  // Year 6 → Year 7: goes to Karra, year level bucket
+  // Year 6 → Year 7: goes to Karra TBP for Year 7
   // Ngakala Year 6s also go here
-  if(s.year === 'Year 6') return { comm:'Karra', group:'__yr__', year: nextYear };
+  if(s.year === 'Year 6') return { comm:'Karra', group:'__tobe_Karra_Y7', year: 'Year 7' };
 
-  // Year 7–11 in Karra → advance year, stay in year level bucket
+  // Year 7–11 in Karra → advance year, land in TBP for next year
   if(['Year 7','Year 8','Year 9','Year 10','Year 11'].includes(s.year)){
-    return { comm:'Karra', group:'__yr__', year: nextYear };
+    const yShort = nextYear.replace('Year ','Y');
+    return { comm:'Karra', group:'__tobe_Karra_'+yShort, year: nextYear };
   }
 
   // Year 12 → Alumni
@@ -3824,7 +3869,7 @@ function buildInitialPlan(){
     ...PLAN_STRUCT.Kurlana.groups, ...PLAN_STRUCT.Kurlana.special,
     ...PLAN_STRUCT.Warti.groups, ...PLAN_STRUCT.Warti.special,
     ...PLAN_STRUCT.Wirra.groups,
-    ...PLAN_STRUCT.Karra.yearLevels];
+    ...KARRA_ALL_KEYS];
   allGroups.forEach(g => p[g] = p[g]||[]);
   p['__tobe_Kurlana'] = [];
   p['__tobe_Warti'] = [];
@@ -3851,9 +3896,6 @@ function buildInitialPlan(){
       const key = '__tobe_' + dest.comm;
       p[key] = p[key]||[];
       p[key].push(planS);
-    } else if(dest.group === '__yr__'){
-      p[dest.year] = p[dest.year]||[];
-      p[dest.year].push(planS);
     } else {
       p[dest.group] = p[dest.group]||[];
       p[dest.group].push(planS);
@@ -3877,7 +3919,7 @@ function initPlan2027(force=false){
       ...PLAN_STRUCT.Madlurta.groups, 'Kindy Entry 2027',
       ...PLAN_STRUCT.Kurlana.groups, '__tobe_Kurlana',
       ...PLAN_STRUCT.Warti.groups, '__tobe_Warti',
-      ...PLAN_STRUCT.Karra.yearLevels,
+      ...KARRA_ALL_KEYS,
       ...PLAN_STRUCT.Wirra.groups,
     ];
     ALL_PLAN_KEYS.forEach(k=>{
@@ -3899,7 +3941,7 @@ function initPlan2027(force=false){
       ...PLAN_STRUCT.Madlurta.groups, 'Kindy Entry 2027',
       ...PLAN_STRUCT.Kurlana.groups, '__tobe_Kurlana',
       ...PLAN_STRUCT.Warti.groups, '__tobe_Warti',
-      ...PLAN_STRUCT.Karra.yearLevels,
+      ...KARRA_ALL_KEYS,
       ...PLAN_STRUCT.Wirra.groups,
     ];
     Object.entries(manualPlacements).forEach(([id, targetKey])=>{
@@ -3940,7 +3982,6 @@ function getAutoGroup(planS){
   const dest = plan2027GroupFor(mockStudent);
   if(dest.comm==='__alumni__') return '__alumni__';
   if(dest.group==='__tobe__') return '__tobe_'+dest.comm;
-  if(dest.group==='__yr__') return dest.year;
   return dest.group||null;
 }
 
@@ -3952,7 +3993,7 @@ function syncUpdatesPlan(){
     ...PLAN_STRUCT.Madlurta.groups, 'Kindy Entry 2027',
     ...PLAN_STRUCT.Kurlana.groups, '__tobe_Kurlana',
     ...PLAN_STRUCT.Warti.groups, '__tobe_Warti',
-    ...PLAN_STRUCT.Karra.yearLevels,
+    ...KARRA_ALL_KEYS,
     ...PLAN_STRUCT.Wirra.groups,
   ];
 
@@ -3975,7 +4016,7 @@ function syncUpdatesPlan(){
         origYear:s.year,gender:s.gender,atsi:s.atsi,nccd:s.nccd,origGroup:s.group,future:'N',leaving:s.leaving||'N'};
       if(dest.comm==='__alumni__'){ plan2027._alumni=plan2027._alumni||[]; plan2027._alumni.push(planS); }
       else if(dest.group==='__tobe__'){ const k='__tobe_'+dest.comm; plan2027[k]=plan2027[k]||[]; plan2027[k].push(planS); }
-      else if(dest.group==='__yr__'){ plan2027[dest.year]=plan2027[dest.year]||[]; plan2027[dest.year].push(planS); }
+      else if(dest.group && dest.group.startsWith('__tobe_Karra_')){ plan2027[dest.group]=plan2027[dest.group]||[]; plan2027[dest.group].push(planS); }
       else { plan2027[dest.group]=plan2027[dest.group]||[]; plan2027[dest.group].push(planS); }
       added.push(s);
     }
@@ -4064,12 +4105,19 @@ async function loadPlan2027(){
         const planKeys = [...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',
           ...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',
           ...PLAN_STRUCT.Warti.groups,'__tobe_Warti',
-          ...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+          ...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
         planKeys.forEach(k => {
           (plan2027[k]||[]).forEach(chip => {
             const live = byId[chip.id];
             if(live){
-              chip.leaving = live.leaving||'N';
+              // Only sync possibly-leaving (Y) from live roll.
+              // Never downgrade a plan-local 'confirmed' back to a lesser value —
+              // plan chips can be independently confirmed in the 2027 plan.
+              if(chip.leaving !== 'confirmed'){
+                // Sync Wardlirna leaving flag (Y / N / confirmed) onto chip,
+                // but treat plan-confirmed as the authoritative state if live is only 'Y'
+                chip.leaving = live.leaving||'N';
+              }
               chip.future  = live.future||'N';
             }
           });
@@ -4163,7 +4211,19 @@ function getPlanCommData(comm){
     PLAN_STRUCT.Warti.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',students:plan2027[g]||[]}));
     groups.push({key:'__tobe_Warti',label:'To Be Placed',type:'tobe',students:plan2027['__tobe_Warti']||[]});
   } else if(comm === 'Karra'){
-    PLAN_STRUCT.Karra.yearLevels.forEach(y=>groups.push({key:y,label:y,type:'year',students:plan2027[y]||[]}));
+    PLAN_STRUCT.Karra.yearBands.forEach(band => {
+      band.years.forEach(y => {
+        const yShort = y.replace('Year ','Y');
+        // Named classes for this year
+        band.classes.forEach(cls => {
+          const key = cls + '_' + yShort;
+          groups.push({key, label: cls + ' (' + y + ')', type:'karra-class', bandYears: band.years, year: y, students: plan2027[key]||[]});
+        });
+        // TBP for this year
+        const tbpKey = '__tobe_Karra_' + yShort;
+        groups.push({key: tbpKey, label: 'To Be Placed (' + y + ')', type:'karra-tobe', year: y, students: plan2027[tbpKey]||[]});
+      });
+    });
   } else if(comm === 'Wirra'){
     groups.push({key:'Ngakala',label:'Ngakala',type:'normal',students:plan2027['Ngakala']||[]});
   }
@@ -4181,14 +4241,12 @@ function renderPlanGroupCard(g){
     if(yDiff!==0) return yDiff;
     return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);
   });
-  const isSpecial = g.type === 'tobe' || g.type === 'kindy-entry';
-  const isYear = g.type === 'year';
+  const isSpecial = g.type === 'tobe' || g.type === 'kindy-entry' || g.type === 'karra-tobe';
 
   // Header colour
   let hdrStyle = 'background:linear-gradient(135deg,var(--hdr1),var(--hdr2))';
-  if(g.type==='tobe') hdrStyle = 'background:linear-gradient(135deg,#92400e,#b45309)';
+  if(g.type==='tobe'||g.type==='karra-tobe') hdrStyle = 'background:linear-gradient(135deg,#92400e,#b45309)';
   if(g.type==='kindy-entry') hdrStyle = 'background:linear-gradient(135deg,#4c1d95,#6d28d9)';
-  if(g.type==='year') hdrStyle = `background:linear-gradient(135deg,var(--hdr1),var(--hdr2))`;
 
   // Drop zone attrs
   const dz = planLocked ? '' : `ondragover="planDragOver(event,'${g.key.replace(/'/g,"\\'")}') " ondragleave="planDragLeave(event)" ondrop="planDrop(event,'${g.key.replace(/'/g,"\\'")}') "`;
@@ -4273,6 +4331,7 @@ function renderPlanGroupCard(g){
 
 // ── Community tabs for plan
 let planComm = 'Madlurta';
+let karraYearFilter = 'Year 7'; // which year's TBP is currently shown in Karra view
 function buildPlanCtabs(){
   const el = document.getElementById('planCtabs');
   if(!el) return;
@@ -4297,8 +4356,14 @@ function getPlanMoveTargets(){
   // Warti
   PLAN_STRUCT.Warti.groups.forEach(g=>targets.push({key:g, label:g, comm:'Warti'}));
   targets.push({key:'__tobe_Warti', label:'To Be Placed (Warti)', comm:'Warti'});
-  // Karra year levels
-  PLAN_STRUCT.Karra.yearLevels.forEach(y=>targets.push({key:y, label:y, comm:'Karra'}));
+  // Karra named classes and TBP slots
+  PLAN_STRUCT.Karra.yearBands.forEach(band => {
+    band.years.forEach(y => {
+      const yShort = y.replace('Year ','Y');
+      band.classes.forEach(cls => targets.push({key: cls+'_'+yShort, label: cls+' ('+y+')', comm:'Karra'}));
+      targets.push({key: '__tobe_Karra_'+yShort, label: 'To Be Placed ('+y+')', comm:'Karra'});
+    });
+  });
   // Wirra
   PLAN_STRUCT.Wirra.groups.forEach(g=>targets.push({key:g, label:g, comm:'Wirra'}));
   // Alumni
@@ -4319,9 +4384,7 @@ function openPlanCtxMenu(e, id, fromKey){
   const s = students.find(x=>x.id===id) || (plan2027[fromKey]||[]).find(x=>x.id===id);
   const chipLeaving = s ? (s.leaving||'N') : 'N';
 
-  let html = `<div class="ctxi" onclick="openStudentModal(${id});closeCtxMenu()">✏️ Edit details</div>
-    <div class="ctxi-sep"></div>
-    <div class="ctxi" onclick="planToggleConfirmedLeaving(${id},'${fromKey.replace(/'/g,"\\'")}');closeCtxMenu()">🔴 ${chipLeaving==='confirmed'?'Remove confirmed leaving flag':'Confirm leaving (strikethrough, not counted)'}</div>
+  let html = `<div class="ctxi" onclick="planToggleConfirmedLeaving(${id},'${fromKey.replace(/'/g,"\\'")}');closeCtxMenu()">🔴 ${chipLeaving==='confirmed'?'Remove confirmed leaving flag':'Confirm leaving (strikethrough, not counted)'}</div>
     <div class="ctxi danger" onclick="planRemoveLearner(${id},'${fromKey.replace(/'/g,"\\'")}');closeCtxMenu()">✕ Remove from 2027 plan</div>
     <div class="ctxi-sep"></div>
     <div style="padding:.2rem .85rem;font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Move to…</div>`;
@@ -4357,8 +4420,8 @@ function movePlanLearner(id, fromKey, toKey){
   }
   if(!learner) return;
 
-  // Update year if moving to/from Karra year buckets
-  if(PLAN_STRUCT.Karra.yearLevels.includes(toKey)) learner.year=toKey;
+  // Update year if moving to a Karra class or TBP slot
+  if(KARRA_KEY_YEAR[toKey]) learner.year=KARRA_KEY_YEAR[toKey];
   if(toKey==='__alumni__') learner.year='Alumni';
 
   // Add to destination
@@ -4457,13 +4520,44 @@ function renderPlan(){
   const groups = getPlanCommData(planComm);
   const commInfo = PLAN_STRUCT[planComm];
 
-  // For Karra, group by year level in bands; otherwise single band
+  // For Karra, render year-level bands with named classes + one toggleable TBP column
   let html = '';
   if(planComm === 'Karra'){
-    html += `<div class="band">
-      <div class="band-hd">Senior Students by Year Level</div>
-      <div class="groups-row">${groups.filter(g=>g.students.length>0).map(g=>renderPlanGroupCard(g)).join('')}</div>
-    </div>`;
+    PLAN_STRUCT.Karra.yearBands.forEach(band => {
+      const bandLabel = band.years.join(' & ');
+      // Named class cards for this band (all years)
+      const classCards = [];
+      band.years.forEach(y => {
+        const yShort = y.replace('Year ','Y');
+        band.classes.forEach(cls => {
+          const key = cls + '_' + yShort;
+          const g = groups.find(x=>x.key===key);
+          if(g) classCards.push(renderPlanGroupCard(g));
+        });
+      });
+      // TBP toggle for this band — show TBP for karraYearFilter if it belongs to this band
+      const tbpYears = band.years;
+      const activeTbpYear = tbpYears.includes(karraYearFilter) ? karraYearFilter : tbpYears[0];
+      const tbpKey = '__tobe_Karra_' + activeTbpYear.replace('Year ','Y');
+      const tbpGroup = groups.find(x=>x.key===tbpKey) || {key:tbpKey, label:'To Be Placed ('+activeTbpYear+')', type:'karra-tobe', year:activeTbpYear, students:[]};
+      const tbpToggleBtns = tbpYears.map(y =>
+        `<button class="sort-btn${y===activeTbpYear?' active':''}" onclick="karraYearFilter='${y}';renderPlan()" style="font-size:.65rem;padding:.15rem .45rem">${y}</button>`
+      ).join('');
+      const tbpCard = renderPlanGroupCard(tbpGroup);
+      html += `<div class="band" style="margin-bottom:1rem">
+        <div class="band-hd">${bandLabel} — ${band.classes.join(' & ')}</div>
+        <div class="groups-row">
+          ${classCards.join('')}
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <div style="display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;padding:.1rem 0">
+              <span style="font-size:.63rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">TBP Year:</span>
+              ${tbpToggleBtns}
+            </div>
+            ${tbpCard}
+          </div>
+        </div>
+      </div>`;
+    });
   } else {
     html += `<div class="band">
       <div class="band-hd">${commInfo?.band||planComm}</div>
@@ -4522,8 +4616,8 @@ function planDrop(e, toGroup){
   // Update year if moving between buckets
   if(toGroup==='__alumni__'){
     student.year='Alumni';
-  } else if(PLAN_STRUCT.Karra.yearLevels.includes(toGroup)){
-    student.year=toGroup;
+  } else if(KARRA_KEY_YEAR[toGroup]){
+    student.year=KARRA_KEY_YEAR[toGroup];
   }
 
   // Add to destination
