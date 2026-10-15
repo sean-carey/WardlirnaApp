@@ -116,6 +116,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .sc.dragging{opacity:.3;cursor:grabbing}
 .sc.conflict{border-color:#fca5a5;background:#fff5f5}
 .sc.leaving{background:#fff7ed;border-color:var(--leaving-border)}
+.sc.confirmed-leaving{background:#fff1f2;border-color:#fca5a5;opacity:.82}
+.sc.confirmed-leaving .sc-name{text-decoration:line-through;color:var(--muted)}
 .sc.new-enrol{background:#eff6ff;border-color:#93c5fd}
 .new-enrol .ypip{box-shadow:0 0 0 2px #3b82f6}
 .sc.wanted{border-left:3px solid #34d399}
@@ -311,12 +313,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .roll-rtable.compact th{padding:.26rem .52rem;font-size:.57rem}
 .roll-rtable.compact .rypill{font-size:.67rem}
 /* Roll print — suppress status colours, clean output only */
-.roll-preview .sc.leaving, .roll-preview .sc.new-enrol,
-.print-page .sc.leaving, .print-page .sc.new-enrol{
+.roll-preview .sc.leaving, .roll-preview .sc.new-enrol, .roll-preview .sc.confirmed-leaving,
+.print-page .sc.leaving, .print-page .sc.new-enrol, .print-page .sc.confirmed-leaving{
   background:#fff !important; border-color:var(--g200) !important;
 }
-.roll-preview .sc.leaving .ypip, .roll-preview .sc.new-enrol .ypip,
-.print-page .sc.leaving .ypip, .print-page .sc.new-enrol .ypip{
+.roll-preview .sc.leaving .ypip, .roll-preview .sc.new-enrol .ypip, .roll-preview .sc.confirmed-leaving .ypip,
+.print-page .sc.leaving .ypip, .print-page .sc.new-enrol .ypip, .print-page .sc.confirmed-leaving .ypip{
   box-shadow:none !important;
 }
 .roll-preview .sc-icons, .print-page .sc-icons{ display:none !important; }
@@ -349,15 +351,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .ftr-n span{font-size:.63rem;color:var(--muted);font-weight:400;font-family:'DM Sans',sans-serif;margin-left:.25rem}
 .ftr-note{font-size:.62rem;color:var(--muted);text-align:right;line-height:1.55}
 @media print{
+  /* ── 2027 plan print: body.printing pattern — only #printRoot shows ── */
+  body.printing > *:not(#printRoot){ display:none!important }
+  body.printing #printRoot{ display:block!important }
+  body.printing #printRoot .print-page{ border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important;break-after:page }
+  body.printing #printRoot .print-page:last-child{ break-after:auto }
+
+  /* ── Standard roll print (no body.printing) ── */
   /* Hide ALL app chrome */
-  .hdr,.nav,.toolbar,.roll-controls{display:none!important}
+  body:not(.printing) .hdr,
+  body:not(.printing) .nav,
+  body:not(.printing) .toolbar,
+  body:not(.printing) .roll-controls{display:none!important}
   /* Show only roll page */
-  #page-planner,#page-analytics,#page-departing,#page-settings,#page-plan{display:none!important}
-  #page-roll{display:flex!important;overflow:visible!important;height:auto!important}
-  .page-roll{display:block!important;overflow:visible!important;height:auto!important}
-  .roll-preview{padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important}
-  .print-page{border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important}
-  .print-page.pb{page-break-after:always}
+  body:not(.printing) #page-planner,
+  body:not(.printing) #page-analytics,
+  body:not(.printing) #page-departing,
+  body:not(.printing) #page-settings,
+  body:not(.printing) #page-plan{display:none!important}
+  body:not(.printing) #page-roll{display:flex!important;overflow:visible!important;height:auto!important}
+  body:not(.printing) .page-roll{display:block!important;overflow:visible!important;height:auto!important}
+  body:not(.printing) .roll-preview{padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important}
+  body:not(.printing) .print-page{border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important}
+  body:not(.printing) .print-page.pb{page-break-after:always}
   /* Force background colours to print */
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   /* Tighter rows for larger classes */
@@ -366,6 +382,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   /* Year dot — force display in print */
   .rydot{display:inline-block!important;width:7px!important;height:7px!important;border-radius:50%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .rypill{display:inline-flex!important}
+  /* 2027 page sizing */
+  @page{ size:A4 portrait; margin:12mm 10mm }
 }
 
 /* ══ 2027 PLANNING TAB ══ */
@@ -402,6 +420,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .pchip-sub{font-size:.61rem;color:var(--muted);white-space:nowrap}
 .pchip.future-chip{background:#eff6ff;border-color:#93c5fd}
 .pchip.alumni-chip{background:var(--g50);border-color:var(--g300);opacity:.7}
+.pchip.confirmed-leaving-chip{background:#fff1f2;border-color:#fca5a5;opacity:.75}
+.pchip.confirmed-leaving-chip .pchip-name{text-decoration:line-through;color:var(--muted)}
+.pchip.sync-flagged{border-color:#f59e0b;background:#fffbeb}
 .plan-col.tobe{border-color:#fbbf24;background:#fffbeb}
 .plan-col.tobe .plan-col-hdr{background:#fef9c3;border-bottom-color:#fde68a}
 .plan-col.tobe .plan-col-name{color:#92400e}
@@ -536,17 +557,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <div class="page" id="page-departing" style="flex-direction:column;overflow:auto">
     <div class="dep-body" style="padding:1.25rem;max-width:960px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem">
 
-      <!-- Departing section -->
+      <!-- Confirmed leaving (still on roll) -->
       <div class="acard">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem">
           <div>
-            <h3 style="font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;margin:0">🚪 Departing Learners</h3>
-            <p style="font-size:.73rem;color:var(--muted);margin:.2rem 0 0">Learners in the <strong>Leaving</strong> homeroom in Veracross. Use <em>Mark as Left</em> once departure is confirmed.</p>
+            <h3 style="font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;margin:0">🔴 Confirmed Leaving — Still on Roll</h3>
+            <p style="font-size:.73rem;color:var(--muted);margin:.2rem 0 0">Flagged as confirmed leaving but still appearing on class lists and roll. Use <em>Remove from roll</em> when their final day has passed.</p>
+          </div>
+          <span id="confCountBadge" style="background:#fee2e2;color:#dc2626;border-radius:12px;padding:.2rem .65rem;font-size:.75rem;font-weight:700"></span>
+        </div>
+        <div id="confList" style="display:flex;flex-direction:column;gap:.5rem"></div>
+        <p id="confEmpty" style="font-size:.78rem;color:var(--muted)">No confirmed leavers yet.</p>
+      </div>
+
+      <!-- Removed from roll (departing[]) -->
+      <div class="acard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem">
+          <div>
+            <h3 style="font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;margin:0">🚪 Removed from Roll</h3>
+            <p style="font-size:.73rem;color:var(--muted);margin:.2rem 0 0">Learners removed from class lists. Use <em>Mark as Left</em> once departure is formally confirmed, or <em>Restore</em> if they return.</p>
           </div>
           <span id="depCountBadge" style="background:#fee2e2;color:#dc2626;border-radius:12px;padding:.2rem .65rem;font-size:.75rem;font-weight:700"></span>
         </div>
         <div id="depList" style="display:flex;flex-direction:column;gap:.5rem"></div>
-        <p id="depEmpty" style="font-size:.78rem;color:var(--muted);display:none">No learners currently in departing.</p>
+        <p id="depEmpty" style="font-size:.78rem;color:var(--muted);display:none">No learners removed from roll.</p>
       </div>
 
       <!-- Formerly Enrolled section -->
@@ -570,8 +604,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   <div class="page" id="page-roll" style="flex-direction:row;overflow:hidden">
     <div class="roll-controls" id="rollControlPanel">
 
-      <!-- Print mode toggle -->
+      <!-- Source selector -->
       <div class="ctrl-block">
+        <span class="ctrl-label">Source</span>
+        <div class="sort-row">
+          <button class="sort-btn on" id="rsrc-current" onclick="rollSetSource('current')">Current Rolls</button>
+          <button class="sort-btn admin-only" id="rsrc-plan2027" onclick="rollSetSource('plan2027')">2027 Plan</button>
+        </div>
+      </div>
+
+      <!-- Print mode toggle -->
+      <div class="ctrl-block" id="rModeBlock">
         <span class="ctrl-label">Print By</span>
         <div class="sort-row">
           <button class="sort-btn on" id="rmode-group" onclick="rollSetMode('group')">Home Group</button>
@@ -641,6 +684,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
           <input type="checkbox" id="rOptSig" onchange="renderRoll()">
           <label for="rOptSig">Signature column</label>
         </div>
+        <!-- 2027-only columns -->
+        <div id="rOpt2027Cols" style="display:none">
+          <div class="roll-opt-row">
+            <input type="checkbox" id="rOptGender" checked onchange="renderRoll()">
+            <label for="rOptGender">Gender</label>
+          </div>
+          <div class="roll-opt-row">
+            <input type="checkbox" id="rOptATSI" checked onchange="renderRoll()">
+            <label for="rOptATSI">ATSI</label>
+          </div>
+          <div class="roll-opt-row">
+            <input type="checkbox" id="rOptCurrentWardli" onchange="renderRoll()">
+            <label for="rOptCurrentWardli">Current Wardli</label>
+          </div>
+        </div>
       </div>
 
       <!-- Purpose (shared) -->
@@ -660,7 +718,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       </div>
 
       <div class="ctrl-footer">
-        <button class="print-btn" onclick="window.print()">🖨&nbsp; Print Roll</button>
+        <button class="print-btn" id="rollPrintBtn" onclick="doRollPrint()">🖨&nbsp; Print Roll</button>
       </div>
     </div>
     <div class="roll-preview" id="rollPreview">
@@ -678,6 +736,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       <span style="font-size:.72rem;color:var(--muted);margin-left:.5rem">Saved separately from current year data.</span>
       <button class="plan-lock-btn" id="planLockBtn" onclick="togglePlanLock()">🔒 Locked</button>
       <button class="tbtn" onclick="syncUpdatesPlan()" title="Add new learners and remove departed ones — preserves all manual placements" style="color:var(--hdr3);font-weight:600;margin-left:auto">⟳ Sync updates</button>
+      <button class="mbtn" id="planSyncFlagBtn" style="font-size:.72rem;background:#fffbeb;border-color:#f59e0b;color:#b45309;display:none" onclick="clearSyncFlags()" title="Veracross sync moved or flagged these learners — review their chips then dismiss">⚠ Review sync changes</button>
       <button class="mbtn mbtn-ghost" style="font-size:.72rem" onclick="confirmRegenPlan()">↺ Re-generate</button>
       <button class="mbtn mbtn-primary admin-only" style="font-size:.72rem" onclick="savePlan2027()">💾 Save Plan</button>
     </div>
@@ -791,7 +850,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         <select class="fs" id="smFuture"><option value="N">Current student</option><option value="Y">Future enrolment</option></select>
       </div>
       <div class="fg"><label>Flag as possibly leaving</label>
-        <select class="fs" id="smLeaving"><option value="N">No</option><option value="Y">Possibly leaving</option></select>
+        <select class="fs" id="smLeaving"><option value="N">No</option><option value="Y">Possibly leaving</option><option value="confirmed">Confirmed leaving</option></select>
       </div>
     </div>
     <div class="fg"><label>✅ Wants to be with</label><input class="fi" id="smWants" placeholder="comma-separated names"></div>
@@ -1098,7 +1157,8 @@ function renderCard(s){
   const wanted=socioOn&&s.wantsWith.length>0;
   const hasSocio=conflicts.length>0||wanted||(s.family&&s.family.trim());
   let cls='sc';
-  if(s.leaving==='Y') cls+=' leaving';
+  if(s.leaving==='confirmed') cls+=' confirmed-leaving';
+  else if(s.leaving==='Y') cls+=' leaving';
   else if(s.future==='Y') cls+=' new-enrol';
   else if(conflicts.length>0) cls+=' conflict';
   else if(wanted) cls+=' wanted';
@@ -1107,7 +1167,8 @@ function renderCard(s){
   if(hasSocio) icons.push(`<span style="cursor:pointer" onclick="showSocioPop(event,${s.id})" title="Sociogram info">⚠️</span>`);
   if(s.family) icons.push('📝');
   if(s.future==='Y') icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;display:inline-block;margin-top:1px" title="New enrolment"></span>');
-  if(s.leaving==='Y') icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#fb923c;display:inline-block;margin-top:1px" title="Possibly leaving"></span>');
+  if(s.leaving==='confirmed') icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#dc2626;display:inline-block;margin-top:1px" title="Confirmed leaving"></span>');
+  else if(s.leaving==='Y') icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#fb923c;display:inline-block;margin-top:1px" title="Possibly leaving"></span>');
 
   const yrColor=YEAR_COLORS[s.year]||'#94a3b8';
   const nccdDetail=detailOn?`<span class="sc-detail">${NCCD_LABELS[s.nccd]||''}</span>`:'';
@@ -1227,9 +1288,10 @@ function openCtxMenu(e,id){
     <div class="ctxi" style="font-weight:700;font-size:.72rem;color:var(--muted);cursor:default">${s.first} ${s.last}</div>
     <div class="ctxi-sep"></div>
     ${userRole==='admin'?'<div class="ctxi" onclick="openStudentModal('+id+');closeCtxMenu()">✏️ Edit details</div>':''}
-    <div class="ctxi" onclick="toggleLeaving(${id})">🟠 ${s.leaving==='Y'?'Remove':'Flag as'} possibly leaving</div>
+    <div class="ctxi" onclick="toggleLeaving(${id})">🟠 ${s.leaving==='Y'?'Remove possibly leaving flag':'Flag as possibly leaving'}</div>
+    <div class="ctxi" onclick="confirmLeaving(${id})">🔴 ${s.leaving==='confirmed'?'Unmark confirmed leaving':'Confirm leaving (stays on roll)'}</div>
     <div class="ctxi-sep"></div>
-    <div class="ctxi danger admin-only" onclick="markDepartingById(${id});closeCtxMenu()">🚪 Mark departing</div>`;
+    <div class="ctxi danger admin-only" onclick="moveToFormerlyEnrolled(${id});closeCtxMenu()">🚪 Move to Formerly Enrolled</div>`;
   menu.style.left=Math.min(e.clientX,window.innerWidth-170)+'px';
   menu.style.top=Math.min(e.clientY,window.innerHeight-300)+'px';
   menu.classList.add('show');
@@ -1336,25 +1398,70 @@ function toggleAllGroupStats(){
 }
 
 function restoreStudent(id){
-  let s, i=departing.findIndex(x=>x.id===id);
+  // Look in departing[], left[], and also confirmed-leaving students[]
+  let s;
+  let i=departing.findIndex(x=>x.id===id);
   if(i!==-1){ s=departing.splice(i,1)[0]; }
-  else { i=left.findIndex(x=>x.id===id); if(i!==-1) s=left.splice(i,1)[0]; }
-  if(!s) return;
-  delete s.leftAt;
-  students.push(s);
-  showToast(`${s.first} ${s.last} restored to classes`); markUnsaved(); render();
+  else {
+    i=left.findIndex(x=>x.id===id);
+    if(i!==-1){ s=left.splice(i,1)[0]; }
+  }
+  if(s){
+    delete s.leftAt;
+    s.leaving='N';
+    students.push(s);
+  } else {
+    // May be a confirmed-leaving learner still in students[]
+    const cs=students.find(x=>x.id===id);
+    if(cs){ cs.leaving='N'; s=cs; }
+  }
+  if(!s){ showToast('Learner not found'); return; }
+  updateDepCount();
+  showToast(`${s.first} ${s.last} restored`); markUnsaved(); render();
 }
 
 function updateDepCount(){
-  document.getElementById('depCount').textContent=`(${departing.length})`;
+  // Count: departing[] + confirmed-leaving in students[]
+  const confirmedCount = students.filter(s=>s.leaving==='confirmed').length;
+  const total = departing.length + confirmedCount;
+  document.getElementById('depCount').textContent=`(${total})`;
 }
 
 function renderDepartingPage(){
-  // ── Departing list
+  // ── Confirmed leaving (still on roll) — from students[]
+  const confirmedList = students.filter(s=>s.leaving==='confirmed').sort((a,b)=>a.last.localeCompare(b.last));
+  const confEl=document.getElementById('confList');
+  const confEmpty=document.getElementById('confEmpty');
+  const confBadge=document.getElementById('confCountBadge');
+  if(confBadge) confBadge.textContent=`${confirmedList.length} learner${confirmedList.length!==1?'s':''}`;
+  if(confEl){
+    if(confirmedList.length===0){
+      confEl.innerHTML='';
+      if(confEmpty) confEmpty.style.display='';
+    } else {
+      if(confEmpty) confEmpty.style.display='none';
+      confEl.innerHTML=confirmedList.map(s=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#fff1f2;border:1px solid #fca5a5;border-radius:8px;padding:.6rem .9rem;gap:.75rem">
+          <div style="display:flex;align-items:center;gap:.7rem;flex:1;min-width:0">
+            <div style="width:9px;height:9px;border-radius:50%;background:#dc2626;flex-shrink:0"></div>
+            <div>
+              <div style="font-weight:600;font-size:.84rem;text-decoration:line-through;color:var(--muted)">${s.last}, ${s.first}</div>
+              <div style="font-size:.71rem;color:var(--muted)">${s.year} · ${s.group} · Still on roll</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:.35rem;flex-shrink:0">
+            <button class="mbtn mbtn-ghost" style="font-size:.71rem;padding:.2rem .55rem" onclick="restoreStudent(${s.id})">↩ Restore</button>
+            <button class="mbtn admin-only" style="font-size:.71rem;padding:.2rem .6rem;background:#991b1b;color:#fff;border-radius:6px;border:none;cursor:pointer" onclick="moveToFormerlyEnrolled(${s.id})">🚪 Remove from roll</button>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  // ── Departing list (removed from roll, pending confirmation)
   const depEl=document.getElementById('depList');
   const depEmpty=document.getElementById('depEmpty');
   const depBadge=document.getElementById('depCountBadge');
-  if(depBadge) depBadge.textContent=`${departing.length} student${departing.length!==1?'s':''}`;
+  if(depBadge) depBadge.textContent=`${departing.length} learner${departing.length!==1?'s':''}`;
   if(departing.length===0){
     if(depEl) depEl.innerHTML='';
     if(depEmpty) depEmpty.style.display='';
@@ -1398,7 +1505,7 @@ function renderDepartingPage(){
       </div>`).join('');
   }
 
-  document.getElementById('depCount').textContent=`(${departing.length})`;
+  updateDepCount();
   // Re-apply role visibility — Mark as Left buttons are dynamically rendered
   if(typeof applyRoleUI === 'function') applyRoleUI();
 }
@@ -1418,8 +1525,26 @@ function markAsLeft(id){
 // ══════════════════════════════════════════════════
 function toggleLeaving(id){
   const s=students.find(x=>x.id===id); if(!s) return;
+  // Only toggle possibly-leaving; confirmed is set separately
+  if(s.leaving==='confirmed') return;
   s.leaving=s.leaving==='Y'?'N':'Y';
-  markUnsaved(); renderCanvas(); saveToBlob(true);
+  // Sync to plan2027
+  if(plan2027){
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.leaving=s.leaving; });
+  }
+  markUnsaved(); updateDepCount(); renderCanvas(); saveToBlob(true);
+}
+function confirmLeaving(id){
+  const s=students.find(x=>x.id===id); if(!s) return;
+  s.leaving = s.leaving==='confirmed' ? 'N' : 'confirmed';
+  if(plan2027){
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.leaving=s.leaving; });
+    if(document.getElementById('page-plan')?.classList.contains('on')) renderPlan();
+  }
+  const msg = s.leaving==='confirmed' ? `${s.first} confirmed leaving — stays on roll` : `${s.first} leaving status cleared`;
+  closeCtxMenu(); updateDepCount(); markUnsaved(); showToast(msg); render();
 }
 function toggleLeavingFromModal(){
   const s=students.find(x=>x.id===editingId); if(!s) return;
@@ -1479,13 +1604,31 @@ function saveStudent(){
   closeModal('ovStudent'); markUnsaved(); showToast('Saved'); render();
 }
 function markDeparting(){
-  markDepartingById(editingId); closeModal('ovStudent');
+  // From modal — set confirmed leaving (stays on roll/canvas)
+  const s=students.find(x=>x.id===editingId); if(!s) return;
+  s.leaving='confirmed';
+  // Sync to plan2027
+  if(plan2027){
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===editingId); if(p) p.leaving='confirmed'; });
+  }
+  closeModal('ovStudent'); updateDepCount(); markUnsaved(); showToast(`${s.first} confirmed leaving — still on roll`); render();
 }
 function markDepartingById(id){
+  // Legacy call path — set confirmed-leaving (stays in students[])
+  const s=students.find(x=>x.id===id); if(!s) return;
+  s.leaving='confirmed';
+  if(plan2027){
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.leaving='confirmed'; });
+  }
+  updateDepCount(); markUnsaved(); showToast(`${s.first} confirmed leaving — still on roll`); render();
+}
+// Move a learner fully out of students[] into departing[] — final step (Formerly Enrolled)
+function moveToFormerlyEnrolled(id){
   const i=students.findIndex(x=>x.id===id); if(i===-1) return;
   const s=students.splice(i,1)[0]; departing.push(s);
-  updateDepCount();
-  markUnsaved(); showToast(`${s.first} → Departing`); render();
+  updateDepCount(); markUnsaved(); showToast(`${s.first} moved to Formerly Enrolled`); render();
 }
 
 // ADD STUDENT MODAL
@@ -1887,9 +2030,10 @@ function renderAnalytics(){
   const total = base.length || 1;
 
   // ── Header summary strip
-  const possLeaving = base.filter(s=>s.leaving==='Y').length;
-  const atsiCount   = base.filter(s=>isATSI(s)).length;
-  const nonIndigenous = base.filter(s=>!isATSI(s)).length;
+  const possLeaving    = base.filter(s=>s.leaving==='Y').length;
+  const confLeaving    = base.filter(s=>s.leaving==='confirmed').length;
+  const atsiCount      = base.filter(s=>isATSI(s)).length;
+  const nonIndigenous  = base.filter(s=>!isATSI(s)).length;
 
   function statBox(n, label, color, size='1.5rem'){
     return `<div style="background:var(--g50);border-radius:8px;padding:.5rem .85rem;text-align:center;border:1px solid var(--g200);min-width:64px">
@@ -1909,7 +2053,9 @@ function renderAnalytics(){
       ${groupGap()}
       ${statBox(atsiCount,'Aboriginal/TSI','#c2410c')}
       ${statBox(nonIndigenous,'Non-Indigenous','var(--muted)')}
-      ${possLeaving ? groupGap()+''+statBox(possLeaving,'Poss. leaving','#fb923c') : ''}
+      ${(possLeaving||confLeaving) ? groupGap() : ''}
+      ${possLeaving ? statBox(possLeaving,'Poss. leaving','#fb923c') : ''}
+      ${confLeaving ? statBox(confLeaving,'Conf. leaving','#dc2626') : ''}
     </div>
   </div>`;
 
@@ -2479,13 +2625,31 @@ function processAutoSync(vcStudents){
       if(!existing.vcId && vc.vcId) existing.vcId=vc.vcId;
       if(vc.atsi!==undefined) existing.atsi=vc.atsi;
       if(vc.nccd!==undefined) existing.nccd=vc.nccd;
-      // Learner moved into Leaving homeroom → move to Departing
-      if(isLeaving(vc.group)){
-        const idx=students.indexOf(existing);
-        if(idx!==-1){
-          students.splice(idx,1);
-          departing.push({...existing,leaving:'Y'});
-          newItems.push({type:'to_leaving',student:existing,autoApplied:true});
+      // Learner moved into Leaving homeroom → mark as confirmed leaving (stays on roll & 2027 plan)
+      if(isLeaving(vc.group) && existing.leaving !== 'confirmed'){
+        existing.leaving = 'confirmed';
+        // Sync confirmed state into 2027 plan chips
+        if(plan2027){
+          const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+          planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===existing.id); if(p) p.leaving='confirmed'; });
+          // Flag in syncFlags so the 2027 plan highlights this chip for review
+          if(!plan2027._syncFlags) plan2027._syncFlags = {departed: new Set(), yearChanged: new Map()};
+          if(!(plan2027._syncFlags.departed instanceof Set)) plan2027._syncFlags.departed = new Set(plan2027._syncFlags.departed);
+          plan2027._syncFlags.departed.add(existing.id);
+        }
+        newItems.push({type:'to_leaving',student:existing,autoApplied:true});
+      }
+      // Year change in Veracross → update student and flag in 2027 plan for review
+      const vcYear = normaliseYear(vc.year);
+      if(vcYear && vcYear !== existing.year && !diffs.includes('year')){
+        // diffs already caught it if it's a conflict; this handles the non-conflict auto-apply case
+      } else if(vcYear && vcYear !== existing.year){
+        // Auto-apply year change and flag for 2027 review
+        existing.year = vcYear;
+        if(plan2027){
+          if(!plan2027._syncFlags) plan2027._syncFlags = {departed: new Set(), yearChanged: new Map()};
+          if(!(plan2027._syncFlags.yearChanged instanceof Map)) plan2027._syncFlags.yearChanged = new Map(Object.entries(plan2027._syncFlags.yearChanged||{}));
+          plan2027._syncFlags.yearChanged.set(String(existing.id), vcYear);
         }
       }
     }
@@ -2497,18 +2661,24 @@ function processAutoSync(vcStudents){
     if(vc){ if(vc.atsi!==undefined) s.atsi=vc.atsi; if(vc.nccd!==undefined) s.nccd=vc.nccd; }
   });
 
-  // ── Learners in app but absent from Veracross entirely → straight to Formerly Enrolled
-  // (they didn't go through Leaving homeroom — they've simply gone)
+  // ── Learners in app but absent from Veracross entirely → mark confirmed leaving, flag in 2027 plan
+  // (they didn't go through Leaving homeroom — they've simply gone; keep on roll until confirmed)
   const toLeft2=[];
   students.forEach(s=>{
     if(s.future==='Y') return; // pre-enrolment — not in VC yet
+    if(s.leaving==='confirmed') return; // already flagged
     const inVC=vcStudents.find(vc=>(vc.vcId&&vc.vcId===s.vcId)||(vc.first.toLowerCase()===s.first.toLowerCase()&&vc.last.toLowerCase()===s.last.toLowerCase()));
     if(!inVC) toLeft2.push(s);
   });
   toLeft2.forEach(s=>{
-    const idx=students.indexOf(s);
-    if(idx!==-1) students.splice(idx,1);
-    left.push({...s,leftAt:new Date().toISOString()});
+    s.leaving = 'confirmed';
+    if(plan2027){
+      const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+      planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===s.id); if(p) p.leaving='confirmed'; });
+      if(!plan2027._syncFlags) plan2027._syncFlags = {departed: new Set(), yearChanged: new Map()};
+      if(!(plan2027._syncFlags.departed instanceof Set)) plan2027._syncFlags.departed = new Set(plan2027._syncFlags.departed);
+      plan2027._syncFlags.departed.add(s.id);
+    }
     newItems.push({type:'missing',student:s,autoApplied:true});
   });
 
@@ -2539,17 +2709,33 @@ function processAutoSync(vcStudents){
     showRestorePrompts(restorePrompts);
   }
 
+  // ── If sync flagged changes in 2027 plan, show a review banner
+  const hasSyncFlags = plan2027?._syncFlags && (
+    (plan2027._syncFlags.departed instanceof Set && plan2027._syncFlags.departed.size > 0) ||
+    (plan2027._syncFlags.yearChanged instanceof Map && plan2027._syncFlags.yearChanged.size > 0)
+  );
+
   if(added||conflicts||departed||toLeftCnt){
     markUnsaved(); render(); saveToBlob(true);
     const parts=[];
     if(added)     parts.push(`<strong>+${added}</strong> new learner${added!==1?'s':''} added`);
-    if(departed)  parts.push(`<strong>${departed}</strong> moved to Departing`);
-    if(toLeftCnt) parts.push(`<strong>${toLeftCnt}</strong> moved to Formerly Enrolled`);
+    if(departed)  parts.push(`<strong>${departed}</strong> flagged as leaving (still on roll)`);
+    if(toLeftCnt) parts.push(`<strong>${toLeftCnt}</strong> flagged as leaving (not in Veracross)`);
     if(conflicts) parts.push(`<strong>${conflicts}</strong> field change${conflicts!==1?'s':''} need review`);
-    showSyncBanner('☁ Veracross sync — '+parts.join(', '), conflicts?'warn':'ok');
+    if(hasSyncFlags) parts.push(`<strong>⚠ 2027 plan has changes to review</strong>`);
+    showSyncBanner('☁ Veracross sync — '+parts.join(', '), (conflicts||hasSyncFlags)?'warn':'ok');
   } else {
     showSyncBanner('☁ Veracross: no changes', 'ok');
   }
+}
+
+// ── Clear sync flags after reviewing 2027 plan changes
+function clearSyncFlags(){
+  if(!plan2027) return;
+  plan2027._syncFlags = {departed: new Set(), yearChanged: new Map()};
+  markUnsaved(); saveToBlob(true);
+  if(document.getElementById('page-plan')?.classList.contains('on')) renderPlan();
+  showToast('2027 sync flags cleared');
 }
 
 // ── Prompt to restore a departing learner who reappeared in Veracross
@@ -2785,6 +2971,43 @@ const rollSel = new Set();       // selected groups (group mode)
 const rollYearSel = new Set();   // selected year levels (year mode)
 let rollSortMode = 'surname';
 let rollPrintMode = 'group';     // 'group' | 'year'
+let rollSource = 'current';      // 'current' | 'plan2027'
+
+function rollSetSource(src){
+  rollSource = src;
+  document.getElementById('rsrc-current')?.classList.toggle('on', src==='current');
+  document.getElementById('rsrc-plan2027')?.classList.toggle('on', src==='plan2027');
+  // Show/hide 2027-specific controls
+  const is2027 = src === 'plan2027';
+  document.getElementById('rModeBlock').style.display    = is2027 ? 'none' : '';
+  document.getElementById('rGroupPanel').style.display   = is2027 ? 'none' : (rollPrintMode==='group' ? '' : 'none');
+  document.getElementById('rYearPanel').style.display    = is2027 ? 'none' : (rollPrintMode==='year' ? '' : 'none');
+  document.getElementById('rOpt2027Cols').style.display  = is2027 ? '' : 'none';
+  document.getElementById('rollPrintBtn').textContent    = is2027 ? '🖨  Print 2027 Lists' : '🖨  Print Roll';
+  renderRoll();
+}
+
+function doRollPrint(){
+  if(rollSource === 'plan2027'){
+    // Use #printRoot + body.printing pattern for clean 2027 print
+    const root = document.getElementById('printRoot') || (() => {
+      const d = document.createElement('div'); d.id='printRoot'; d.style.display='none';
+      document.body.appendChild(d); return d;
+    })();
+    root.innerHTML = buildPlan2027PrintHTML();
+    root.style.display = '';
+    document.body.classList.add('printing');
+    window.print();
+    window.addEventListener('afterprint', function cleanup(){
+      document.body.classList.remove('printing');
+      root.style.display = 'none';
+      root.innerHTML = '';
+      window.removeEventListener('afterprint', cleanup);
+    });
+  } else {
+    window.print();
+  }
+}
 
 function rollSetMode(mode){
   rollPrintMode = mode;
@@ -3070,6 +3293,16 @@ function renderRoll(){
   const purpose = getRollPurpose();
   const today = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
+  // ── 2027 Plan source
+  if(rollSource === 'plan2027'){
+    if(!plan2027){
+      el.innerHTML='<div class="preview-empty">No 2027 plan found. Generate the plan first in the 2027 Planning tab.</div>';
+      return;
+    }
+    el.innerHTML = buildPlan2027PreviewHTML(opts, today);
+    return;
+  }
+
   if(rollPrintMode === 'year'){
     // ── Year level mode
     if(!rollYearSel.size){
@@ -3102,6 +3335,101 @@ function renderRoll(){
 }
 
 
+
+// ════════════════════════════════════════════════════════════════
+// 2027 PLAN PRINT / PREVIEW
+// ════════════════════════════════════════════════════════════════
+
+function get2027PrintGroups(){
+  // Returns [{name, community, students}] for all 2027 groups that have at least one active learner
+  // Excludes confirmed leavers from the list; includes possibly-leaving (they're still in the count)
+  const groups = [];
+  const learnersById = {};
+  students.forEach(s=>{ learnersById[s.id]=s; });
+  // Also include kindy entry learners stored directly in the plan
+  (plan2027['Kindy Entry 2027']||[]).forEach(s=>{ learnersById[s.id]=s; });
+
+  function addGroup(comm, name){
+    const raw = plan2027[name]||[];
+    const list = raw.map(chip=>{
+      // Merge chip data with live learner data (chip may be stale)
+      const live = learnersById[chip.id];
+      return live ? {...live, ...chip, currentWardli: live.group} : chip;
+    }).filter(s=>s.leaving!=='confirmed');
+    groups.push({name, community:comm, students:list});
+  }
+
+  Object.entries(PLAN_STRUCT).forEach(([comm, info])=>{
+    if(info.groups) info.groups.forEach(g=>addGroup(comm,g));
+    if(comm==='Madlurta') addGroup(comm,'Kindy Entry 2027');
+    if(comm==='Kurlana')  addGroup(comm,'__tobe_Kurlana');
+    if(comm==='Warti')    addGroup(comm,'__tobe_Warti');
+    if(info.yearLevels)   info.yearLevels.forEach(y=>addGroup(comm,y));
+  });
+
+  return groups;
+}
+
+function buildPlan2027PreviewHTML(opts, today){
+  const groups = get2027PrintGroups();
+  const showGender = document.getElementById('rOptGender')?.checked;
+  const showATSI   = document.getElementById('rOptATSI')?.checked;
+  const showWardli = document.getElementById('rOptCurrentWardli')?.checked;
+  const showYear   = document.getElementById('rOptYear')?.checked;
+  const showNotes  = document.getElementById('rOptNotes')?.checked;
+  const showCheck  = document.getElementById('rOptCheck')?.checked;
+  const numChecks  = parseInt(document.getElementById('rNumChecks')?.value||'1',10);
+  const pageBreak  = document.getElementById('rOptPageBreak')?.checked;
+  const purpose    = getRollPurpose();
+
+  return groups.filter(g=>g.students.length>0).map((g,i,arr)=>{
+    const sorted = rollSortStudents(g.students);
+    const isLast = i===arr.length-1;
+    const headerComm = g.community === 'Karra' ? `${g.community} — ` : '';
+    return `<div class="print-page${pageBreak&&!isLast?' pb':''}">
+      <div class="pp-hdr">
+        <div>
+          <div class="pp-school">Ngutu College · 2027 Class List</div>
+          <div class="pp-grp">${g.name}</div>
+          <div style="font-size:.68rem;color:var(--muted)">${headerComm}${g.community} · ${sorted.length} learner${sorted.length!==1?'s':''}</div>
+        </div>
+        <div style="text-align:right">
+          ${purpose?`<div class="pp-purp">${purpose}</div>`:''}
+          <div class="pp-date">${today}</div>
+          <div style="font-size:.65rem;color:var(--muted);margin-top:.15rem">Confidential — learner information</div>
+        </div>
+      </div>
+      <table class="roll-rtable">
+        <thead><tr>
+          <th>#</th><th>Learner</th>
+          ${showYear?'<th>2027 Year</th>':''}
+          ${showGender?'<th>Gender</th>':''}
+          ${showATSI?'<th>ATSI</th>':''}
+          ${showWardli?'<th>Current Wardli</th>':''}
+          ${showNotes?'<th>Notes</th>':''}
+          ${showCheck?[...Array(numChecks)].map(()=>'<th class="chk-col"></th>').join(''):''}
+        </tr></thead>
+        <tbody>${sorted.map((s,idx)=>`<tr>
+          <td style="color:var(--muted);font-size:.7rem">${idx+1}</td>
+          <td><strong>${s.last}</strong>, ${s.first}${s.leaving==='Y'?'<span style="color:#f97316;font-size:.68rem;margin-left:.3rem">●</span>':''}</td>
+          ${showYear?`<td><span class="rypill" style="background:${YEAR_COLORS[s.year]||'#94a3b8'}">${s.year||'—'}</span></td>`:''}
+          ${showGender?`<td style="font-size:.72rem">${s.gender||'—'}</td>`:''}
+          ${showATSI?`<td style="font-size:.72rem">${s.atsi===true?'Y':s.atsi===false?'N':'—'}</td>`:''}
+          ${showWardli?`<td style="font-size:.72rem">${s.currentWardli||'—'}</td>`:''}
+          ${showNotes?'<td></td>':''}
+          ${showCheck?[...Array(numChecks)].map(()=>'<td class="chk-col"></td>').join(''):''}
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  }).join('') || '<div class="preview-empty">2027 plan has no placed learners yet.</div>';
+}
+
+function buildPlan2027PrintHTML(){
+  // Same as preview but designed for the #printRoot print path
+  const today = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const opts = getRollOpts();
+  return buildPlan2027PreviewHTML(opts, today);
+}
 
 // ════════════════════════════════════════════════════════════════
 // 2027 PLANNING ENGINE
@@ -3426,9 +3754,35 @@ function confirmRegenPlan(){
 }
 
 // ── Blob save/load for plan
+function serialisePlan(p){
+  // JSON cannot serialise Set/Map — convert syncFlags to plain arrays/objects
+  if(!p) return p;
+  const out = {...p};
+  if(p._syncFlags){
+    out._syncFlags = {
+      departed:    [...(p._syncFlags.departed instanceof Set ? p._syncFlags.departed : (p._syncFlags.departed||[]))],
+      yearChanged: p._syncFlags.yearChanged instanceof Map
+        ? Object.fromEntries(p._syncFlags.yearChanged)
+        : (p._syncFlags.yearChanged||{}),
+    };
+  }
+  return out;
+}
+function deserialisePlan(p){
+  // Restore Set/Map from plain arrays/objects after JSON parse
+  if(!p) return p;
+  if(p._syncFlags){
+    p._syncFlags = {
+      departed:    new Set(Array.isArray(p._syncFlags.departed) ? p._syncFlags.departed : []),
+      yearChanged: new Map(Object.entries(p._syncFlags.yearChanged||{})),
+    };
+  }
+  return p;
+}
+
 async function savePlan2027(silent=false){
   if(!blobCfg.account||!blobCfg.sas) return;
-  const data = JSON.stringify({plan2027, savedAt: new Date().toISOString()});
+  const data = JSON.stringify({plan2027: serialisePlan(plan2027), savedAt: new Date().toISOString()});
   try{
     await fetch(blobUrl('plan2027.json'),{method:'PUT',headers:{'x-ms-blob-type':'BlockBlob','Content-Type':'application/json'},body:data});
     if(!silent) showToast('2027 plan saved');
@@ -3441,7 +3795,7 @@ async function loadPlan2027(){
     const res = await fetch(blobUrl('plan2027.json'));
     if(res.ok){
       const d = await res.json();
-      plan2027 = d.plan2027;
+      plan2027 = deserialisePlan(d.plan2027);
       return true;
     }
   }catch(e){}
@@ -3450,14 +3804,17 @@ async function loadPlan2027(){
 
 // ── Stats helpers
 function planStats(arr){
-  const total = arr.length;
-  const male   = arr.filter(s=>s.gender==='Male').length;
-  const female = arr.filter(s=>s.gender==='Female').length;
-  const nb     = arr.filter(s=>s.gender==='Non-binary').length;
-  const atsi   = arr.filter(s=>isATSI(s)).length;
+  // Exclude confirmed leavers from all counts
+  const active = arr.filter(s=>s.leaving!=='confirmed');
+  const total  = active.length;
+  const male   = active.filter(s=>s.gender==='Male').length;
+  const female = active.filter(s=>s.gender==='Female').length;
+  const nb     = active.filter(s=>s.gender==='Non-binary').length;
+  const atsi   = active.filter(s=>isATSI(s)).length;
   const byYear = {};
-  arr.forEach(s=>{ byYear[s.year]=(byYear[s.year]||0)+1; });
-  return {total,male,female,nb,atsi,byYear};
+  active.forEach(s=>{ byYear[s.year]=(byYear[s.year]||0)+1; });
+  const confirmedLeaving = arr.filter(s=>s.leaving==='confirmed').length;
+  return {total,male,female,nb,atsi,byYear,confirmedLeaving};
 }
 
 function renderPlanStats(arr){
@@ -3467,11 +3824,12 @@ function renderPlanStats(arr){
     `<div class="yr-row"><div class="yr-pip" style="background:${YEAR_COLORS[y]||'#94a3b8'}"></div><span class="yr-lbl">${y}</span><span class="yr-cnt">${n}</span></div>`
   ).join('');
   return `<div style="padding:.35rem .55rem;border-top:1px solid var(--g100);font-size:.68rem">
-    <div style="display:flex;gap:.5rem;margin-bottom:.25rem">
+    <div style="display:flex;gap:.5rem;margin-bottom:.25rem;flex-wrap:wrap">
       <span style="color:#2dd4bf">♂${st.male}</span>
       <span style="color:#fb923c">♀${st.female}</span>
       ${st.nb?`<span style="color:#a78bfa">NB ${st.nb}</span>`:''}
       ${st.atsi?`<span style="color:#c2410c">ATSI ${st.atsi}</span>`:''}
+      ${st.confirmedLeaving?`<span style="color:#dc2626;font-style:italic">−${st.confirmedLeaving} leaving</span>`:''}
     </div>
     ${yearPips}
   </div>`;
@@ -3548,18 +3906,33 @@ function renderPlanGroupCard(g){
   // Drop zone attrs
   const dz = planLocked ? '' : `ondragover="planDragOver(event,'${g.key.replace(/'/g,"\\'")}') " ondragleave="planDragLeave(event)" ondrop="planDrop(event,'${g.key.replace(/'/g,"\\'")}') "`;
 
+  // Active count excludes confirmed leavers
+  const activeCount = sorted.filter(s=>s.leaving!=='confirmed').length;
+
   const chips = sorted.map(s=>{
     const draggable = !planLocked;
     const isFuture = s.future==='Y';
-    const isLeaving = s.leaving==='Y';
+    const isConfirmedLeaving = s.leaving==='confirmed';
+    const isPossLeaving = s.leaving==='Y';
+    // Check sync flag
+    const isSyncFlagged = plan2027?._syncFlags?.departed?.has(s.id) || plan2027?._syncFlags?.yearChanged?.has(s.id);
     const yrCol = YEAR_COLORS[s.year]||'#94a3b8';
-    const chipCls = ['sc', draggable?'pdrag':'', isFuture?'new-enrol':'', isLeaving?'leaving':''].filter(Boolean).join(' ');
+    const chipCls = ['sc', draggable?'pdrag':'', isFuture?'new-enrol':'', isConfirmedLeaving?'confirmed-leaving':isPossLeaving?'leaving':'', isSyncFlagged?'sync-flagged':''].filter(Boolean).join(' ');
     const icons = [];
     if(isFuture) icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;display:inline-block;margin-top:1px" title="New enrolment"></span>');
-    if(isLeaving) icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#fb923c;display:inline-block;margin-top:1px" title="Possibly leaving"></span>');
+    if(isConfirmedLeaving) icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#dc2626;display:inline-block;margin-top:1px" title="Confirmed leaving — not counted"></span>');
+    else if(isPossLeaving) icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#fb923c;display:inline-block;margin-top:1px" title="Possibly leaving"></span>');
+    if(isSyncFlagged) icons.push('<span title="Changed in last sync — needs review">⚠</span>');
+    const tooltip = [
+      `${s.last}, ${s.first} · ${s.year}`,
+      s.origYear&&s.origYear!==s.year?`(was ${s.origYear})`:'',
+      isFuture?'Pre-enrolled':'',
+      isConfirmedLeaving?'Confirmed leaving — not counted in class total':isPossLeaving?'Possibly leaving':'',
+      isSyncFlagged?'Changed in last sync':'',
+    ].filter(Boolean).join(' · ');
     return `<div class="${chipCls}" id="pc-${s.id}"
       ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'${g.key.replace(/'/g,"\\'")}') " ondragend="planDragEnd(event)"` : ''}
-      title="${s.last}, ${s.first} · ${s.year}${s.origYear&&s.origYear!==s.year?' (was '+s.origYear+')':''}${isFuture?' · Pre-enrolled':''}${isLeaving?' · Possibly leaving':''}"
+      title="${tooltip}"
       ondblclick="openStudentModal(${s.id})"
       oncontextmenu="openPlanCtxMenu(event,${s.id},'${g.key.replace(/'/g,"\\'")}')">
       <div class="ypip" style="background:${yrCol}"></div>
@@ -3592,10 +3965,13 @@ function renderPlanGroupCard(g){
       <button class="plan-add-btn" onclick="addKindyEntry()">+ Add student</button>
     </div>` : '';
 
+  const hasConfLeavers = sorted.some(s=>s.leaving==='confirmed');
+  const hasSyncFlags = sorted.some(s=>plan2027?._syncFlags?.departed?.has(s.id)||plan2027?._syncFlags?.yearChanged?.has(s.id));
+  const cntLabel = hasConfLeavers ? `${activeCount} <span style="font-size:.58rem;opacity:.75">(+${sorted.length-activeCount} leaving)</span>` : `${sorted.length}`;
   return `<div class="gcol ${planLocked?'locked':''}" id="pcol-${g.key.replace(/[^a-zA-Z0-9]/g,'_')}" style="flex:1;min-width:155px">
     <div class="ghdr" style="${hdrStyle}">
-      <span class="gname">${g.label}</span>
-      <span class="gcnt">${sorted.length}</span>
+      <span class="gname">${g.label}${hasSyncFlags?' ⚠':''}</span>
+      <span class="gcnt">${cntLabel}</span>
     </div>
     <div class="sc-list" id="pz-${g.key.replace(/[^a-zA-Z0-9]/g,'_')}" style="padding:.45rem .5rem;display:flex;flex-direction:column;gap:.22rem;min-height:50px" ${dz}>
       ${chips||`<div style="font-size:.72rem;color:var(--muted);padding:.25rem;font-style:italic">Empty</div>`}
@@ -3713,6 +4089,16 @@ function renderPlan(){
   const el = document.getElementById('planCanvas');
   if(!el) return;
   if(!plan2027){ el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted)">Click ↺ Re-generate to build the 2027 plan from current data.</div>'; return; }
+
+  // Show/hide the "Review sync changes" button based on whether flags exist
+  const hasSyncFlags = plan2027._syncFlags && (
+    (plan2027._syncFlags.departed instanceof Set && plan2027._syncFlags.departed.size > 0) ||
+    (plan2027._syncFlags.yearChanged instanceof Map && plan2027._syncFlags.yearChanged.size > 0) ||
+    (Array.isArray(plan2027._syncFlags.departed) && plan2027._syncFlags.departed.length > 0) ||
+    (plan2027._syncFlags.yearChanged && !( plan2027._syncFlags.yearChanged instanceof Map) && Object.keys(plan2027._syncFlags.yearChanged).length > 0)
+  );
+  const syncFlagBtn = document.getElementById('planSyncFlagBtn');
+  if(syncFlagBtn) syncFlagBtn.style.display = hasSyncFlags ? '' : 'none';
 
   buildPlanCtabs();
 
