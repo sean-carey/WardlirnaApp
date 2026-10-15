@@ -621,7 +621,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         <span class="ctrl-label">Source</span>
         <div class="sort-row">
           <button class="sort-btn on" id="rsrc-current" onclick="rollSetSource('current')">Current Rolls</button>
-          <button class="sort-btn admin-only" id="rsrc-plan2027" onclick="rollSetSource('plan2027')">2027 Plan</button>
+          <button class="sort-btn" id="rsrc-plan2027" onclick="rollSetSource('plan2027')">2027 Plan</button>
         </div>
       </div>
 
@@ -4025,6 +4025,26 @@ async function loadPlan2027(){
     if(res.ok){
       const d = await res.json();
       plan2027 = deserialisePlan(d.plan2027);
+      // Patch leaving/future flags from live students onto loaded chip objects.
+      // Chips stored before the leaving-flag fix don't have these fields, so
+      // every load refreshes them from the current roll regardless of blob age.
+      if(plan2027 && students.length){
+        const byId = {};
+        students.forEach(s => { byId[s.id] = s; });
+        const planKeys = [...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',
+          ...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',
+          ...PLAN_STRUCT.Warti.groups,'__tobe_Warti',
+          ...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+        planKeys.forEach(k => {
+          (plan2027[k]||[]).forEach(chip => {
+            const live = byId[chip.id];
+            if(live){
+              chip.leaving = live.leaving||'N';
+              chip.future  = live.future||'N';
+            }
+          });
+        });
+      }
       return true;
     }
   }catch(e){}
