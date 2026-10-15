@@ -4172,11 +4172,13 @@ function getPlanCommData(comm){
 
 // ── Render one group as a planner-style card
 function renderPlanGroupCard(g){
-  // Confirmed leavers float to the bottom
+  // Sort: confirmed leavers to bottom, then year level, then surname, then first name
   const sorted = [...g.students].sort((a,b)=>{
     const aConf = a.leaving==='confirmed' ? 1 : 0;
     const bConf = b.leaving==='confirmed' ? 1 : 0;
     if(aConf!==bConf) return aConf-bConf;
+    const yDiff = yearRank2027(a.year) - yearRank2027(b.year);
+    if(yDiff!==0) return yDiff;
     return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);
   });
   const isSpecial = g.type === 'tobe' || g.type === 'kindy-entry';
