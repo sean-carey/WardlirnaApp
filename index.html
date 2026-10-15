@@ -423,6 +423,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .pchip.confirmed-leaving-chip{background:#fff1f2;border-color:#fca5a5;opacity:.75}
 .pchip.confirmed-leaving-chip .pchip-name{text-decoration:line-through;color:var(--muted)}
 .pchip.sync-flagged{border-color:#f59e0b;background:#fffbeb}
+/* 2027 Overview styles */
+.ov-comm-section{margin-bottom:1.5rem}
+.ov-comm-title{font-weight:700;font-size:.82rem;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;padding-bottom:.2rem;border-bottom:1px solid var(--g200)}
+.ov-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.75rem}
+.ov-card{background:#fff;border:1px solid var(--g200);border-radius:8px;padding:.65rem .75rem;break-inside:avoid}
+.ov-card-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.25rem}
+.ov-comm-row td{background:#f1f5f9!important}
+@media print{
+  .ov-cards-grid{grid-template-columns:repeat(2,1fr)!important}
+  .ov-card{break-inside:avoid;box-shadow:none!important}
+  .overview-page{max-width:100%!important;padding:0!important}
+}
 .plan-col.tobe{border-color:#fbbf24;background:#fffbeb}
 .plan-col.tobe .plan-col-hdr{background:#fef9c3;border-bottom-color:#fde68a}
 .plan-col.tobe .plan-col-name{color:#92400e}
@@ -610,6 +622,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
         <div class="sort-row">
           <button class="sort-btn on" id="rsrc-current" onclick="rollSetSource('current')">Current Rolls</button>
           <button class="sort-btn admin-only" id="rsrc-plan2027" onclick="rollSetSource('plan2027')">2027 Plan</button>
+        </div>
+      </div>
+
+      <!-- 2027 View toggle (Lists | Overview) — only visible when source=plan2027 -->
+      <div class="ctrl-block" id="r2027ViewBlock" style="display:none">
+        <span class="ctrl-label">View</span>
+        <div class="sort-row">
+          <button class="sort-btn on" id="rview-lists" onclick="roll2027SetView('lists')">Class Lists</button>
+          <button class="sort-btn" id="rview-overview" onclick="roll2027SetView('overview')">Overview</button>
         </div>
       </div>
 
@@ -2972,6 +2993,7 @@ const rollYearSel = new Set();   // selected year levels (year mode)
 let rollSortMode = 'surname';
 let rollPrintMode = 'group';     // 'group' | 'year'
 let rollSource = 'current';      // 'current' | 'plan2027'
+let roll2027View = 'lists';      // 'lists' | 'overview'
 
 function rollSetSource(src){
   rollSource = src;
@@ -2979,12 +3001,30 @@ function rollSetSource(src){
   document.getElementById('rsrc-plan2027')?.classList.toggle('on', src==='plan2027');
   // Show/hide 2027-specific controls
   const is2027 = src === 'plan2027';
+  document.getElementById('r2027ViewBlock').style.display = is2027 ? '' : 'none';
   document.getElementById('rModeBlock').style.display    = is2027 ? 'none' : '';
   document.getElementById('rGroupPanel').style.display   = is2027 ? 'none' : (rollPrintMode==='group' ? '' : 'none');
   document.getElementById('rYearPanel').style.display    = is2027 ? 'none' : (rollPrintMode==='year' ? '' : 'none');
-  document.getElementById('rOpt2027Cols').style.display  = is2027 ? '' : 'none';
-  document.getElementById('rollPrintBtn').textContent    = is2027 ? '🖨  Print 2027 Lists' : '🖨  Print Roll';
+  const showListCols = is2027 && roll2027View === 'lists';
+  document.getElementById('rOpt2027Cols').style.display  = showListCols ? '' : 'none';
+  updateRoll2027PrintBtn();
   renderRoll();
+}
+
+function roll2027SetView(view){
+  roll2027View = view;
+  document.getElementById('rview-lists')?.classList.toggle('on', view==='lists');
+  document.getElementById('rview-overview')?.classList.toggle('on', view==='overview');
+  document.getElementById('rOpt2027Cols').style.display = (view==='lists') ? '' : 'none';
+  updateRoll2027PrintBtn();
+  renderRoll();
+}
+
+function updateRoll2027PrintBtn(){
+  const btn = document.getElementById('rollPrintBtn');
+  if(!btn) return;
+  if(rollSource !== 'plan2027'){ btn.textContent = '🖨  Print Roll'; return; }
+  btn.textContent = roll2027View === 'overview' ? '🖨  Print Overview' : '🖨  Print 2027 Lists';
 }
 
 function doRollPrint(){
@@ -2994,7 +3034,8 @@ function doRollPrint(){
       const d = document.createElement('div'); d.id='printRoot'; d.style.display='none';
       document.body.appendChild(d); return d;
     })();
-    root.innerHTML = buildPlan2027PrintHTML();
+    const today = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    root.innerHTML = roll2027View === 'overview' ? build2027OverviewHTML(today) : buildPlan2027PrintHTML();
     root.style.display = '';
     document.body.classList.add('printing');
     window.print();
@@ -3299,7 +3340,11 @@ function renderRoll(){
       el.innerHTML='<div class="preview-empty">No 2027 plan found. Generate the plan first in the 2027 Planning tab.</div>';
       return;
     }
-    el.innerHTML = buildPlan2027PreviewHTML(opts, today);
+    if(roll2027View === 'overview'){
+      el.innerHTML = build2027OverviewHTML(today);
+    } else {
+      el.innerHTML = buildPlan2027PreviewHTML(opts, today);
+    }
     return;
   }
 
@@ -3339,6 +3384,189 @@ function renderRoll(){
 // ════════════════════════════════════════════════════════════════
 // 2027 PLAN PRINT / PREVIEW
 // ════════════════════════════════════════════════════════════════
+
+// ── Helpers for 2027 stats
+
+const YEAR_RANK = {
+  'Kindergarten': -1, 'Reception': 0,
+  'Year 1':1,'Year 2':2,'Year 3':3,'Year 4':4,'Year 5':5,'Year 6':6,
+  'Year 7':7,'Year 8':8,'Year 9':9,'Year 10':10,'Year 11':11,'Year 12':12
+};
+
+function yearRank2027(y){ return YEAR_RANK[y] ?? 99; }
+
+function plan2027GroupStats(students){
+  // Exclude confirmed leavers
+  const active = students.filter(s => s.leaving !== 'confirmed');
+  const total  = active.length;
+  const male   = active.filter(s => s.gender === 'Male').length;
+  const female = active.filter(s => s.gender === 'Female').length;
+  const nb     = active.filter(s => s.gender === 'Non-binary').length;
+  const atsiY  = active.filter(s => s.atsi === true || s.atsi === 'Y').length;
+  const atsiN  = active.filter(s => s.atsi === false || s.atsi === 'N').length;
+  const atsiUnk = total - atsiY - atsiN;
+  const byYear = {};
+  active.forEach(s => { byYear[s.year] = (byYear[s.year]||0)+1; });
+  return {total, male, female, nb, atsiY, atsiN, atsiUnk, byYear};
+}
+
+// ── Summary table + per-class composition cards for Overview view
+function build2027OverviewHTML(today){
+  if(!plan2027) return '<div class="preview-empty">No 2027 plan found.</div>';
+  const groups = get2027PrintGroups();
+  const allStudents = groups.flatMap(g => g.students);
+  const totalStats = plan2027GroupStats(allStudents);
+
+  // Count confirmed leavers across all plan keys for the footer note
+  const planKeys = [...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',
+    ...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',
+    ...PLAN_STRUCT.Warti.groups,'__tobe_Warti',
+    ...PLAN_STRUCT.Karra.yearLevels,...PLAN_STRUCT.Wirra.groups];
+  const confirmedLeavingCount = planKeys.reduce((sum,k)=>
+    sum + (plan2027[k]||[]).filter(s=>s.leaving==='confirmed').length, 0);
+
+  // All years present
+  const yearSet = new Set(allStudents.map(s=>s.year).filter(Boolean));
+  const yearCols = [...yearSet].sort((a,b) => yearRank2027(a)-yearRank2027(b));
+
+  // Community order for the summary table
+  const COMM_ORDER = ['Madlurta','Kurlana','Warti','Karra','Wirra'];
+
+  // Build summary table rows grouped by community
+  let summaryRows = '';
+  let grandTotal = 0, grandMale = 0, grandFemale = 0, grandNB = 0, grandATSI = 0;
+  const yearGrandTotals = {};
+
+  COMM_ORDER.forEach(comm => {
+    const commGroups = groups.filter(g => g.community === comm && g.students.length > 0);
+    if(!commGroups.length) return;
+    summaryRows += `<tr class="ov-comm-row"><td colspan="${5 + yearCols.length}" style="background:#f1f5f9;font-weight:700;font-size:.72rem;color:#475569;padding:.3rem .5rem;letter-spacing:.04em">${comm.toUpperCase()}</td></tr>`;
+    commGroups.forEach(g => {
+      const st = plan2027GroupStats(g.students);
+      const displayName = g.name.replace('__tobe_','To Be Placed — ');
+      const atsiPct = st.total ? Math.round(st.atsiY/st.total*100) : 0;
+      const yearCells = yearCols.map(y => `<td style="text-align:center;font-size:.72rem">${st.byYear[y]||'—'}</td>`).join('');
+      summaryRows += `<tr>
+        <td style="padding-left:1rem;font-size:.78rem">${displayName}</td>
+        <td style="text-align:center;font-weight:600">${st.total}</td>
+        <td style="text-align:center;font-size:.72rem">${st.male}</td>
+        <td style="text-align:center;font-size:.72rem">${st.female}</td>
+        <td style="text-align:center;font-size:.72rem">${st.atsiY}${atsiPct?` <span style="color:var(--muted)">(${atsiPct}%)</span>`:``}</td>
+        ${yearCells}
+      </tr>`;
+      grandTotal += st.total; grandMale += st.male; grandFemale += st.female;
+      grandNB += st.nb; grandATSI += st.atsiY;
+      yearCols.forEach(y => { yearGrandTotals[y] = (yearGrandTotals[y]||0) + (st.byYear[y]||0); });
+    });
+  });
+
+  const grandYearCells = yearCols.map(y => `<td style="text-align:center;font-weight:600;font-size:.72rem">${yearGrandTotals[y]||'—'}</td>`).join('');
+
+  // Per-class composition cards
+  const commCards = COMM_ORDER.map(comm => {
+    const commGroups = groups.filter(g => g.community === comm && g.students.length > 0);
+    if(!commGroups.length) return '';
+    const cards = commGroups.map(g => {
+      const st = plan2027GroupStats(g.students);
+      const active = g.students.filter(s => s.leaving !== 'confirmed');
+      const displayName = g.name.replace('__tobe_','To Be Placed — ');
+
+      // Year × Gender breakdown
+      const genders = ['Male','Female','Non-binary'];
+      const yearRows = yearCols.filter(y => st.byYear[y]).map(y => {
+        const ys = active.filter(s => s.year === y);
+        const byG = genders.map(gn => ys.filter(s=>s.gender===gn).length);
+        const atsiY = ys.filter(s=>s.atsi===true||s.atsi==='Y').length;
+        return `<tr>
+          <td style="font-size:.7rem;color:var(--muted)">${y}</td>
+          ${byG.map(n=>`<td style="text-align:center;font-size:.72rem">${n||'—'}</td>`).join('')}
+          <td style="text-align:center;font-size:.72rem;color:#1d4ed8">${atsiY||'—'}</td>
+          <td style="text-align:center;font-weight:600;font-size:.72rem">${ys.length}</td>
+        </tr>`;
+      }).join('');
+
+      // Current Wardli breakdown ("coming from")
+      const fromMap = {};
+      active.forEach(s => {
+        const k = s.currentWardli || s.origGroup || '—';
+        fromMap[k] = (fromMap[k]||0)+1;
+      });
+      const fromRows = Object.entries(fromMap).sort((a,b)=>b[1]-a[1]).map(([k,n])=>
+        `<span style="font-size:.7rem;background:#f1f5f9;border-radius:4px;padding:.1rem .35rem">${k} <strong>${n}</strong></span>`
+      ).join(' ');
+
+      const atsiPct = st.total ? Math.round(st.atsiY/st.total*100) : 0;
+
+      return `<div class="ov-card">
+        <div class="ov-card-hdr">
+          <strong>${displayName}</strong>
+          <span style="font-size:.72rem;color:var(--muted)">${comm}</span>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:.4rem">
+          ${st.total} learner${st.total!==1?'s':''} · ${st.male}M ${st.female}F${st.nb?` ${st.nb}NB`:''} · ATSI: ${st.atsiY} (${atsiPct}%)
+        </div>
+        ${yearRows ? `<table style="width:100%;border-collapse:collapse;margin-bottom:.4rem">
+          <thead><tr style="border-bottom:1px solid #e2e8f0">
+            <th style="text-align:left;font-size:.68rem;color:var(--muted);padding:.15rem 0">Year</th>
+            ${genders.map(gn=>`<th style="text-align:center;font-size:.68rem;color:var(--muted)">${gn.charAt(0)}</th>`).join('')}
+            <th style="text-align:center;font-size:.68rem;color:#1d4ed8">ATSI</th>
+            <th style="text-align:center;font-size:.68rem;color:var(--muted)">N</th>
+          </tr></thead>
+          <tbody>${yearRows}</tbody>
+        </table>` : ''}
+        ${fromRows ? `<div style="margin-top:.3rem"><span style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:.2rem">Current Wardli →</span>${fromRows}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    return `<div class="ov-comm-section">
+      <div class="ov-comm-title">${comm}</div>
+      <div class="ov-cards-grid">${cards}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="print-page overview-page" style="font-family:'Inter',sans-serif;max-width:820px;margin:0 auto;padding:.5rem">
+    <div class="pp-hdr" style="margin-bottom:1rem">
+      <div>
+        <div class="pp-school">Ngutu College · 2027 Class Overview</div>
+        <div style="font-size:.72rem;color:var(--muted)">All communities · ${grandTotal} learner${grandTotal!==1?'s':''} placed${confirmedLeavingCount?` · ${confirmedLeavingCount} confirmed departing (not shown)`:''}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="pp-date">${today}</div>
+        <div style="font-size:.65rem;color:var(--muted);margin-top:.15rem">Confidential — learner information</div>
+      </div>
+    </div>
+
+    <!-- Summary table -->
+    <div style="margin-bottom:1.5rem">
+      <div style="font-weight:700;font-size:.82rem;margin-bottom:.4rem;border-bottom:2px solid var(--accent);padding-bottom:.2rem">Summary</div>
+      <table class="roll-rtable" style="width:100%">
+        <thead><tr>
+          <th style="text-align:left">Wardli / Group</th>
+          <th style="text-align:center">Total</th>
+          <th style="text-align:center">M</th>
+          <th style="text-align:center">F</th>
+          <th style="text-align:center">ATSI</th>
+          ${yearCols.map(y=>`<th style="text-align:center;font-size:.68rem">${y.replace('Year ','Yr ')}</th>`).join('')}
+        </tr></thead>
+        <tbody>
+          ${summaryRows}
+          <tr style="border-top:2px solid #e2e8f0;font-weight:700">
+            <td>Total</td>
+            <td style="text-align:center">${grandTotal}</td>
+            <td style="text-align:center;font-size:.72rem">${grandMale}</td>
+            <td style="text-align:center;font-size:.72rem">${grandFemale}</td>
+            <td style="text-align:center;font-size:.72rem">${grandATSI}</td>
+            ${grandYearCells}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Per-class composition cards -->
+    <div style="font-weight:700;font-size:.82rem;margin-bottom:.6rem;border-bottom:2px solid var(--accent);padding-bottom:.2rem">Composition by Wardli</div>
+    ${commCards}
+  </div>`;
+}
 
 function get2027PrintGroups(){
   // Returns [{name, community, students}] for all 2027 groups that have at least one active learner
@@ -3585,6 +3813,7 @@ function buildInitialPlan(){
       nccd: s.nccd,
       origGroup: s.group,
       future: s.future||'N',
+      leaving: s.leaving||'N',   // carry possibly/confirmed leaving flag into plan chips
     };
     if(dest.comm === '__alumni__'){
       p._alumni.push(planS);
@@ -3713,7 +3942,7 @@ function syncUpdatesPlan(){
     if(!inPlan && !inAlumni){
       const dest = plan2027GroupFor(s);
       const planS = {id:s.id,first:s.first,last:s.last,year:PLAN_NEXT_YEAR[s.year]||s.year,
-        origYear:s.year,gender:s.gender,atsi:s.atsi,nccd:s.nccd,origGroup:s.group,future:'N'};
+        origYear:s.year,gender:s.gender,atsi:s.atsi,nccd:s.nccd,origGroup:s.group,future:'N',leaving:s.leaving||'N'};
       if(dest.comm==='__alumni__'){ plan2027._alumni=plan2027._alumni||[]; plan2027._alumni.push(planS); }
       else if(dest.group==='__tobe__'){ const k='__tobe_'+dest.comm; plan2027[k]=plan2027[k]||[]; plan2027[k].push(planS); }
       else if(dest.group==='__yr__'){ plan2027[dest.year]=plan2027[dest.year]||[]; plan2027[dest.year].push(planS); }
@@ -3968,11 +4197,14 @@ function renderPlanGroupCard(g){
   const hasConfLeavers = sorted.some(s=>s.leaving==='confirmed');
   const hasSyncFlags = sorted.some(s=>plan2027?._syncFlags?.departed?.has(s.id)||plan2027?._syncFlags?.yearChanged?.has(s.id));
   const cntLabel = hasConfLeavers ? `${activeCount} <span style="font-size:.58rem;opacity:.75">(+${sorted.length-activeCount} leaving)</span>` : `${sorted.length}`;
+  const tobeHint = (g.type==='tobe' && planLocked && sorted.length > 0)
+    ? `<div style="font-size:.62rem;color:#92400e;background:#fef9c3;padding:.15rem .45rem;text-align:center;border-bottom:1px solid #fde68a">🔒 Unlock to drag into classes</div>` : '';
   return `<div class="gcol ${planLocked?'locked':''}" id="pcol-${g.key.replace(/[^a-zA-Z0-9]/g,'_')}" style="flex:1;min-width:155px">
     <div class="ghdr" style="${hdrStyle}">
       <span class="gname">${g.label}${hasSyncFlags?' ⚠':''}</span>
       <span class="gcnt">${cntLabel}</span>
     </div>
+    ${tobeHint}
     <div class="sc-list" id="pz-${g.key.replace(/[^a-zA-Z0-9]/g,'_')}" style="padding:.45rem .5rem;display:flex;flex-direction:column;gap:.22rem;min-height:50px" ${dz}>
       ${chips||`<div style="font-size:.72rem;color:var(--muted);padding:.25rem;font-style:italic">Empty</div>`}
     </div>
