@@ -3077,7 +3077,7 @@ function printPlanOverview(){
           <span style="font-weight:700;font-size:.8rem;color:#fff;flex:1">🖨 Print Overview — 2027</span>
           <label style="display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:#cbd5e1;cursor:pointer;user-select:none">
             <input type="checkbox" id="ovKindyToggle" ${showKindy?'checked':''} style="accent-color:#60a5fa;cursor:pointer">
-            Include Kindy &amp; Reception
+            Include Kindergarten
           </label>
           <button onclick="doPrintOverview()" style="background:#3b82f6;color:#fff;border:none;border-radius:5px;padding:.35rem .8rem;font-size:.75rem;font-weight:700;cursor:pointer">🖨 Print</button>
           <button onclick="document.getElementById('ovPreviewPanel').remove()" style="background:#475569;color:#fff;border:none;border-radius:5px;padding:.35rem .7rem;font-size:.75rem;cursor:pointer">✕ Close</button>
@@ -3490,17 +3490,16 @@ function build2027OverviewHTML(today, opts){
   const confirmedLeavingCount = planKeys.reduce((sum,k)=>
     sum + (plan2027[k]||[]).filter(s=>s.leaving==='confirmed').length, 0);
 
-  // Helper: get active students for a community (optionally excluding kindy years)
-  const KINDY_YEARS = new Set(['Kindergarten','Reception','Kindy']);
+  // Toggle only removes Kindergarten; Reception always stays
+  const KINDY_ONLY_YEARS = new Set(['Kindergarten','Kindy']);
+
   function commStudents(comm){
     const gs = groups.filter(g => g.community === comm);
     let all = gs.flatMap(g => g.students);
-    if(!showKindy) all = all.filter(s => !KINDY_YEARS.has(s.year));
+    if(!showKindy) all = all.filter(s => !KINDY_ONLY_YEARS.has(s.year));
     return all;
   }
 
-  // Build per-community year-level data
-  // comm → { total, male, female, nb, atsiY, byYear:{year→{total,atsiY}} }
   function commStats(comm){
     const ss = commStudents(comm);
     const byYear = {};
@@ -3520,39 +3519,118 @@ function build2027OverviewHTML(today, opts){
     return {total, atsiY, male, female, nb, byYear};
   }
 
-  // Campus groupings — Junior: Madlurta, Kurlana, Warti, Wirra | Senior: Karra
-  const JUNIOR_COMMS = ['Madlurta','Kurlana','Warti','Wirra'];
-  const SENIOR_COMMS = ['Karra'];
-  const ALL_COMMS = [...JUNIOR_COMMS, ...SENIOR_COMMS];
-  // Filter Madlurta from junior list if kindy hidden
-  const visibleJunior = showKindy ? JUNIOR_COMMS : JUNIOR_COMMS.filter(c=>c!=='Madlurta');
-
-  function campusStats(comms){
-    const all = comms.flatMap(c=>commStudents(c));
-    const total = all.length;
-    const atsiY = all.filter(s=>isATSI(s)).length;
-    const male = all.filter(s=>s.gender==='Male').length;
-    const female = all.filter(s=>s.gender==='Female').length;
-    const nb = all.filter(s=>s.gender==='Non-binary').length;
-    return {total, atsiY, male, female, nb};
-  }
-  const jSt = campusStats(visibleJunior);
-  const sSt = campusStats(SENIOR_COMMS);
-  const allSt = campusStats(showKindy ? ALL_COMMS : ALL_COMMS.filter(c=>c!=='Madlurta'));
+  const ALL_COMMS = ['Madlurta','Kurlana','Warti','Wirra','Karra'];
+  const SENIOR_COMMS = new Set(['Karra']);
+  const visibleComms = showKindy ? ALL_COMMS : ALL_COMMS.filter(c=>c!=='Madlurta');
 
   const pct = (n,d) => d ? Math.round(n/d*100) : 0;
 
-  // ATSI bar SVG-style inline
-  function atsiBar(atsiN, total, colorA, colorN){
-    const ap = total ? Math.round(atsiN/total*100) : 0;
-    const np = 100 - ap;
-    return `<div style="background:#e2e8f0;border-radius:20px;height:6px;overflow:hidden;margin:.28rem 0 .22rem;display:flex;gap:1px">
-      <div style="width:${ap}%;background:${colorA};border-radius:20px 0 0 20px;min-width:${ap>0?2:0}px"></div>
-      <div style="width:${np}%;background:${colorN};border-radius:0 20px 20px 0;min-width:${np>0?2:0}px"></div>
-    </div>`;
+  // Aggregate stats across visible communities
+  function multiCommStats(comms){
+    const all = comms.flatMap(c => commStudents(c));
+    return {
+      total: all.length,
+      atsiY: all.filter(s=>isATSI(s)).length,
+      male: all.filter(s=>s.gender==='Male').length,
+      female: all.filter(s=>s.gender==='Female').length,
+      nb: all.filter(s=>s.gender==='Non-binary').length,
+    };
+  }
+  const allSt = multiCommStats(visibleComms);
+
+  // ── Forecast vs Actual table ────────────────────────────────────────────
+  // Wirra (Ngakala) actual count — used to reduce Warti forecast
+  const wirraSt = commStats('Wirra');
+  const wirraActual = wirraSt.total;
+
+  // Base forecasts (Warti forecast reduced by Wirra actual)
+  const FORECASTS = {
+    Madlurta: showKindy ? 50 : null,   // null = excluded
+    Kurlana:  75,
+    Warti:    75 - wirraActual,         // Wirra kids drawn from Warti
+    Wirra:    null,                     // no forecast — actual only
+    Karra:    135,
+  };
+  // Total forecast = sum of non-null entries
+  const forecastTotal = Object.values(FORECASTS).filter(v=>v!==null).reduce((a,b)=>a+b,0);
+
+  function forecastRow(comm, label){
+    const st = commStats(comm);
+    const fc = FORECASTS[comm];
+    const actual = st.total;
+    if(fc === null){
+      // Wirra: show actual only, no variance, no bar
+      return `<tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:.38rem .5rem;font-size:.76rem;font-weight:700;color:#334155">${label}</td>
+        <td style="text-align:center;font-size:.76rem;color:#94a3b8;font-style:italic">—</td>
+        <td style="text-align:center;font-size:.9rem;font-weight:800;color:#0f172a">${actual}</td>
+        <td style="padding:.38rem .5rem">
+          <div style="background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden">
+            <div style="width:100%;height:100%;background:#e2e8f0"></div>
+          </div>
+        </td>
+        <td style="text-align:center;font-size:.72rem;color:#94a3b8;font-style:italic">actual only</td>
+      </tr>`;
+    }
+    const fillPct = Math.min(Math.round(actual/fc*100), 100);
+    const over = actual >= fc;
+    const near = !over && actual >= fc * 0.9;
+    const fillColor = over ? '#16a34a' : near ? '#f59e0b' : '#ef4444';
+    const varVal = actual - fc;
+    const varStr = varVal === 0 ? '—' : (varVal > 0 ? `+${varVal}` : `${varVal}`);
+    const varColor = varVal > 0 ? '#16a34a' : varVal < 0 ? '#dc2626' : '#64748b';
+    return `<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:.38rem .5rem;font-size:.76rem;font-weight:700;color:#334155">${label}</td>
+      <td style="text-align:center;font-size:.76rem;color:#475569">${fc}</td>
+      <td style="text-align:center;font-size:.9rem;font-weight:800;color:#0f172a">${actual}</td>
+      <td style="padding:.38rem .5rem">
+        <div style="background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:${fillPct}%;height:100%;background:${fillColor};border-radius:4px;transition:width .3s"></div>
+        </div>
+      </td>
+      <td style="text-align:center;font-size:.8rem;font-weight:700;color:${varColor}">${varStr}</td>
+    </tr>`;
   }
 
-  // Year rows for a community — sorted by year rank
+  const fcActualTotal = visibleComms.reduce((s,c)=>s+commStats(c).total,0);
+  const fcTotalVar = fcActualTotal - forecastTotal;
+  const fcTotalVarStr = fcTotalVar === 0 ? '—' : (fcTotalVar > 0 ? `+${fcTotalVar}` : `${fcTotalVar}`);
+  const fcTotalVarColor = fcTotalVar > 0 ? '#16a34a' : fcTotalVar < 0 ? '#dc2626' : '#64748b';
+  const fcTotalFill = Math.min(Math.round(fcActualTotal/forecastTotal*100),100);
+  const fcTotalColor = fcActualTotal >= forecastTotal ? '#16a34a' : fcActualTotal >= forecastTotal*0.9 ? '#f59e0b' : '#ef4444';
+
+  const forecastTable = `
+    <div style="margin-bottom:1.2rem">
+      <div style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;border-bottom:1px solid #e2e8f0;padding-bottom:.3rem;margin-bottom:.5rem">Forecast vs Actual</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="border-bottom:2px solid #e2e8f0">
+            <th style="text-align:left;font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;padding:.25rem .5rem;font-weight:600">Community</th>
+            <th style="text-align:center;font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;font-weight:600">Forecast</th>
+            <th style="text-align:center;font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;font-weight:600">Actual</th>
+            <th style="font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;font-weight:600;padding:.25rem .5rem"></th>
+            <th style="text-align:center;font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;font-weight:600">Variance</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${visibleComms.map(c => forecastRow(c, c)).join('')}
+          <tr style="background:#f8fafc;border-top:2px solid #e2e8f0">
+            <td style="padding:.38rem .5rem;font-size:.76rem;font-weight:800;color:#0f172a">Total</td>
+            <td style="text-align:center;font-size:.76rem;font-weight:700;color:#0f172a">${forecastTotal}</td>
+            <td style="text-align:center;font-size:.9rem;font-weight:800;color:#0f172a">${fcActualTotal}</td>
+            <td style="padding:.38rem .5rem">
+              <div style="background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden">
+                <div style="width:${fcTotalFill}%;height:100%;background:${fcTotalColor};border-radius:4px"></div>
+              </div>
+            </td>
+            <td style="text-align:center;font-size:.8rem;font-weight:800;color:${fcTotalVarColor}">${fcTotalVarStr}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size:.6rem;color:#94a3b8;margin-top:.3rem;padding-left:.5rem">Warti forecast adjusted by Wirra (Ngakala) actual count. Wirra has no separate forecast.</div>
+    </div>`;
+
+  // ── Year rows per community ─────────────────────────────────────────────
   function yearRows(comm){
     const st = commStats(comm);
     const years = Object.keys(st.byYear).sort((a,b) => yearRank2027(a) - yearRank2027(b));
@@ -3573,37 +3651,17 @@ function build2027OverviewHTML(today, opts){
     }).join('');
   }
 
-  // Community block
-  function commBlock(comm, isSenior){
+  function commBlock(comm){
     const st = commStats(comm);
     if(st.total === 0) return '';
     const ap = pct(st.atsiY, st.total);
-    const hdrBg = isSenior ? '#166534' : '#334155';
+    const hdrBg = SENIOR_COMMS.has(comm) ? '#166534' : '#334155';
     return `<div style="margin-bottom:.9rem;background:#fff;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden">
       <div style="background:${hdrBg};padding:.32rem .65rem;display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:.7rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.05em">${comm}</span>
         <span style="font-size:.67rem;color:#cbd5e1">${st.total} total · <span style="color:#93c5fd;font-weight:700">ATSI ${st.atsiY} (${ap}%)</span> · <span style="color:#86efac">Non-ATSI ${st.total-st.atsiY}</span></span>
       </div>
       <div style="padding:.4rem .65rem">${yearRows(comm)}</div>
-    </div>`;
-  }
-
-  const visibleComms = showKindy ? ALL_COMMS : ALL_COMMS.filter(c=>c!=='Madlurta');
-
-  // Campus card
-  function campusCard(label, commsLabel, st, colorA, colorB, borderColor){
-    const ap = pct(st.atsiY, st.total);
-    return `<div style="border-radius:8px;padding:.7rem .9rem;border:1.5px solid ${borderColor};background:${colorB}">
-      <div style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${colorA};margin-bottom:.4rem">${label}</div>
-      <div style="display:flex;gap:.7rem;align-items:baseline;margin-bottom:.35rem">
-        <span style="font-size:2rem;font-weight:800;line-height:1;color:#0f172a">${st.total}</span>
-        <span style="font-size:.72rem;color:#475569;line-height:1.4">${st.male}M · ${st.female}F${st.nb?` · ${st.nb}NB`:''}<br><span style="color:#94a3b8;font-size:.66rem">${commsLabel}</span></span>
-      </div>
-      ${atsiBar(st.atsiY, st.total, colorA, '#86efac')}
-      <div style="display:flex;justify-content:space-between;font-size:.64rem">
-        <span style="font-weight:700;color:${colorA}">ATSI ${st.atsiY} (${ap}%)</span>
-        <span style="color:#64748b">Non-ATSI ${st.total-st.atsiY} (${100-ap}%)</span>
-      </div>
     </div>`;
   }
 
@@ -3614,7 +3672,7 @@ function build2027OverviewHTML(today, opts){
       <div>
         <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.12rem">Ngutu College · 2027 Class Planning</div>
         <div style="font-size:1.05rem;font-weight:800;color:#0f172a">Class Overview — All Communities</div>
-        <div style="font-size:.68rem;color:#475569;margin-top:.15rem">${allSt.total} learner${allSt.total!==1?'s':''} placed${confirmedLeavingCount?` · ${confirmedLeavingCount} confirmed leaving (not counted)`:''}${!showKindy?' · Kindy &amp; Reception excluded':''}
+        <div style="font-size:.68rem;color:#475569;margin-top:.15rem">${allSt.total} learner${allSt.total!==1?'s':''} placed${confirmedLeavingCount?` · ${confirmedLeavingCount} confirmed leaving (not counted)`:''}${!showKindy?' · Kindergarten excluded':''}
         </div>
       </div>
       <div style="text-align:right;font-size:.66rem;color:#64748b;flex-shrink:0;margin-left:1rem">
@@ -3622,11 +3680,8 @@ function build2027OverviewHTML(today, opts){
       </div>
     </div>
 
-    <!-- Campus cards -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.2rem">
-      ${campusCard('Junior Campus', visibleJunior.join(' · '), jSt, '#1d4ed8', '#eff6ff', '#93c5fd')}
-      ${campusCard('Senior Campus', 'Karra', sSt, '#15803d', '#f0fdf4', '#86efac')}
-    </div>
+    <!-- Forecast vs Actual -->
+    ${forecastTable}
 
     <!-- College totals strip -->
     <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;margin-bottom:1.2rem">
@@ -3647,7 +3702,7 @@ function build2027OverviewHTML(today, opts){
     <div style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;border-bottom:1px solid #e2e8f0;padding-bottom:.3rem;margin-bottom:.65rem">By Learning Community — Year Level Breakdown</div>
 
     <!-- Community blocks -->
-    ${visibleComms.map(c => commBlock(c, SENIOR_COMMS.includes(c))).join('')}
+    ${visibleComms.map(c => commBlock(c)).join('')}
 
     <!-- Grand total bar -->
     <div style="background:#1e293b;border-radius:6px;padding:.55rem .9rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;color:#fff;margin-top:.4rem">
