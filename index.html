@@ -354,8 +354,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   /* ── 2027 plan print: body.printing pattern — only #printRoot shows ── */
   body.printing > *:not(#printRoot){ display:none!important }
   body.printing #printRoot{ display:block!important }
-  body.printing #printRoot .print-page{ border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important }
-  body.printing #printRoot .page-break{ page-break-before:always;break-before:page;display:block;height:0;overflow:hidden }
+  body.printing #printRoot .print-page{ border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important;padding:1.2rem 1.4rem!important }
+  body.printing #printRoot.page-breaks .print-page + .print-page{ page-break-before:always!important;break-before:page!important }
+  body.printing #printRoot .page-break{ display:none!important }
   #printEscBtn{ display:none!important }
 
   /* ── Standard roll print (no body.printing) ── */
@@ -3053,8 +3054,10 @@ function doRollPrint(){
       document.body.appendChild(d); return d;
     })();
     const today = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const pageBreakOn = document.getElementById('rOptPageBreak')?.checked;
     root.innerHTML = roll2027View === 'overview' ? build2027OverviewHTML(today) : buildPlan2027PrintHTML();
     root.style.display = '';
+    if(pageBreakOn) root.classList.add('page-breaks'); else root.classList.remove('page-breaks');
     document.body.classList.add('printing');
 
     // Escape button — visible on screen (hidden by @media print), lets user exit if afterprint misfires
@@ -3067,6 +3070,7 @@ function doRollPrint(){
 
     function cleanup(){
       document.body.classList.remove('printing');
+      root.classList.remove('page-breaks');
       root.style.display = 'none';
       root.innerHTML = '';
       escBtn.remove();
@@ -3808,7 +3812,7 @@ function buildPlan2027PreviewHTML(opts, today){
         const kids = byYear[y];
         return kids.map(s=>`<li style="font-size:.85rem;padding:.18rem 0;color:#0f172a">${s.first} ${(s.last||'').charAt(0)}.</li>`).join('');
       }).join('');
-      return `${pageBreak&&i>0?'<div class="page-break"></div>':''}<div class="print-page" style="font-family:'Inter',system-ui,sans-serif">
+      return `<div class="print-page" style="font-family:'Inter',system-ui,sans-serif">
         <div style="border-bottom:2px solid #1e293b;padding-bottom:.6rem;margin-bottom:.9rem;display:flex;justify-content:space-between;align-items:flex-end">
           <div>
             <div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.15rem">Ngutu College · 2027</div>
@@ -3871,7 +3875,7 @@ function buildPlan2027PreviewHTML(opts, today){
       ? `<strong>${printActive.length}</strong> learner${printActive.length!==1?'s':''} · <span style="color:#f59e0b">${possLeavingCount} PL excluded</span>${confirmedLeaving.length?` · ${confirmedLeaving.length} confirmed leaving`:''}`
       : `<strong>${active.length}</strong> learner${active.length!==1?'s':''}${confirmedLeaving.length?` · ${confirmedLeaving.length} confirmed leaving`:''}${possLeavingCount&&showPL?` · ${possLeavingCount} possibly leaving (PL)`:''}`;
 
-    return `${pageBreak&&i>0?'<div class="page-break"></div>':''}<div class="print-page" style="font-family:'Inter',system-ui,sans-serif">
+    return `<div class="print-page" style="font-family:'Inter',system-ui,sans-serif">
       <div style="border-bottom:2px solid #1e293b;padding-bottom:.6rem;margin-bottom:.8rem;display:flex;justify-content:space-between;align-items:flex-end">
         <div>
           <div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.15rem">Ngutu College · 2027 Class List</div>
