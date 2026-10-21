@@ -354,8 +354,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   /* ── 2027 plan print: body.printing pattern — only #printRoot shows ── */
   body.printing > *:not(#printRoot){ display:none!important }
   body.printing #printRoot{ display:block!important }
-  body.printing #printRoot .print-page{ border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important;break-after:page }
-  body.printing #printRoot .print-page:last-child{ break-after:auto }
+  body.printing #printRoot .print-page{ border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important }
+  body.printing #printRoot .print-page.pb{ break-after:page;page-break-after:always }
+  body.printing #printRoot .print-page.pb:last-child{ break-after:auto;page-break-after:auto }
+  #printEscBtn{ display:none!important }
 
   /* ── Standard roll print (no body.printing) ── */
   /* Hide ALL app chrome */
@@ -3055,13 +3057,29 @@ function doRollPrint(){
     root.innerHTML = roll2027View === 'overview' ? build2027OverviewHTML(today) : buildPlan2027PrintHTML();
     root.style.display = '';
     document.body.classList.add('printing');
-    window.print();
-    window.addEventListener('afterprint', function cleanup(){
+
+    // Escape button — visible on screen (hidden by @media print), lets user exit if afterprint misfires
+    const escBtn = document.createElement('button');
+    escBtn.id = 'printEscBtn';
+    escBtn.textContent = '✕ Close print view';
+    escBtn.style.cssText = 'position:fixed;top:12px;right:16px;z-index:99999;padding:.5rem 1rem;background:#1e293b;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.25)';
+    escBtn.onclick = cleanup;
+    document.body.appendChild(escBtn);
+
+    function cleanup(){
       document.body.classList.remove('printing');
       root.style.display = 'none';
       root.innerHTML = '';
-      window.removeEventListener('afterprint', cleanup);
-    });
+      escBtn.remove();
+      window.removeEventListener('afterprint', onAfterPrint);
+      clearTimeout(fallbackTimer);
+    }
+    function onAfterPrint(){ cleanup(); }
+    window.addEventListener('afterprint', onAfterPrint);
+    // Fallback: if afterprint never fires (e.g. PDF save in some browsers), clean up after 60s
+    const fallbackTimer = setTimeout(cleanup, 60000);
+
+    window.print();
   } else {
     window.print();
   }
