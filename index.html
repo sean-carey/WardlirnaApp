@@ -731,6 +731,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
             <input type="checkbox" id="rOptShowPL" checked onchange="renderRoll()">
             <label for="rOptShowPL">Show possibly leaving (PL)</label>
           </div>
+          <div class="roll-opt-row" style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--g100)">
+            <input type="checkbox" id="rOptFamilyVersion" onchange="renderRoll()">
+            <label for="rOptFamilyVersion" style="font-weight:600">Family version</label>
+          </div>
         </div>
       </div>
 
@@ -3764,6 +3768,43 @@ function get2027PrintGroups(){
 
 function buildPlan2027PreviewHTML(opts, today){
   const groups = get2027PrintGroups();
+  const familyVersion = document.getElementById('rOptFamilyVersion')?.checked ?? false;
+
+  // ── Family version: stripped-down shareable list ──────────────────────
+  if(familyVersion){
+    const pageBreak = document.getElementById('rOptPageBreak')?.checked;
+    return groups.filter(g=>g.students.length>0).map((g,i,arr)=>{
+      const isLast = i===arr.length-1;
+      const displayName = g.name ? g.name.replace('__tobe_','To Be Placed — ') : g.key;
+      // Active only — no PL distinction, no confirmed leavers
+      const active = g.students.filter(s=>s.leaving!=='confirmed');
+      // Group by year level, sorted by YEAR_LEVELS order then alpha within
+      const byYear = {};
+      rollSortStudents(active).forEach(s=>{
+        const y = s.year||'';
+        (byYear[y]=byYear[y]||[]).push(s);
+      });
+      const yearOrder = YEAR_LEVELS.filter(y=>byYear[y]);
+      // Any unknown/empty year at end
+      if(byYear['']) yearOrder.push('');
+      const rowsHtml = yearOrder.map(y=>{
+        const kids = byYear[y];
+        return kids.map(s=>`<li style="font-size:.85rem;padding:.18rem 0;color:#0f172a">${s.first} ${(s.last||'').charAt(0)}.</li>`).join('');
+      }).join('');
+      return `<div class="print-page${pageBreak&&!isLast?' pb':''}" style="font-family:'Inter',system-ui,sans-serif">
+        <div style="border-bottom:2px solid #1e293b;padding-bottom:.6rem;margin-bottom:.9rem;display:flex;justify-content:space-between;align-items:flex-end">
+          <div>
+            <div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.15rem">Ngutu College · 2027</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#0f172a">${displayName}</div>
+            <div style="font-size:.72rem;color:#475569;margin-top:.15rem">${active.length} learner${active.length!==1?'s':''}</div>
+          </div>
+          <div style="text-align:right;font-size:.7rem;color:#475569">${today}</div>
+        </div>
+        <ul style="list-style:none;margin:0;padding:0;columns:${active.length>14?2:1};column-gap:2rem">${rowsHtml}</ul>
+      </div>`;
+    }).join('') || '<div class="preview-empty">2027 plan has no placed learners yet.</div>';
+  }
+
   const showGender = document.getElementById('rOptGender')?.checked;
   const showATSI   = document.getElementById('rOptATSI')?.checked;
   const showWardli = document.getElementById('rOptCurrentWardli')?.checked;
