@@ -3050,53 +3050,40 @@ function updateRoll2027PrintBtn(){
 
 function doRollPrint(){
   if(rollSource === 'plan2027'){
-    // Use #printRoot + body.printing pattern for clean 2027 print
-    const root = document.getElementById('printRoot') || (() => {
-      const d = document.createElement('div'); d.id='printRoot'; d.style.display='none';
-      document.body.appendChild(d); return d;
-    })();
     const today = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     const pageBreakOn = document.getElementById('rOptPageBreak')?.checked;
-    root.innerHTML = roll2027View === 'overview' ? build2027OverviewHTML(today) : buildPlan2027PrintHTML();
-    root.style.display = '';
-    // Apply page breaks — insert a real spacer div before each page (except first)
-    // This is the most reliable approach for Microsoft Print to PDF in Edge
-    if(pageBreakOn){
-      const pages = [...root.querySelectorAll('.print-page')];
-      pages.forEach((el, i) => {
-        if(i > 0){
-          const spacer = document.createElement('div');
-          spacer.style.cssText = 'page-break-before:always;break-before:page;page-break-after:avoid;break-after:avoid;height:0;overflow:hidden;display:block;visibility:hidden';
-          spacer.innerHTML = '&nbsp;'; // non-empty so Edge doesn't collapse it
-          el.parentNode.insertBefore(spacer, el);
-        }
-      });
-    }
-    document.body.classList.add('printing');
+    const bodyHTML = roll2027View === 'overview' ? build2027OverviewHTML(today) : buildPlan2027PrintHTML();
 
-    // Escape button — visible on screen (hidden by @media print), lets user exit if afterprint misfires
-    const escBtn = document.createElement('button');
-    escBtn.id = 'printEscBtn';
-    escBtn.textContent = '✕ Close print view';
-    escBtn.style.cssText = 'position:fixed;top:12px;right:16px;z-index:99999;padding:.5rem 1rem;background:#1e293b;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.25)';
-    escBtn.onclick = cleanup;
-    document.body.appendChild(escBtn);
+    // Open a fresh minimal window — the only reliable way to get page breaks
+    // working in Edge's Microsoft Print to PDF
+    const pw = window.open('', '_blank', 'width=900,height=700');
+    if(!pw){ showToast('Allow pop-ups for this site to print'); return; }
 
-    function cleanup(){
-      document.body.classList.remove('printing');
-      root.classList.remove('page-breaks');
-      root.style.display = 'none';
-      root.innerHTML = '';
-      escBtn.remove();
-      window.removeEventListener('afterprint', onAfterPrint);
-      clearTimeout(fallbackTimer);
-    }
-    function onAfterPrint(){ cleanup(); }
-    window.addEventListener('afterprint', onAfterPrint);
-    // Fallback: if afterprint never fires (e.g. PDF save in some browsers), clean up after 60s
-    const fallbackTimer = setTimeout(cleanup, 60000);
+    // Build page-break CSS: simple break-before on every .print-page except first
+    const pbCSS = pageBreakOn ? `.print-page+.print-page{page-break-before:always;break-before:page}` : '';
 
-    window.print();
+    pw.document.write(`<!doctype html><html><head><meta charset="utf-8">
+<title>2027 Class Lists — Ngutu College</title>
+<style>
+@page{margin:1.2cm}
+*{box-sizing:border-box}
+body{margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif;background:#fff;color:#0f172a}
+.print-page{padding:1.2rem 1.4rem;display:block;background:#fff}
+${pbCSS}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:.68rem;font-weight:700;color:#475569;padding:.3rem .4rem;border-bottom:1.5px solid #334155}
+td{font-size:.8rem;padding:.32rem .52rem}
+ul{list-style:none;margin:0;padding:0}
+@media print{
+  .print-page{padding:0 0 1rem 0}
+  ${pageBreakOn?`.print-page+.print-page{page-break-before:always;break-before:page}`:''}
+}
+</style></head><body>${bodyHTML}</body></html>`);
+    pw.document.close();
+    pw.focus();
+    // Small delay lets the window render before print dialog opens
+    setTimeout(()=>{ pw.print(); pw.close(); }, 600);
+    return;
   } else {
     window.print();
   }
