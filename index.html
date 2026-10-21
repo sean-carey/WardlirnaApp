@@ -351,11 +351,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 .ftr-n span{font-size:.63rem;color:var(--muted);font-weight:400;font-family:'DM Sans',sans-serif;margin-left:.25rem}
 .ftr-note{font-size:.62rem;color:var(--muted);text-align:right;line-height:1.55}
 @media print{
+  @page{ margin:1cm }
   /* ── 2027 plan print: body.printing pattern — only #printRoot shows ── */
   body.printing > *:not(#printRoot){ display:none!important }
-  body.printing #printRoot{ display:block!important }
-  body.printing #printRoot .print-page{ border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important;padding:1.2rem 1.4rem!important }
-  body.printing #printRoot.page-breaks .print-page + .print-page{ page-break-before:always!important;break-before:page!important }
+  body.printing #printRoot{ display:block!important;overflow:visible!important;height:auto!important;width:100%!important }
+  body.printing #printRoot .print-page{ border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important;padding:1.2rem 1.4rem!important;display:block!important }
+  body.printing #printRoot.page-breaks .print-page{ page-break-before:always!important;break-before:page!important;page-break-after:avoid!important;break-after:avoid!important }
+  body.printing #printRoot.page-breaks .print-page:first-child{ page-break-before:avoid!important;break-before:avoid!important }
   body.printing #printRoot .page-break{ display:none!important }
   #printEscBtn{ display:none!important }
 
