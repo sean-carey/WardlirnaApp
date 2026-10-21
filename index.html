@@ -3802,7 +3802,7 @@ function buildPlan2027PreviewHTML(opts, today){
         <td><strong style="${nameStyle}">${s.last}</strong>, ${s.first}${leavingNote}</td>
         ${showYear?`<td style="font-size:.72rem">${s.year||'—'}</td>`:''}
         ${showGender?`<td style="font-size:.72rem">${s.gender||'—'}</td>`:''}
-        ${showATSI?`<td style="font-size:.72rem">${s.atsi===true?'Y':s.atsi===false?'N':'—'}</td>`:''}
+        ${showATSI?`<td style="font-size:.72rem">${isATSI(s)?'Y':s.atsi==='N'?'N':'—'}</td>`:''}
         ${showWardli?`<td style="font-size:.72rem">${s.currentWardli||'—'}</td>`:''}
         ${showNotes?'<td></td>':''}
         ${showCheck?[...Array(numChecks)].map(()=>`<td class="chk-col">${isConf?'':'□'}</td>`).join(''):''}
