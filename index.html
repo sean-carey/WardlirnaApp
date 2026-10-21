@@ -355,8 +355,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   body.printing > *:not(#printRoot){ display:none!important }
   body.printing #printRoot{ display:block!important }
   body.printing #printRoot .print-page{ border-radius:0!important;box-shadow:none!important;max-width:100%!important;margin:0!important }
-  body.printing #printRoot .print-page.pb{ break-after:page;page-break-after:always }
-  body.printing #printRoot .print-page.pb:last-child{ break-after:auto;page-break-after:auto }
+  body.printing #printRoot .page-break{ page-break-before:always;break-before:page;display:block;height:0;overflow:hidden }
   #printEscBtn{ display:none!important }
 
   /* ── Standard roll print (no body.printing) ── */
@@ -3809,7 +3808,7 @@ function buildPlan2027PreviewHTML(opts, today){
         const kids = byYear[y];
         return kids.map(s=>`<li style="font-size:.85rem;padding:.18rem 0;color:#0f172a">${s.first} ${(s.last||'').charAt(0)}.</li>`).join('');
       }).join('');
-      return `<div class="print-page${pageBreak&&!isLast?' pb':''}" style="font-family:'Inter',system-ui,sans-serif">
+      return `${pageBreak&&i>0?'<div class="page-break"></div>':''}<div class="print-page" style="font-family:'Inter',system-ui,sans-serif">
         <div style="border-bottom:2px solid #1e293b;padding-bottom:.6rem;margin-bottom:.9rem;display:flex;justify-content:space-between;align-items:flex-end">
           <div>
             <div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.15rem">Ngutu College · 2027</div>
@@ -3872,7 +3871,7 @@ function buildPlan2027PreviewHTML(opts, today){
       ? `<strong>${printActive.length}</strong> learner${printActive.length!==1?'s':''} · <span style="color:#f59e0b">${possLeavingCount} PL excluded</span>${confirmedLeaving.length?` · ${confirmedLeaving.length} confirmed leaving`:''}`
       : `<strong>${active.length}</strong> learner${active.length!==1?'s':''}${confirmedLeaving.length?` · ${confirmedLeaving.length} confirmed leaving`:''}${possLeavingCount&&showPL?` · ${possLeavingCount} possibly leaving (PL)`:''}`;
 
-    return `<div class="print-page${pageBreak&&!isLast?' pb':''}" style="font-family:'Inter',system-ui,sans-serif">
+    return `${pageBreak&&i>0?'<div class="page-break"></div>':''}<div class="print-page" style="font-family:'Inter',system-ui,sans-serif">
       <div style="border-bottom:2px solid #1e293b;padding-bottom:.6rem;margin-bottom:.8rem;display:flex;justify-content:space-between;align-items:flex-end">
         <div>
           <div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.15rem">Ngutu College · 2027 Class List</div>
