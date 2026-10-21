@@ -3895,13 +3895,15 @@ function buildPlan2027PreviewHTML(opts, today){
       const isConf = s.leaving==='confirmed';
       const isPoss = s.leaving==='Y';
       if(!isConf) rowNum++;
-      const rowStyle = isConf ? 'color:#9ca3af;font-style:italic' : '';
+      const isNew = s.future==='Y';
+      const rowStyle = isConf ? 'color:#9ca3af;font-style:italic' : isNew ? 'background:#eff6ff' : '';
       const nameStyle = isConf ? 'text-decoration:line-through' : '';
       const leavingNote = isConf ? ' <span style="font-size:.65rem;color:#9ca3af">(confirmed leaving)</span>'
                         : isPoss ? ' <span style="font-size:.65rem;color:#f59e0b;font-weight:700">(PL)</span>' : '';
+      const newNote = isNew ? ' <span style="font-size:.65rem;color:#2563eb;font-weight:600">(new)</span>' : '';
       return `<tr style="${rowStyle}">
         <td style="color:#9ca3af;font-size:.7rem;width:1.8em">${isConf?'':rowNum}</td>
-        <td><strong style="${nameStyle}">${s.last}</strong>, ${s.first}${leavingNote}</td>
+        <td><strong style="${nameStyle}">${s.last}</strong>, ${s.first}${leavingNote}${newNote}</td>
         ${showYear?`<td style="font-size:.72rem">${s.year||'—'}</td>`:''}
         ${showGender?`<td style="font-size:.72rem">${s.gender||'—'}</td>`:''}
         ${showATSI?`<td style="font-size:.72rem">${isATSI(s)?'Y':s.atsi==='N'?'N':'—'}</td>`:''}
