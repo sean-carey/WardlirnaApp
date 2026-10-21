@@ -3059,10 +3059,16 @@ function doRollPrint(){
     const pageBreakOn = document.getElementById('rOptPageBreak')?.checked;
     root.innerHTML = roll2027View === 'overview' ? build2027OverviewHTML(today) : buildPlan2027PrintHTML();
     root.style.display = '';
-    if(pageBreakOn) root.classList.add('page-breaks'); else root.classList.remove('page-breaks');
+    // Apply page breaks as inline styles — most reliable across all print engines
+    if(pageBreakOn){
+      root.querySelectorAll('.print-page').forEach((el, i) => {
+        if(i > 0){
+          el.style.pageBreakBefore = 'always';
+          el.style.breakBefore = 'page';
+        }
+      });
+    }
     document.body.classList.add('printing');
-    // DEBUG — remove after confirming print path works
-    console.log('[WardlirnaDebug] printRoot pages:', root.querySelectorAll('.print-page').length, '| page-breaks class:', root.classList.contains('page-breaks'), '| innerHTML length:', root.innerHTML.length);
 
     // Escape button — visible on screen (hidden by @media print), lets user exit if afterprint misfires
     const escBtn = document.createElement('button');
