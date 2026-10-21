@@ -3841,7 +3841,56 @@ function buildPlan2027PreviewHTML(opts, today){
         </thead>
         <tbody style="font-size:.8rem">${rowsHtml}</tbody>
       </table>
-      ${confirmedLeaving.length ? `<div style="font-size:.64rem;color:#9ca3af;margin-top:.5rem;border-top:1px solid #e2e8f0;padding-top:.3rem">Struck-through learners are confirmed leaving and are not counted in the class total.</div>` : ''}
+      <div style="margin-top:.6rem;padding-top:.45rem;border-top:1.5px solid #e2e8f0;display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-start">
+        ${(()=>{
+          // Stats over the printed list only (printActive = PL-filtered active students)
+          const st = planStats(printActive);
+          const pct = (n,d) => d ? Math.round(n/d*100)+'%' : '—';
+          const mPct  = pct(st.male,   st.total);
+          const fPct  = pct(st.female, st.total);
+          const nbPct = pct(st.nb,     st.total);
+          const atsiPct = pct(st.atsi, st.total);
+          const nonAtsi = st.total - st.atsi;
+          // Gender bar segments
+          const mW  = st.total ? st.male/st.total*100   : 0;
+          const fW  = st.total ? st.female/st.total*100 : 0;
+          const nbW = st.total ? st.nb/st.total*100     : 0;
+          // ATSI bar segments
+          const aW  = st.total ? st.atsi/st.total*100  : 0;
+          const nW  = st.total ? nonAtsi/st.total*100  : 0;
+          const statCell = (label, val, pctVal, col) =>
+            `<div style="display:flex;flex-direction:column;gap:.05rem">
+              <span style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8">${label}</span>
+              <span style="font-size:.82rem;font-weight:700;color:${col}">${val} <span style="font-size:.66rem;font-weight:500;color:#94a3b8">${pctVal}</span></span>
+            </div>`;
+          return `
+            <div style="flex:1;min-width:160px">
+              <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:.3rem">Gender</div>
+              <div style="display:flex;height:5px;border-radius:3px;overflow:hidden;margin-bottom:.35rem;background:#f1f5f9">
+                <div style="width:${mW}%;background:#3b82f6"></div>
+                <div style="width:${fW}%;background:#ec4899"></div>
+                <div style="width:${nbW}%;background:#a855f7"></div>
+              </div>
+              <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+                ${statCell('Male',   st.male,   mPct,  '#3b82f6')}
+                ${statCell('Female', st.female, fPct,  '#ec4899')}
+                ${st.nb ? statCell('Non-binary', st.nb, nbPct, '#a855f7') : ''}
+              </div>
+            </div>
+            <div style="flex:1;min-width:120px">
+              <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:.3rem">ATSI</div>
+              <div style="display:flex;height:5px;border-radius:3px;overflow:hidden;margin-bottom:.35rem;background:#f1f5f9">
+                <div style="width:${aW}%;background:#c2410c"></div>
+                <div style="width:${nW}%;background:#cbd5e1"></div>
+              </div>
+              <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+                ${statCell('ATSI',     st.atsi,  atsiPct, '#c2410c')}
+                ${statCell('Non-ATSI', nonAtsi,  pct(nonAtsi,st.total), '#64748b')}
+              </div>
+            </div>`;
+        })()}
+      </div>
+      ${confirmedLeaving.length ? `<div style="font-size:.64rem;color:#9ca3af;margin-top:.4rem;border-top:1px solid #e2e8f0;padding-top:.3rem">Struck-through learners are confirmed leaving and are not counted in the class total.</div>` : ''}
       ${possLeavingCount && showPL ? `<div style="font-size:.64rem;color:#64748b;margin-top:.25rem"><em>(PL)</em> = possibly leaving</div>` : ''}
     </div>`;
   }).join('') || '<div class="preview-empty">2027 plan has no placed learners yet.</div>';
