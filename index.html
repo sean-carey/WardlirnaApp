@@ -739,6 +739,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
             <input type="checkbox" id="rOptFamilyVersion" onchange="renderRoll()">
             <label for="rOptFamilyVersion" style="font-weight:600">Family version</label>
           </div>
+          <div class="roll-opt-row" style="margin-top:.35rem;padding-left:1.4rem">
+            <input type="checkbox" id="rOptWatermark" onchange="renderRoll()">
+            <label for="rOptWatermark">CONFIDENTIAL watermark</label>
+          </div>
         </div>
       </div>
 
@@ -3066,6 +3070,7 @@ function doRollPrint(){
   if(rollSource === 'plan2027'){
     const today = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     const pageBreakOn = document.getElementById('rOptPageBreak')?.checked;
+    const watermark   = document.getElementById('rOptWatermark')?.checked;
     const bodyHTML = roll2027View === 'overview' ? build2027OverviewHTML(today) : buildPlan2027PrintHTML();
 
     // Open a fresh minimal window — the only reliable way to get page breaks
@@ -3076,6 +3081,26 @@ function doRollPrint(){
     // Build page-break CSS: simple break-before on every .print-page except first
     const pbCSS = pageBreakOn ? `.print-page+.print-page{page-break-before:always;break-before:page}` : '';
 
+    // Diagonal CONFIDENTIAL watermark via repeating-linear-gradient pseudo-element on body
+    const wmCSS = watermark ? `
+body::before{
+  content:'CONFIDENTIAL';
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%) rotate(-45deg);
+  font-size:5.5rem;font-weight:900;
+  color:rgba(220,30,30,.09);
+  white-space:nowrap;pointer-events:none;
+  z-index:9999;letter-spacing:.12em;font-family:'Segoe UI',system-ui,sans-serif;
+}
+@media print{
+  body::before{
+    position:fixed;top:50%;left:50%;
+    transform:translate(-50%,-50%) rotate(-45deg);
+    color:rgba(200,20,20,.1);
+    font-size:5.5rem;
+  }
+}` : '';
+
     pw.document.write(`<!doctype html><html><head><meta charset="utf-8">
 <title>2027 Class Lists — Ngutu College</title>
 <style>
@@ -3084,6 +3109,7 @@ function doRollPrint(){
 body{margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif;background:#fff;color:#0f172a}
 .print-page{padding:1.2rem 1.4rem;display:block;background:#fff}
 ${pbCSS}
+${wmCSS}
 table{width:100%;border-collapse:collapse}
 th{text-align:left;font-size:.68rem;font-weight:700;color:#475569;padding:.3rem .4rem;border-bottom:1.5px solid #334155}
 td{font-size:.8rem;padding:.32rem .52rem}
