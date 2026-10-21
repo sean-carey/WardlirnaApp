@@ -3994,6 +3994,38 @@ function addNewEnrol2027(tbpKey, year){
   showToast(`${first} ${last} added as new 2027 enrolment`);
 }
 
+function addNewEnrolGeneral(groupKey){
+  const fEl = document.getElementById('ng_first_'+groupKey);
+  const lEl = document.getElementById('ng_last_'+groupKey);
+  const yEl = document.getElementById('ng_yr_'+groupKey);
+  const gEl = document.getElementById('ng_gen_'+groupKey);
+  const aEl = document.getElementById('ng_atsi_'+groupKey);
+  const first = (fEl?.value||'').trim();
+  const last  = (lEl?.value||'').trim();
+  if(!first||!last){ showToast('Enter first and last name'); return; }
+  if(!plan2027) return;
+  plan2027[groupKey] = plan2027[groupKey]||[];
+  plan2027[groupKey].push({
+    id: planNextId++,
+    first, last,
+    gender: gEl?.value||'',
+    atsi:   aEl?.value||'N',
+    year:   yEl?.value||'',
+    origYear: '',
+    nccd: 'nil',
+    origGroup: '',
+    future: 'Y',
+    leaving: 'N',
+  });
+  if(fEl) fEl.value='';
+  if(lEl) lEl.value='';
+  if(gEl) gEl.value='';
+  if(aEl) aEl.value='N';
+  savePlan2027(true);
+  renderPlan();
+  showToast(`${first} ${last} added as new 2027 enrolment`);
+}
+
 function togglePlanLock(){
   planLocked = !planLocked;
   const btn = document.getElementById('planLockBtn');
@@ -4404,29 +4436,29 @@ function renderPlanSidebar(){
 function getPlanCommData(comm){
   const groups = [];
   if(comm === 'Madlurta'){
-    PLAN_STRUCT.Madlurta.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',students:plan2027[g]||[]}));
-    groups.push({key:'Kindy Entry 2027',label:'Kindy Entry 2027',type:'kindy-entry',students:plan2027['Kindy Entry 2027']||[]});
+    PLAN_STRUCT.Madlurta.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',community:'Madlurta',students:plan2027[g]||[]}));
+    groups.push({key:'Kindy Entry 2027',label:'Kindy Entry 2027',type:'kindy-entry',community:'Madlurta',students:plan2027['Kindy Entry 2027']||[]});
   } else if(comm === 'Kurlana'){
-    PLAN_STRUCT.Kurlana.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',students:plan2027[g]||[]}));
-    groups.push({key:'__tobe_Kurlana',label:'To Be Placed',type:'tobe',students:plan2027['__tobe_Kurlana']||[]});
+    PLAN_STRUCT.Kurlana.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',community:'Kurlana',students:plan2027[g]||[]}));
+    groups.push({key:'__tobe_Kurlana',label:'To Be Placed',type:'tobe',community:'Kurlana',students:plan2027['__tobe_Kurlana']||[]});
   } else if(comm === 'Warti'){
-    PLAN_STRUCT.Warti.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',students:plan2027[g]||[]}));
-    groups.push({key:'__tobe_Warti',label:'To Be Placed',type:'tobe',students:plan2027['__tobe_Warti']||[]});
+    PLAN_STRUCT.Warti.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',community:'Warti',students:plan2027[g]||[]}));
+    groups.push({key:'__tobe_Warti',label:'To Be Placed',type:'tobe',community:'Warti',students:plan2027['__tobe_Warti']||[]});
   } else if(comm === 'Karra'){
     // One group card per named class (key = class name, e.g. 'Kardi')
     PLAN_STRUCT.Karra.yearBands.forEach(band => {
       band.classes.forEach(cls => {
         const bandLabel = band.years.map(y=>y.replace('Year ','')).join('/');
-        groups.push({key: cls, label: cls + ' (Yr ' + bandLabel + ')', type:'karra-class', bandYears: band.years, students: plan2027[cls]||[]});
+        groups.push({key: cls, label: cls + ' (Yr ' + bandLabel + ')', type:'karra-class', community:'Karra', bandYears: band.years, students: plan2027[cls]||[]});
       });
     });
     // TBP: one per year level
     PLAN_STRUCT.Karra.yearLevels.forEach(y => {
       const tbpKey = '__tobe_Karra_' + y.replace('Year ','Y');
-      groups.push({key: tbpKey, label: 'To Be Placed (' + y + ')', type:'karra-tobe', year: y, students: plan2027[tbpKey]||[]});
+      groups.push({key: tbpKey, label: 'To Be Placed (' + y + ')', type:'karra-tobe', community:'Karra', year: y, students: plan2027[tbpKey]||[]});
     });
   } else if(comm === 'Wirra'){
-    groups.push({key:'Ngakala',label:'Ngakala',type:'normal',students:plan2027['Ngakala']||[]});
+    groups.push({key:'Ngakala',label:'Ngakala',type:'normal',community:'Wirra',students:plan2027['Ngakala']||[]});
   }
   return groups;
 }
@@ -4489,6 +4521,22 @@ function renderPlanGroupCard(g){
   }).join('');
 
   const safeKey = g.key.replace(/'/g,"\\'");
+
+  // Determine year options for normal/karra-class add-row
+  const COMM_YEARS = {
+    Madlurta: ['Kindergarten','Reception'],
+    Kurlana:  ['Year 1','Year 2','Year 3'],
+    Warti:    ['Year 4','Year 5','Year 6'],
+    Wirra:    ['Year 1','Year 2','Year 3','Year 4','Year 5','Year 6'],
+  };
+  let normalYearOptions = '';
+  if(g.type==='normal'){
+    const yrs = COMM_YEARS[g.community] || [];
+    normalYearOptions = yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
+  } else if(g.type==='karra-class'){
+    normalYearOptions = (g.bandYears||[]).map(y=>`<option value="${y}">${y}</option>`).join('');
+  }
+
   const addRow = g.type==='kindy-entry' ? `
     <div style="padding:.4rem .5rem;border-top:1px solid var(--g200);display:flex;flex-direction:column;gap:.25rem">
       <div style="display:flex;gap:.25rem">
@@ -4533,6 +4581,32 @@ function renderPlanGroupCard(g){
         </select>
       </div>
       <button class="plan-add-btn" onclick="addNewEnrol2027('${safeKey}','${(g.year||'').replace(/'/g,"\\'")}')">+ Add new student</button>
+    </div>`
+  : (g.type==='normal'||g.type==='karra-class') ? `
+    <div style="padding:.35rem .5rem;border-top:1px solid var(--g200);display:flex;flex-direction:column;gap:.2rem">
+      <div style="font-size:.6rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">New 2027 enrolment</div>
+      <div style="display:flex;gap:.22rem">
+        <input class="plan-add-f" id="ng_first_${safeKey}" placeholder="First" style="flex:1">
+        <input class="plan-add-l" id="ng_last_${safeKey}" placeholder="Last" style="flex:1">
+      </div>
+      <div style="display:flex;gap:.22rem">
+        <select id="ng_yr_${safeKey}" style="flex:1;padding:.2rem .28rem;border:1px solid var(--g200);border-radius:4px;font-size:.69rem;font-family:'DM Sans',sans-serif">
+          ${normalYearOptions}
+        </select>
+        <select id="ng_gen_${safeKey}" style="flex:1;padding:.2rem .28rem;border:1px solid var(--g200);border-radius:4px;font-size:.69rem;font-family:'DM Sans',sans-serif">
+          <option value="">Gender…</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Non-binary">Non-binary</option>
+        </select>
+      </div>
+      <select id="ng_atsi_${safeKey}" style="width:100%;padding:.2rem .28rem;border:1px solid var(--g200);border-radius:4px;font-size:.69rem;font-family:'DM Sans',sans-serif">
+        <option value="N">Non-Indigenous</option>
+        <option value="aboriginal">Aboriginal</option>
+        <option value="tsi">Torres Strait Islander</option>
+        <option value="both">Aboriginal &amp; TSI</option>
+      </select>
+      <button class="plan-add-btn" onclick="addNewEnrolGeneral('${safeKey}')">+ Add new student</button>
     </div>`
   : '';
 
