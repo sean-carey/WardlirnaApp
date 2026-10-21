@@ -898,6 +898,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
     <div class="fg"><label>✅ Wants to be with</label><input class="fi" id="smWants" placeholder="comma-separated names"></div>
     <div class="fg"><label>❌ Should NOT be with</label><input class="fi" id="smNot" placeholder="comma-separated names"></div>
     <div class="fg"><label>📝 Family Notes / Requests</label><textarea class="ft" id="smFamily"></textarea></div>
+    <div class="fg" style="margin-top:.5rem">
+      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.8rem;font-weight:500">
+        <input type="checkbox" id="smPrivateFamily" style="width:1rem;height:1rem;cursor:pointer">
+        Family list: show initials only (e.g. A. B. instead of full first name)
+      </label>
+    </div>
     <div class="mfoot">
       <button class="mbtn mbtn-warn" onclick="toggleLeavingFromModal()">🟠 Leaving ?</button>
       <button class="mbtn mbtn-danger" onclick="markDeparting()">🚪 Mark Departing</button>
@@ -1622,6 +1628,13 @@ function openStudentModal(id){
   document.getElementById('smWants').value=s.wantsWith.join(', ');
   document.getElementById('smNot').value=s.notWith.join(', ');
   document.getElementById('smFamily').value=s.family;
+  // Load privateFamily flag from plan2027 entry (if present)
+  let planPrivate = false;
+  if(plan2027){
+    const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
+    for(const k of planKeys){ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p){ planPrivate=!!p.privateFamily; break; } }
+  }
+  document.getElementById('smPrivateFamily').checked=planPrivate;
   openModal('ovStudent');
 }
 function saveStudent(){
@@ -1637,10 +1650,11 @@ function saveStudent(){
   s.wantsWith=document.getElementById('smWants').value.split(',').map(x=>x.trim()).filter(Boolean);
   s.notWith=document.getElementById('smNot').value.split(',').map(x=>x.trim()).filter(Boolean);
   s.family=document.getElementById('smFamily').value.trim();
-  // Also sync leaving flag to plan2027 if this learner appears there
+  // Also sync leaving/future/privateFamily flags to plan2027 if this learner appears there
+  const privateFamily = document.getElementById('smPrivateFamily').checked;
   if(plan2027){
     const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
-    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===editingId); if(p){ p.leaving=s.leaving; p.future=s.future; } });
+    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===editingId); if(p){ p.leaving=s.leaving; p.future=s.future; p.privateFamily=privateFamily||undefined; } });
     if(document.getElementById('page-plan')?.classList.contains('on')) renderPlan();
   }
   closeModal('ovStudent'); markUnsaved(); showToast('Saved'); render();
@@ -3798,8 +3812,8 @@ function buildPlan2027PreviewHTML(opts, today){
     return groups.filter(g=>g.students.length>0).map((g,i,arr)=>{
       const isLast = i===arr.length-1;
       const displayName = g.name ? g.name.replace('__tobe_','To Be Placed — ') : g.key;
-      // Active only — no PL distinction, no confirmed leavers
-      const active = g.students.filter(s=>s.leaving!=='confirmed');
+      // Active only — no PL distinction, no confirmed leavers, no new enrolments (future:'Y')
+      const active = g.students.filter(s=>s.leaving!=='confirmed' && s.future!=='Y');
       // Group by year level, sorted by YEAR_LEVELS order then alpha within
       const byYear = {};
       rollSortStudents(active).forEach(s=>{
@@ -3811,7 +3825,7 @@ function buildPlan2027PreviewHTML(opts, today){
       if(byYear['']) yearOrder.push('');
       const rowsHtml = yearOrder.map(y=>{
         const kids = byYear[y];
-        return kids.map(s=>`<li style="font-size:.85rem;padding:.18rem 0;color:#0f172a">${s.first} ${(s.last||'').charAt(0)}.</li>`).join('');
+        return kids.map(s=>`<li style="font-size:.85rem;padding:.18rem 0;color:#0f172a">${s.privateFamily ? s.first.charAt(0)+'.' : s.first} ${(s.last||'').charAt(0)}.</li>`).join('');
       }).join('');
       return `<div class="print-page" style="font-family:'Inter',system-ui,sans-serif">
         <div style="border-bottom:2px solid #1e293b;padding-bottom:.6rem;margin-bottom:.9rem;display:flex;justify-content:space-between;align-items:flex-end">
@@ -4797,15 +4811,21 @@ function openKindyEntryModal(id, fromKey){
   modal.id = 'kindyEntryModal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center';
   modal.innerHTML = `
-    <div style="background:var(--card,#fff);border-radius:10px;padding:1.4rem 1.6rem;min-width:280px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.22);font-family:'DM Sans',system-ui,sans-serif">
+    <div style="background:var(--card,#fff);border-radius:10px;padding:1.4rem 1.6rem;min-width:280px;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.22);font-family:'DM Sans',system-ui,sans-serif">
       <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted,#64748b);margin-bottom:.3rem">Kindy Entry 2027</div>
       <div style="font-size:1.1rem;font-weight:700;color:var(--fg,#0f172a);margin-bottom:.15rem">${kid.first} ${kid.last}</div>
       <div style="font-size:.78rem;color:var(--muted,#64748b);margin-bottom:1rem">
         ${kid.year||'Kindergarten'} &nbsp;·&nbsp; ${kid.gender||'—'} &nbsp;·&nbsp; ATSI: ${kid.atsi||'—'}
       </div>
+      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.78rem;font-weight:500;color:var(--fg,#0f172a);margin-bottom:1rem">
+        <input type="checkbox" id="kindyPrivateFamily" ${kid.privateFamily?'checked':''} style="width:1rem;height:1rem;cursor:pointer">
+        Family list: initials only
+      </label>
       <div style="display:flex;gap:.5rem;justify-content:flex-end">
         <button onclick="document.getElementById('kindyEntryModal').remove()"
           style="padding:.4rem .9rem;border-radius:6px;border:1px solid var(--g200,#e2e8f0);background:transparent;font-size:.78rem;cursor:pointer;color:var(--fg,#0f172a)">Close</button>
+        <button onclick="(()=>{const pf=document.getElementById('kindyPrivateFamily').checked;const k=(plan2027['Kindy Entry 2027']||[]).find(x=>x.id===${id});if(k){k.privateFamily=pf||undefined;}savePlan2027(true);document.getElementById('kindyEntryModal').remove();showToast('Saved')})()"
+          style="padding:.4rem .9rem;border-radius:6px;border:none;background:var(--accent,#2563eb);color:#fff;font-size:.78rem;font-weight:600;cursor:pointer">Save</button>
         <button onclick="planRemoveLearner(${id},'${fromKey.replace(/'/g,"\\'")}');document.getElementById('kindyEntryModal').remove()"
           style="padding:.4rem .9rem;border-radius:6px;border:none;background:#ef4444;color:#fff;font-size:.78rem;font-weight:600;cursor:pointer">✕ Remove</button>
       </div>
@@ -4841,12 +4861,14 @@ function openPlanCtxMenu(e, id, fromKey){
   });
 
   menu.innerHTML = html;
-  // Position menu
-  const x = Math.min(e.clientX, window.innerWidth-180);
-  const y = Math.min(e.clientY, window.innerHeight-300);
-  menu.style.left = x+'px';
-  menu.style.top  = y+'px';
+  // Position menu — clamp after rendering so we know actual height
   menu.classList.add('show');
+  const menuW = menu.offsetWidth || 200;
+  const menuH = menu.offsetHeight || 40;
+  const x = Math.min(e.clientX, window.innerWidth - menuW - 8);
+  const y = Math.min(e.clientY, window.innerHeight - menuH - 8);
+  menu.style.left = Math.max(4, x)+'px';
+  menu.style.top  = Math.max(4, y)+'px';
   setTimeout(()=>document.addEventListener('click',closeCtxMenu,{once:true}),10);
 }
 
