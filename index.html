@@ -727,6 +727,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
             <input type="checkbox" id="rOptCurrentWardli" onchange="renderRoll()">
             <label for="rOptCurrentWardli">Current Wardli</label>
           </div>
+          <div class="roll-opt-row">
+            <input type="checkbox" id="rOptShowPL" checked onchange="renderRoll()">
+            <label for="rOptShowPL">Show possibly leaving (PL)</label>
+          </div>
         </div>
       </div>
 
@@ -3766,6 +3770,7 @@ function buildPlan2027PreviewHTML(opts, today){
   const showYear   = document.getElementById('rOptYear')?.checked;
   const showNotes  = document.getElementById('rOptNotes')?.checked;
   const showCheck  = document.getElementById('rOptCheck')?.checked;
+  const showPL     = document.getElementById('rOptShowPL')?.checked ?? true;
   const numChecks  = parseInt(document.getElementById('rNumChecks')?.value||'1',10);
   const pageBreak  = document.getElementById('rOptPageBreak')?.checked;
   const purpose    = getRollPurpose();
@@ -3775,20 +3780,25 @@ function buildPlan2027PreviewHTML(opts, today){
     const allSorted = rollSortStudents(g.students);
     const active = allSorted.filter(s=>s.leaving!=='confirmed');
     const confirmedLeaving = allSorted.filter(s=>s.leaving==='confirmed');
-    const sorted = [...active, ...confirmedLeaving];
+    // When showPL is off, exclude possibly-leaving from the printed list entirely
+    const printActive = showPL ? active : active.filter(s=>s.leaving!=='Y');
+    const sorted = [...printActive, ...confirmedLeaving];
     const isLast = i===arr.length-1;
     const displayName = g.name.replace('__tobe_','To Be Placed — ');
     const possLeavingCount = active.filter(s=>s.leaving==='Y').length;
+    const plExcluded = !showPL && possLeavingCount > 0;
 
-    const rowsHtml = sorted.map((s,idx)=>{
+    let rowNum = 0;
+    const rowsHtml = sorted.map((s)=>{
       const isConf = s.leaving==='confirmed';
       const isPoss = s.leaving==='Y';
+      if(!isConf) rowNum++;
       const rowStyle = isConf ? 'color:#9ca3af;font-style:italic' : '';
       const nameStyle = isConf ? 'text-decoration:line-through' : '';
       const leavingNote = isConf ? ' <span style="font-size:.65rem;color:#9ca3af">(confirmed leaving)</span>'
-                        : isPoss ? ' <span style="font-size:.65rem;color:#6b7280">(PL)</span>' : '';
+                        : isPoss ? ' <span style="font-size:.65rem;color:#f59e0b;font-weight:700">(PL)</span>' : '';
       return `<tr style="${rowStyle}">
-        <td style="color:#9ca3af;font-size:.7rem;width:1.8em">${isConf?'':idx+1}</td>
+        <td style="color:#9ca3af;font-size:.7rem;width:1.8em">${isConf?'':rowNum}</td>
         <td><strong style="${nameStyle}">${s.last}</strong>, ${s.first}${leavingNote}</td>
         ${showYear?`<td style="font-size:.72rem">${s.year||'—'}</td>`:''}
         ${showGender?`<td style="font-size:.72rem">${s.gender||'—'}</td>`:''}
@@ -3799,12 +3809,16 @@ function buildPlan2027PreviewHTML(opts, today){
       </tr>`;
     }).join('');
 
+    const countLabel = plExcluded
+      ? `<strong>${printActive.length}</strong> learner${printActive.length!==1?'s':''} · <span style="color:#f59e0b">${possLeavingCount} PL excluded</span>${confirmedLeaving.length?` · ${confirmedLeaving.length} confirmed leaving`:''}`
+      : `<strong>${active.length}</strong> learner${active.length!==1?'s':''}${confirmedLeaving.length?` · ${confirmedLeaving.length} confirmed leaving`:''}${possLeavingCount&&showPL?` · ${possLeavingCount} possibly leaving (PL)`:''}`;
+
     return `<div class="print-page${pageBreak&&!isLast?' pb':''}" style="font-family:'Inter',system-ui,sans-serif">
       <div style="border-bottom:2px solid #1e293b;padding-bottom:.6rem;margin-bottom:.8rem;display:flex;justify-content:space-between;align-items:flex-end">
         <div>
           <div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.15rem">Ngutu College · 2027 Class List</div>
           <div style="font-size:1.15rem;font-weight:700;color:#0f172a;line-height:1.1">${displayName}</div>
-          <div style="font-size:.72rem;color:#475569;margin-top:.2rem">${g.community} · <strong>${active.length}</strong> learner${active.length!==1?'s':''}${confirmedLeaving.length?` · ${confirmedLeaving.length} confirmed leaving`:''}${possLeavingCount?` · ${possLeavingCount} possibly leaving (PL)`:''}</div>
+          <div style="font-size:.72rem;color:#475569;margin-top:.2rem">${g.community} · ${countLabel}</div>
         </div>
         <div style="text-align:right">
           ${purpose?`<div style="font-size:.72rem;font-weight:600;color:#1e40af;margin-bottom:.2rem">${purpose}</div>`:''}
@@ -3828,7 +3842,7 @@ function buildPlan2027PreviewHTML(opts, today){
         <tbody style="font-size:.8rem">${rowsHtml}</tbody>
       </table>
       ${confirmedLeaving.length ? `<div style="font-size:.64rem;color:#9ca3af;margin-top:.5rem;border-top:1px solid #e2e8f0;padding-top:.3rem">Struck-through learners are confirmed leaving and are not counted in the class total.</div>` : ''}
-      ${possLeavingCount ? `<div style="font-size:.64rem;color:#64748b;margin-top:.25rem"><em>(PL)</em> = possibly leaving</div>` : ''}
+      ${possLeavingCount && showPL ? `<div style="font-size:.64rem;color:#64748b;margin-top:.25rem"><em>(PL)</em> = possibly leaving</div>` : ''}
     </div>`;
   }).join('') || '<div class="preview-empty">2027 plan has no placed learners yet.</div>';
 }
@@ -4465,7 +4479,7 @@ function renderPlanGroupCard(g){
     return `<div class="${chipCls}" id="pc-${s.id}"
       ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'${g.key.replace(/'/g,"\\'")}') " ondragend="planDragEnd(event)"` : ''}
       title="${tooltip}"
-      ondblclick="openStudentModal(${s.id})"
+      ondblclick="${isFuture?`openKindyEntryModal(${s.id},'${g.key.replace(/'/g,"\\'")}')`:` openStudentModal(${s.id})`}"
       oncontextmenu="openPlanCtxMenu(event,${s.id},'${g.key.replace(/'/g,"\\'")}')">
       <div class="ypip" style="background:${yrCol}"></div>
       <span class="sc-name">${s.last}, ${s.first}</span>
@@ -4581,6 +4595,38 @@ function getPlanMoveTargets(){
   // Alumni
   targets.push({key:'__alumni__', label:'Alumni', comm:'Alumni'});
   return targets;
+}
+
+function openKindyEntryModal(id, fromKey){
+  // Find the future:'Y' kid in plan2027['Kindy Entry 2027']
+  const kindyList = plan2027['Kindy Entry 2027'] || [];
+  const kid = kindyList.find(k=>k.id===id);
+  if(!kid) return;
+
+  // Remove any existing modal
+  const existing = document.getElementById('kindyEntryModal');
+  if(existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'kindyEntryModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:var(--card,#fff);border-radius:10px;padding:1.4rem 1.6rem;min-width:280px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.22);font-family:'DM Sans',system-ui,sans-serif">
+      <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted,#64748b);margin-bottom:.3rem">Kindy Entry 2027</div>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--fg,#0f172a);margin-bottom:.15rem">${kid.first} ${kid.last}</div>
+      <div style="font-size:.78rem;color:var(--muted,#64748b);margin-bottom:1rem">
+        ${kid.year||'Kindergarten'} &nbsp;·&nbsp; ${kid.gender||'—'} &nbsp;·&nbsp; ATSI: ${kid.atsi||'—'}
+      </div>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end">
+        <button onclick="document.getElementById('kindyEntryModal').remove()"
+          style="padding:.4rem .9rem;border-radius:6px;border:1px solid var(--g200,#e2e8f0);background:transparent;font-size:.78rem;cursor:pointer;color:var(--fg,#0f172a)">Close</button>
+        <button onclick="planRemoveLearner(${id},'${fromKey.replace(/'/g,"\\'")}');document.getElementById('kindyEntryModal').remove()"
+          style="padding:.4rem .9rem;border-radius:6px;border:none;background:#ef4444;color:#fff;font-size:.78rem;font-weight:600;cursor:pointer">✕ Remove</button>
+      </div>
+    </div>`;
+  // Close on backdrop click
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
 }
 
 function openPlanCtxMenu(e, id, fromKey){
