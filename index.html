@@ -4625,17 +4625,18 @@ function getPlanCommData(comm){
     PLAN_STRUCT.Warti.groups.forEach(g=>groups.push({key:g,label:g,type:'normal',community:'Warti',students:plan2027[g]||[]}));
     groups.push({key:'__tobe_Warti',label:'To Be Placed',type:'tobe',community:'Warti',students:plan2027['__tobe_Warti']||[]});
   } else if(comm === 'Karra'){
-    // One group card per named class (key = class name, e.g. 'Kardi')
+    // Interleave: class card(s) then TBP slots for each year band, so TBP stays adjacent to its classes
     PLAN_STRUCT.Karra.yearBands.forEach(band => {
+      const bandLabel = band.years.map(y=>y.replace('Year ','')).join('/');
+      // Named class(es) for this band
       band.classes.forEach(cls => {
-        const bandLabel = band.years.map(y=>y.replace('Year ','')).join('/');
         groups.push({key: cls, label: cls + ' (Yr ' + bandLabel + ')', type:'karra-class', community:'Karra', bandYears: band.years, students: plan2027[cls]||[]});
       });
-    });
-    // TBP: one per year level
-    PLAN_STRUCT.Karra.yearLevels.forEach(y => {
-      const tbpKey = '__tobe_Karra_' + y.replace('Year ','Y');
-      groups.push({key: tbpKey, label: 'To Be Placed (' + y + ')', type:'karra-tobe', community:'Karra', year: y, students: plan2027[tbpKey]||[]});
+      // TBP slots for each year in this band — immediately after the class card(s)
+      band.years.forEach(y => {
+        const tbpKey = '__tobe_Karra_' + y.replace('Year ','Y');
+        groups.push({key: tbpKey, label: 'To Be Placed (' + y + ')', type:'karra-tobe', community:'Karra', year: y, students: plan2027[tbpKey]||[]});
+      });
     });
   } else if(comm === 'Wirra'){
     groups.push({key:'Ngakala',label:'Ngakala',type:'normal',community:'Wirra',students:plan2027['Ngakala']||[]});
