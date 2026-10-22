@@ -110,7 +110,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 /* CARDS */
 .gcards{padding:.35rem;display:flex;flex-direction:column;gap:.22rem;min-height:50px}
 
-/* STUDENT CARD — single line */
+/* LEARNER CARD — single line */
 .sc{border-radius:6px;padding:.28rem .4rem;cursor:default;display:flex;align-items:center;gap:.35rem;transition:all .15s;position:relative;user-select:none;background:var(--g50);border:1px solid var(--g200)}
 .sc:hover{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.1);transform:translateY(-1px);z-index:2}
 .sc.dragging{opacity:.3;cursor:grabbing}
@@ -544,7 +544,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
           <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem">
             <span style="font-size:.7rem;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em">⚠ Unassigned — no homeroom in Veracross</span>
             <span id="unassignedCount" style="background:#f59e0b;color:#fff;font-size:.62rem;font-weight:700;padding:.08rem .35rem;border-radius:10px">0</span>
-            <span style="font-size:.68rem;color:#b45309;font-style:italic">Drag each student to a group or right-click to assign</span>
+            <span style="font-size:.68rem;color:#b45309;font-style:italic">Drag each learner to a group or right-click to assign</span>
           </div>
           <div id="unassignedChips" style="display:flex;flex-wrap:wrap;gap:.3rem;min-height:24px"></div>
         </div>
@@ -832,7 +832,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
       </div>
       <div class="scard admin-only">
         <h3>🔄 Veracross API Sync</h3>
-        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.6rem">Pulls live student data directly from Veracross via the Azure Function. Runs automatically on login if data is more than 4 hours old. Use the button below or the <strong>Sync from Veracross</strong> button in the header to force an immediate pull.</p>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.6rem">Pulls live learner data directly from Veracross via the Azure Function. Runs automatically on login if data is more than 4 hours old. Use the button below or the <strong>Sync from Veracross</strong> button in the header to force an immediate pull.</p>
         <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">New learners are added automatically. Learners no longer in Veracross are moved to Departing. Field changes (name, year, gender) are queued for review.</p>
         <div class="fg" style="margin-bottom:.75rem">
           <label>Azure Function URL <span style="font-weight:400;color:var(--muted)">(pre-configured)</span></label>
@@ -848,7 +848,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 
       <div class="scard">
         <h3>⬇ Export</h3>
-        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Export current groupings as CSV for import into MIS or timetabling system. Departing students are included with group marked as DEPARTING.</p>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:.85rem">Export current groupings as CSV for import into MIS or timetabling system. Departing learners are included with group marked as DEPARTING.</p>
         <button class="mbtn mbtn-ghost" onclick="exportCSV()">Export Groupings CSV</button>
       </div>
     </div>
@@ -856,11 +856,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
 
 </div>
 
-<!-- STUDENT MODAL -->
+<!-- LEARNER MODAL -->
 <div class="overlay" id="ovStudent">
   <div class="modal">
     <div class="mhd">
-      <div class="mtitle" id="smTitle">Student</div>
+      <div class="mtitle" id="smTitle">Learner</div>
       <button class="mclose" onclick="closeModal('ovStudent')">✕</button>
     </div>
     <div class="frow">
@@ -893,7 +893,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
     </div>
     <div class="frow">
       <div class="fg"><label>Future Enrolment</label>
-        <select class="fs" id="smFuture"><option value="N">Current student</option><option value="Y">Future enrolment</option></select>
+        <select class="fs" id="smFuture"><option value="N">Current learner</option><option value="Y">Future enrolment</option></select>
       </div>
       <div class="fg"><label>Flag as possibly leaving</label>
         <select class="fs" id="smLeaving"><option value="N">No</option><option value="Y">Possibly leaving</option><option value="confirmed">Confirmed leaving</option></select>
@@ -917,7 +917,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
   </div>
 </div>
 
-<!-- ADD STUDENT MODAL -->
+<!-- ADD LEARNER MODAL -->
 <div class="overlay" id="ovAdd">
   <div class="modal">
     <div class="mhd">
@@ -955,7 +955,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--txt);dis
     </div>
     <div class="mfoot">
       <button class="mbtn mbtn-ghost" onclick="closeModal('ovAdd')">Cancel</button>
-      <button class="mbtn mbtn-primary" onclick="confirmAddStudent()">Add Student</button>
+      <button class="mbtn mbtn-primary" onclick="confirmAddStudent()">Add Learner</button>
     </div>
   </div>
 </div>
@@ -1252,8 +1252,8 @@ function renderSidebar(){
   document.getElementById('sbStats').innerHTML=`
     <div class="sp"><div class="sp-v">${students.length}</div><div class="sp-l">Total learners</div></div>
     <div class="sp"><div class="sp-v">${cStudents.length}</div><div class="sp-l">${comm}</div></div>
-    <div class="sp" style="cursor:pointer" onclick="showLeavingList('departing')" title="Click to see departing students"><div class="sp-v">${departing.length}</div><div class="sp-l">Departing ↗</div></div>
-    <div class="sp" style="cursor:pointer" onclick="showLeavingList('leaving')" title="Click to see possibly leaving students"><div class="sp-v">${students.filter(s=>s.leaving==='Y').length}</div><div class="sp-l">Poss. leaving ↗</div></div>`;
+    <div class="sp" style="cursor:pointer" onclick="showLeavingList('departing')" title="Click to see departing learners"><div class="sp-v">${departing.length}</div><div class="sp-l">Departing ↗</div></div>
+    <div class="sp" style="cursor:pointer" onclick="showLeavingList('leaving')" title="Click to see possibly leaving learners"><div class="sp-v">${students.filter(s=>s.leaving==='Y').length}</div><div class="sp-l">Poss. leaving ↗</div></div>`;
 
   // Gender breakdown
   const genderHTML=`
@@ -1539,7 +1539,7 @@ function renderDepartingPage(){
   const leftEl=document.getElementById('leftList');
   const leftEmpty=document.getElementById('leftEmpty');
   const leftBadge=document.getElementById('leftCountBadge');
-  if(leftBadge) leftBadge.textContent=`${left.length} student${left.length!==1?'s':''}`;
+  if(leftBadge) leftBadge.textContent=`${left.length} learner${left.length!==1?'s':''}`;
   if(left.length===0){
     if(leftEl) leftEl.innerHTML='';
     if(leftEmpty) leftEmpty.style.display='';
@@ -1629,7 +1629,7 @@ function toggleLock(group){
 }
 
 // ══════════════════════════════════════════════════
-// STUDENT MODAL
+// LEARNER MODAL
 // ══════════════════════════════════════════════════
 function openStudentModal(id){
   const s=students.find(x=>x.id===id); if(!s) return;
@@ -1836,7 +1836,7 @@ function handleVeracrossCSV(e){
       });
     }
 
-    // Map Veracross query 2 fields to app student fields
+    // Map Veracross query 2 fields to app learner fields
     // Uses preferred_name if present, falls back to first_name
     const vcStudents = rows.filter(r=>r.first_name||r.first).map(r=>{
       const firstName = (r.preferred_name && r.preferred_name.trim()) ? r.preferred_name.trim() : (r.first_name||r.first||'').trim();
@@ -2656,7 +2656,7 @@ function updateVcBadge(){
   else badge.style.display='none';
 }
 
-// Process a Veracross student array silently:
+// Process a Veracross learner array silently:
 // - New students and departures applied automatically
 // - Field conflicts queued for later manual review
 function processAutoSync(vcStudents){
@@ -3386,7 +3386,7 @@ function buildRollPage(group,gs,opts,purpose,today,addBreak){
         ${list.length} learner${list.length!==1?'s':''}
       </div>
     </div>
-    ${purpose?`<div class="doc-purpose"><b>${purpose}</b> &nbsp;·&nbsp; ${group} &nbsp;·&nbsp; ${comm} &nbsp;·&nbsp; ${list.length} students</div>`:''}
+    ${purpose?`<div class="doc-purpose"><b>${purpose}</b> &nbsp;·&nbsp; ${group} &nbsp;·&nbsp; ${comm} &nbsp;·&nbsp; ${list.length} learners</div>`:''}
     <div class="roll-wrap">
       <table class="roll-rtable${list.length>24?' compact':''}">
         <thead><tr>
@@ -3454,7 +3454,7 @@ function buildRollYearPage(year, yearStudents, opts, purpose, today, addBreak){
         ${list.length} learner${list.length!==1?'s':''}
       </div>
     </div>
-    ${purpose?`<div class="doc-purpose"><b>${purpose}</b> &nbsp;·&nbsp; ${year} &nbsp;·&nbsp; ${list.length} students</div>`:''}
+    ${purpose?`<div class="doc-purpose"><b>${purpose}</b> &nbsp;·&nbsp; ${year} &nbsp;·&nbsp; ${list.length} learners</div>`:''}
     <div class="roll-wrap">
       <table class="roll-rtable${list.length>28?' compact':''}">
         <thead><tr>
@@ -4108,12 +4108,12 @@ const PLAN_NEXT_YEAR = {
   'Year 10':'Year 11','Year 11':'Year 12','Year 12':'Alumni',
 };
 
-// State: plan2027 is an object keyed by group/bucket name → array of student objects
+// State: plan2027 is an object keyed by group/bucket name → array of learner objects
 // plan2027._alumni = array
 // plan2027._kindyEntry = array of manually-added new kids (id, first, last)
 let plan2027 = null;
 let planLocked = true;
-let planDragId = null; // id of student being dragged in plan
+let planDragId = null; // id of learner being dragged in plan
 let planNextId = 90000; // separate ID space from main students
 
 function addKindyEntry(){
@@ -4216,7 +4216,7 @@ function togglePlanLock(){
   renderPlan();
 }
 
-// ── Determine which named group a current student belongs to in 2027
+// ── Determine which named group a current learner belongs to in 2027
 function plan2027GroupFor(s){
   const nextYear = PLAN_NEXT_YEAR[s.year] || s.year;
   const curGroup = s.group;
@@ -4740,7 +4740,7 @@ function renderPlanGroupCard(g){
           <option value="both">Aboriginal &amp; TSI</option>
         </select>
       </div>
-      <button class="plan-add-btn" onclick="addKindyEntry()">+ Add student</button>
+      <button class="plan-add-btn" onclick="addKindyEntry()">+ Add learner</button>
     </div>`
   : g.type==='karra-tobe' ? `
     <div style="padding:.35rem .5rem;border-top:1px solid var(--g200);display:flex;flex-direction:column;gap:.2rem">
@@ -4763,7 +4763,7 @@ function renderPlanGroupCard(g){
           <option value="both">Aboriginal &amp; TSI</option>
         </select>
       </div>
-      <button class="plan-add-btn" onclick="addNewEnrol2027('${safeKey}','${(g.year||'').replace(/'/g,"\\'")}')">+ Add new student</button>
+      <button class="plan-add-btn" onclick="addNewEnrol2027('${safeKey}','${(g.year||'').replace(/'/g,"\\'")}')">+ Add new learner</button>
     </div>`
   : (g.type==='normal'||g.type==='karra-class') ? `
     <div style="padding:.35rem .5rem;border-top:1px solid var(--g200);display:flex;flex-direction:column;gap:.2rem">
@@ -4789,7 +4789,7 @@ function renderPlanGroupCard(g){
         <option value="tsi">Torres Strait Islander</option>
         <option value="both">Aboriginal &amp; TSI</option>
       </select>
-      <button class="plan-add-btn" onclick="addNewEnrolGeneral('${safeKey}')">+ Add new student</button>
+      <button class="plan-add-btn" onclick="addNewEnrolGeneral('${safeKey}')">+ Add new learner</button>
     </div>`
   : '';
 
@@ -5108,13 +5108,13 @@ function renderPlan(){
     const mergedTbpGroup = {key:'__tobe_Karra', label:'To Be Placed (Yr 7–12)', type:'karra-tobe', community:'Karra', students: allTbpStudents};
     const tbpCard = renderPlanGroupCard(mergedTbpGroup);
 
-    html = `<div style="display:flex;gap:.75rem;align-items:flex-start;height:100%">
-      <div style="flex:1;min-width:0;overflow-x:auto;padding-bottom:.5rem">
-        <div style="display:flex;gap:.55rem;min-width:max-content">
+    html = `<div style="display:flex;gap:.75rem;align-items:flex-start">
+      <div style="overflow-x:auto;overflow-y:visible;flex:1;min-width:0;padding-bottom:.5rem;cursor:grab">
+        <div style="display:inline-flex;gap:.55rem;padding-right:.25rem">
           ${classCards}
         </div>
       </div>
-      <div style="flex-shrink:0;width:185px;position:sticky;top:0">
+      <div style="flex-shrink:0;width:190px">
         ${tbpCard}
       </div>
     </div>`;
