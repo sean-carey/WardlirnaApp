@@ -1227,6 +1227,7 @@ function renderCard(s){
   if(s.future==='Y') icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;display:inline-block;margin-top:1px" title="New enrolment"></span>');
   if(s.leaving==='confirmed') icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#dc2626;display:inline-block;margin-top:1px" title="Confirmed leaving"></span>');
   else if(s.leaving==='Y') icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#fb923c;display:inline-block;margin-top:1px" title="Possibly leaving"></span>');
+  if(s.midYearRec) icons.push('<span style="font-size:.62rem;line-height:1;color:#7c3aed" title="Mid-year Reception — stays Reception in 2027 plan">½</span>');
 
   const yrColor=YEAR_COLORS[s.year]||'#94a3b8';
   const nccdDetail=detailOn?`<span class="sc-detail">${NCCD_LABELS[s.nccd]||''}</span>`:'';
@@ -1348,6 +1349,7 @@ function openCtxMenu(e,id){
     ${userRole==='admin'?'<div class="ctxi" onclick="openStudentModal('+id+');closeCtxMenu()">✏️ Edit details</div>':''}
     <div class="ctxi" onclick="toggleLeaving(${id})">🟠 ${s.leaving==='Y'?'Remove possibly leaving flag':'Flag as possibly leaving'}</div>
     <div class="ctxi" onclick="confirmLeaving(${id})">🔴 ${s.leaving==='confirmed'?'Unmark confirmed leaving':'Confirm leaving (stays on roll)'}</div>
+    ${s.year==='Reception'?`<div class="ctxi-sep"></div><div class="ctxi" onclick="toggleMidYearRec(${id})">📅 ${s.midYearRec?'Remove mid-year Reception flag':'Mark as mid-year Reception (stays Rec in 2027)'}</div>`:''}
     <div class="ctxi-sep"></div>
     <div class="ctxi danger admin-only" onclick="moveToFormerlyEnrolled(${id});closeCtxMenu()">🚪 Move to Formerly Enrolled</div>`;
   menu.style.left=Math.min(e.clientX,window.innerWidth-170)+'px';
@@ -1356,6 +1358,20 @@ function openCtxMenu(e,id){
   setTimeout(()=>document.addEventListener('click',closeCtxMenu,{once:true}),10);
 }
 function closeCtxMenu(){ document.getElementById('ctxMenu').classList.remove('show'); }
+
+function toggleMidYearRec(id){
+  closeCtxMenu();
+  const s=students.find(x=>x.id===id); if(!s||s.year!=='Reception') return;
+  s.midYearRec = s.midYearRec ? undefined : true;
+  // Sync flag onto any existing plan chip for this learner
+  if(plan2027){
+    const ALL_PLAN_KEYS=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
+    ALL_PLAN_KEYS.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.midYearRec=s.midYearRec||undefined; });
+  }
+  markUnsaved();
+  showToast(s.midYearRec ? `${s.first} marked mid-year Reception — will stay Reception in 2027 plan` : `${s.first} mid-year flag removed — will advance to Year 1 in 2027 plan`);
+}
+
 function moveStudentTo(id,group){
   const s=students.find(x=>x.id===id); if(!s) return;
   s.group=group; markUnsaved(); showToast(`${s.first} → ${group}`); render();
@@ -4230,8 +4246,11 @@ function plan2027GroupFor(s){
   // Kindergarten → Reception: stays in same group (Purli/Tirntu/Maku)
   if(s.year === 'Kindergarten') return { comm:'Madlurta', group: curGroup, year: nextYear };
 
-  // Reception → Year 1: To Be Placed in Kurlana (includes future:'Y' Receptions)
-  if(s.year === 'Reception') return { comm:'Kurlana', group:'__tobe__', year: nextYear };
+  // Reception → Year 1 normally; but mid-year Reception stays Reception in Madlurta same group
+  if(s.year === 'Reception'){
+    if(s.midYearRec) return { comm:'Madlurta', group: curGroup, year: 'Reception' };
+    return { comm:'Kurlana', group:'__tobe__', year: nextYear };
+  }
 
   // Year 1 → Year 2: stays in same group (Kurlana)
   if(s.year === 'Year 1') return { comm:'Kurlana', group: curGroup, year: nextYear };
@@ -4417,8 +4436,10 @@ function syncUpdatesPlan(silent=false){
     const inAlumni = (plan2027._alumni||[]).some(p=>p.id===s.id);
     if(!inPlan && !inAlumni){
       const dest = plan2027GroupFor(s);
-      const planS = {id:s.id,first:s.first,last:s.last,year:PLAN_NEXT_YEAR[s.year]||s.year,
-        origYear:s.year,gender:s.gender,atsi:s.atsi,nccd:s.nccd,origGroup:s.group,future:'N',leaving:s.leaving||'N'};
+      const planYear = (s.year==='Reception'&&s.midYearRec) ? 'Reception' : (PLAN_NEXT_YEAR[s.year]||s.year);
+      const planS = {id:s.id,first:s.first,last:s.last,year:planYear,
+        origYear:s.year,gender:s.gender,atsi:s.atsi,nccd:s.nccd,origGroup:s.group,future:'N',leaving:s.leaving||'N',
+        midYearRec:s.midYearRec||undefined};
       if(dest.comm==='__alumni__'){ plan2027._alumni=plan2027._alumni||[]; plan2027._alumni.push(planS); }
       else if(dest.group==='__tobe__'){ const k='__tobe_'+dest.comm; plan2027[k]=plan2027[k]||[]; plan2027[k].push(planS); }
       else if(dest.group && dest.group.startsWith('__tobe_Karra_')){ plan2027[dest.group]=plan2027[dest.group]||[]; plan2027[dest.group].push(planS); }
@@ -4688,6 +4709,7 @@ function renderPlanGroupCard(g){
     if(isConfirmedLeaving) icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#dc2626;display:inline-block;margin-top:1px" title="Confirmed leaving — not counted"></span>');
     else if(isPossLeaving) icons.push('<span style="width:7px;height:7px;border-radius:50%;background:#fb923c;display:inline-block;margin-top:1px" title="Possibly leaving"></span>');
     if(isSyncFlagged) icons.push('<span title="Changed in last sync — needs review">⚠</span>');
+    if(s.midYearRec) icons.push('<span style="font-size:.62rem;line-height:1;color:#7c3aed" title="Mid-year Reception — staying Reception in 2027">½</span>');
     const tooltip = [
       `${s.last}, ${s.first} · ${s.year}`,
       s.origYear&&s.origYear!==s.year?`(was ${s.origYear})`:'',
