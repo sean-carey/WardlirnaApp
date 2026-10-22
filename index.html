@@ -1369,26 +1369,30 @@ function toggleMidYearRec(id){
     const ALL_PLAN_KEYS=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
     let chip=null, fromKey=null;
     for(const k of ALL_PLAN_KEYS){
-      const idx=(plan2027[k]||[]).findIndex(x=>x.id===id);
+      // Match by ID (may be number or string after JSON round-trip), fallback to name
+      const idx=(plan2027[k]||[]).findIndex(x=>x.id==id||(x.first.toLowerCase()===s.first.toLowerCase()&&x.last.toLowerCase()===s.last.toLowerCase()));
       if(idx!==-1){ chip=plan2027[k][idx]; fromKey=k; break; }
     }
     if(chip){
+      chip.id = s.id; // ensure ID is in sync
       chip.midYearRec = s.midYearRec||undefined;
       if(s.midYearRec){
         // Flag ON: move to Madlurta same group, set year Reception
         chip.year = 'Reception';
+        chip.origYear = 'Reception';
         const destKey = s.group; // current Wardlirna group (e.g. Purli)
         if(fromKey !== destKey){
-          plan2027[fromKey].splice(plan2027[fromKey].indexOf(chip),1);
+          plan2027[fromKey] = plan2027[fromKey].filter(c=>c!==chip);
           plan2027[destKey] = plan2027[destKey]||[];
           plan2027[destKey].push(chip);
         }
       } else {
         // Flag OFF: move to Kurlana TBP, set year Year 1
         chip.year = 'Year 1';
+        chip.origYear = 'Reception';
         const destKey = '__tobe_Kurlana';
         if(fromKey !== destKey){
-          plan2027[fromKey].splice(plan2027[fromKey].indexOf(chip),1);
+          plan2027[fromKey] = plan2027[fromKey].filter(c=>c!==chip);
           plan2027[destKey] = plan2027[destKey]||[];
           plan2027[destKey].push(chip);
         }
@@ -1397,8 +1401,9 @@ function toggleMidYearRec(id){
     savePlan2027(true);
     renderPlan();
   }
+  saveToBlob(true); // persist midYearRec flag on student record
   markUnsaved();
-  showToast(s.midYearRec ? `${s.first} marked mid-year Reception — moved to Madlurna in 2027 plan as Reception` : `${s.first} mid-year flag removed — moved to Kurlana To Be Placed as Year 1`);
+  showToast(s.midYearRec ? `${s.first} marked mid-year Reception — stays Reception in 2027 plan` : `${s.first} mid-year flag removed — moved to Kurlana To Be Placed as Year 1`);
 }
 
 function moveStudentTo(id,group){
@@ -4589,7 +4594,32 @@ async function loadPlan2027(){
                 chip.leaving = live.leaving||'N';
               }
               chip.future  = live.future||'N';
+              // Sync midYearRec flag from live student onto plan chip
+              chip.midYearRec = live.midYearRec||undefined;
             }
+          });
+        });
+        // Re-position any mid-year Reception chips that ended up in the wrong bucket.
+        // This corrects chips that were placed before the flag existed, or that were
+        // moved back by a reload before this patch ran.
+        const madlurtaGroups = PLAN_STRUCT.Madlurta.groups;
+        planKeys.forEach(fromKey => {
+          if(!plan2027[fromKey]) return;
+          const toMove = [];
+          plan2027[fromKey].forEach(chip => {
+            if(!chip.midYearRec) return;
+            const live = byId[chip.id];
+            if(!live) return;
+            const destKey = live.group; // Madlurta group (e.g. Purli)
+            if(destKey && destKey !== fromKey && madlurtaGroups.includes(destKey)){
+              toMove.push({chip, destKey});
+            }
+          });
+          toMove.forEach(({chip, destKey}) => {
+            plan2027[fromKey] = plan2027[fromKey].filter(c=>c!==chip);
+            chip.year = 'Reception';
+            plan2027[destKey] = plan2027[destKey]||[];
+            plan2027[destKey].push(chip);
           });
         });
       }
