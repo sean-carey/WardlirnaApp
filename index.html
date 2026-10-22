@@ -5198,6 +5198,37 @@ function planDrop(e, toGroup){
 
 
 
+// One-time migration: move any existing confirmed-leaving chips to their TBP bucket
+function migrateConfirmedLeaversToBP(){
+  if(!plan2027) return;
+  const TBP_KEYS = new Set(['__tobe_Kurlana','__tobe_Warti',...KARRA_TBP_KEYS]);
+  const CLASS_KEYS = [
+    ...PLAN_STRUCT.Madlurta.groups, 'Kindy Entry 2027',
+    ...PLAN_STRUCT.Kurlana.groups,
+    ...PLAN_STRUCT.Warti.groups,
+    ...KARRA_CLASS_KEYS,
+    ...PLAN_STRUCT.Wirra.groups,
+  ];
+  let moved = 0;
+  for(const k of CLASS_KEYS){
+    const arr = plan2027[k];
+    if(!arr) continue;
+    // Iterate backwards so splice doesn't skip
+    for(let i = arr.length-1; i >= 0; i--){
+      const chip = arr[i];
+      if(chip.leaving !== 'confirmed') continue;
+      const tbpKey = planTBPKeyFor(k, chip);
+      if(tbpKey && tbpKey !== k){
+        arr.splice(i, 1);
+        plan2027[tbpKey] = plan2027[tbpKey] || [];
+        plan2027[tbpKey].push(chip);
+        moved++;
+      }
+    }
+  }
+  if(moved > 0){ savePlan2027(true); }
+}
+
 async function initPlan2027Page(){
   // Try loading saved plan first, fall back to generating from current data
   const loaded = await loadPlan2027();
@@ -5206,6 +5237,8 @@ async function initPlan2027Page(){
   } else {
     // Auto-sync: pull in new learners and remove departed ones silently each time the tab opens
     syncUpdatesPlan(true);
+    // Migrate any pre-existing confirmed-leaving chips to TBP
+    migrateConfirmedLeaversToBP();
   }
 }
 
