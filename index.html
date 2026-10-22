@@ -4689,11 +4689,13 @@ function renderPlanGroupCard(g){
       isConfirmedLeaving?'Confirmed leaving — not counted in class total':isPossLeaving?'Possibly leaving':'',
       isSyncFlagged?'Changed in last sync':'',
     ].filter(Boolean).join(' · ');
+    // For merged Karra TBP, use the real per-year key so drag/drop and context menu work correctly
+    const chipGroupKey = (s._tbpKey || g.key).replace(/'/g,"\\'");
     return `<div class="${chipCls}" id="pc-${s.id}"
-      ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'${g.key.replace(/'/g,"\\'")}') " ondragend="planDragEnd(event)"` : ''}
+      ${draggable?`draggable="true" ondragstart="planDragStart(event,${s.id},'${chipGroupKey}') " ondragend="planDragEnd(event)"` : ''}
       title="${tooltip}"
-      ondblclick="${isFuture?`openKindyEntryModal(${s.id},'${g.key.replace(/'/g,"\\'")}')`:` openStudentModal(${s.id})`}"
-      oncontextmenu="openPlanCtxMenu(event,${s.id},'${g.key.replace(/'/g,"\\'")}')">
+      ondblclick="${isFuture?`openKindyEntryModal(${s.id},'${chipGroupKey}')`:` openStudentModal(${s.id})`}"
+      oncontextmenu="openPlanCtxMenu(event,${s.id},'${chipGroupKey}')">
       <div class="ypip" style="background:${yrCol}"></div>
       <span class="sc-name">${s.last}, ${s.first}</span>
       <span class="sc-yr">${s.year.replace('Year ','Y').replace('Kindergarten','K').replace('Reception','Rec')}</span>
@@ -5087,29 +5089,35 @@ function renderPlan(){
   const groups = getPlanCommData(planComm);
   const commInfo = PLAN_STRUCT[planComm];
 
-  // For Karra, render year-level bands with named classes + one shared TBP column (Y7-Y12 toggle)
+  // For Karra: horizontally-scrollable class columns + fixed TBP panel on the right
   let html = '';
   if(planComm === 'Karra'){
-    // Render each year band as its own row: class card(s) + TBP columns for that band's years, all inline
-    let bandRows = '';
-    PLAN_STRUCT.Karra.yearBands.forEach(band => {
-      const bandLabel = band.years.join(' & ');
-      const classCards = band.classes.map(cls => {
-        const g = groups.find(x=>x.key===cls);
-        return g ? renderPlanGroupCard(g) : '';
-      }).join('');
-      const tbpCards = band.years.map(y => {
-        const tbpKey = '__tobe_Karra_' + y.replace('Year ','Y');
-        const g = groups.find(x=>x.key===tbpKey) || {key:tbpKey, label:'To Be Placed ('+y+')', type:'karra-tobe', community:'Karra', year:y, students:plan2027[tbpKey]||[]};
-        return renderPlanGroupCard(g);
-      }).join('');
-      bandRows += `<div class="band" style="margin-bottom:.6rem">
-        <div class="band-hd">${bandLabel} — ${band.classes.join(' &amp; ')}</div>
-        <div class="groups-row">${classCards}${tbpCards}</div>
-      </div>`;
-    });
+    // All class cards in a single horizontally-scrollable strip
+    const classCards = KARRA_CLASS_KEYS.map(cls => {
+      const g = groups.find(x=>x.key===cls);
+      return g ? renderPlanGroupCard(g) : '';
+    }).join('');
 
-    html = bandRows;
+    // Merged TBP pool — all Y7–Y12 TBP students shown together, sorted by year then name
+    const allTbpStudents = KARRA_TBP_KEYS.flatMap(k => (plan2027[k]||[]).map(s=>({...s, _tbpKey:k})));
+    allTbpStudents.sort((a,b)=>{
+      const yDiff = yearRank2027(a.year) - yearRank2027(b.year);
+      if(yDiff!==0) return yDiff;
+      return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);
+    });
+    const mergedTbpGroup = {key:'__tobe_Karra', label:'To Be Placed (Yr 7–12)', type:'karra-tobe', community:'Karra', students: allTbpStudents};
+    const tbpCard = renderPlanGroupCard(mergedTbpGroup);
+
+    html = `<div style="display:flex;gap:.75rem;align-items:flex-start;height:100%">
+      <div style="flex:1;min-width:0;overflow-x:auto;padding-bottom:.5rem">
+        <div style="display:flex;gap:.55rem;min-width:max-content">
+          ${classCards}
+        </div>
+      </div>
+      <div style="flex-shrink:0;width:185px;position:sticky;top:0">
+        ${tbpCard}
+      </div>
+    </div>`;
   } else {
     html += `<div class="band">
       <div class="band-hd">${commInfo?.band||planComm}</div>
@@ -5172,13 +5180,20 @@ function planDrop(e, toGroup){
     student.year=KARRA_KEY_YEAR[toGroup];
   }
 
-  // Add to destination
-  if(toGroup==='__alumni__'){
+  // Add to destination — merged Karra TBP routes to year-specific key
+  let destKey = toGroup;
+  if(toGroup==='__tobe_Karra'){
+    // Route to the student's own year-specific TBP bucket
+    const yKey = '__tobe_Karra_' + (student.year||'').replace('Year ','Y');
+    destKey = KARRA_TBP_KEYS.includes(yKey) ? yKey : KARRA_TBP_KEYS[0];
+  }
+
+  if(destKey==='__alumni__'){
     plan2027._alumni = plan2027._alumni||[];
     plan2027._alumni.push(student);
   } else {
-    plan2027[toGroup] = plan2027[toGroup]||[];
-    plan2027[toGroup].push(student);
+    plan2027[destKey] = plan2027[destKey]||[];
+    plan2027[destKey].push(student);
   }
 
   savePlan2027(true);
