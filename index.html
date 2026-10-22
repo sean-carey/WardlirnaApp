@@ -1592,10 +1592,24 @@ function confirmLeaving(id){
   s.leaving = s.leaving==='confirmed' ? 'N' : 'confirmed';
   if(plan2027){
     const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
-    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.leaving=s.leaving; });
+    if(s.leaving==='confirmed'){
+      // Move plan chip to TBP bucket
+      for(const k of planKeys){
+        const chip=(plan2027[k]||[]).find(x=>x.id===id);
+        if(chip){
+          chip.leaving='confirmed';
+          const tbpKey = planTBPKeyFor(k, chip);
+          if(tbpKey && tbpKey!==k) planMoveChip(chip, k, tbpKey);
+          break;
+        }
+      }
+    } else {
+      // Just clear the flag (chip stays where it is)
+      planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.leaving=s.leaving; });
+    }
     if(document.getElementById('page-plan')?.classList.contains('on')) renderPlan();
   }
-  const msg = s.leaving==='confirmed' ? `${s.first} confirmed leaving — stays on roll` : `${s.first} leaving status cleared`;
+  const msg = s.leaving==='confirmed' ? `${s.first} confirmed leaving — moved to To Be Placed in plan` : `${s.first} leaving status cleared`;
   closeCtxMenu(); updateDepCount(); markUnsaved(); showToast(msg); render();
 }
 function toggleLeavingFromModal(){
@@ -1658,31 +1672,44 @@ function saveStudent(){
   const privateFamily = document.getElementById('smPrivateFamily').checked;
   if(plan2027){
     const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
-    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===editingId); if(p){ p.leaving=s.leaving; p.future=s.future; p.privateFamily=privateFamily||undefined; } });
+    if(s.leaving==='confirmed'){
+      // Move chip to TBP when confirmed leaving is saved
+      for(const k of planKeys){
+        const chip=(plan2027[k]||[]).find(x=>x.id===editingId);
+        if(chip){ chip.leaving='confirmed'; chip.future=s.future; chip.privateFamily=privateFamily||undefined; const tbpKey=planTBPKeyFor(k,chip); if(tbpKey&&tbpKey!==k) planMoveChip(chip,k,tbpKey); break; }
+      }
+    } else {
+      planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===editingId); if(p){ p.leaving=s.leaving; p.future=s.future; p.privateFamily=privateFamily||undefined; } });
+    }
     if(document.getElementById('page-plan')?.classList.contains('on')) renderPlan();
   }
   closeModal('ovStudent'); markUnsaved(); showToast('Saved'); render();
 }
 function markDeparting(){
-  // From modal — set confirmed leaving (stays on roll/canvas)
+  // From modal — set confirmed leaving (stays on roll/canvas) + move plan chip to TBP
   const s=students.find(x=>x.id===editingId); if(!s) return;
   s.leaving='confirmed';
-  // Sync to plan2027
   if(plan2027){
     const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
-    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===editingId); if(p) p.leaving='confirmed'; });
+    for(const k of planKeys){
+      const chip=(plan2027[k]||[]).find(x=>x.id===editingId);
+      if(chip){ chip.leaving='confirmed'; const tbpKey=planTBPKeyFor(k,chip); if(tbpKey&&tbpKey!==k) planMoveChip(chip,k,tbpKey); break; }
+    }
   }
-  closeModal('ovStudent'); updateDepCount(); markUnsaved(); showToast(`${s.first} confirmed leaving — still on roll`); render();
+  closeModal('ovStudent'); updateDepCount(); markUnsaved(); showToast(`${s.first} confirmed leaving — moved to To Be Placed in plan`); render();
 }
 function markDepartingById(id){
-  // Legacy call path — set confirmed-leaving (stays in students[])
+  // Legacy call path — set confirmed-leaving + move plan chip to TBP
   const s=students.find(x=>x.id===id); if(!s) return;
   s.leaving='confirmed';
   if(plan2027){
     const planKeys=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
-    planKeys.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.leaving='confirmed'; });
+    for(const k of planKeys){
+      const chip=(plan2027[k]||[]).find(x=>x.id===id);
+      if(chip){ chip.leaving='confirmed'; const tbpKey=planTBPKeyFor(k,chip); if(tbpKey&&tbpKey!==k) planMoveChip(chip,k,tbpKey); break; }
+    }
   }
-  updateDepCount(); markUnsaved(); showToast(`${s.first} confirmed leaving — still on roll`); render();
+  updateDepCount(); markUnsaved(); showToast(`${s.first} confirmed leaving — moved to To Be Placed in plan`); render();
 }
 // Move a learner fully out of students[] into departing[] — final step (Formerly Enrolled)
 function moveToFormerlyEnrolled(id){
@@ -4937,17 +4964,63 @@ function movePlanLearner(id, fromKey, toKey){
   showToast(`Moved to ${toKey==='__alumni__'?'Alumni':toKey.replace('__tobe_','To Be Placed — ')}`);
 }
 
-// Toggle confirmed-leaving state on a 2027 chip (local to plan, doesn't change students[])
+// Return the To Be Placed key for a given plan key + chip (used when moving confirmed leavers)
+function planTBPKeyFor(fromKey, chip){
+  // Kurlana classes → __tobe_Kurlana
+  if(PLAN_STRUCT.Kurlana.groups.includes(fromKey) || fromKey==='__tobe_Kurlana') return '__tobe_Kurlana';
+  // Warti classes → __tobe_Warti
+  if(PLAN_STRUCT.Warti.groups.includes(fromKey) || fromKey==='__tobe_Warti') return '__tobe_Warti';
+  // Madlurta → __tobe_Kurlana (their TBP is the Kurlana incoming slot)
+  if(PLAN_STRUCT.Madlurta.groups.includes(fromKey) || fromKey==='Kindy Entry 2027') return '__tobe_Kurlana';
+  // Karra named class or TBP → TBP key for chip's year
+  if(KARRA_ALL_KEYS.includes(fromKey)){
+    const y = chip.year || '';
+    const tbpKey = '__tobe_Karra_'+y.replace('Year ','Y');
+    if(plan2027[tbpKey] !== undefined || KARRA_TBP_KEYS.includes(tbpKey)) return tbpKey;
+    return KARRA_TBP_KEYS[0] || fromKey;
+  }
+  // Wirra has no TBP — leave in place
+  return null;
+}
+
+// Move a chip in plan2027 from fromKey to toKey (helper)
+function planMoveChip(chip, fromKey, toKey){
+  if(!toKey || toKey===fromKey) return false;
+  const src = plan2027[fromKey];
+  if(!src) return false;
+  const idx = src.findIndex(s=>s.id===chip.id);
+  if(idx===-1) return false;
+  src.splice(idx,1);
+  plan2027[toKey] = plan2027[toKey] || [];
+  plan2027[toKey].push(chip);
+  return true;
+}
+
+// Toggle confirmed-leaving state on a 2027 chip — moves to TBP on confirm, stays in TBP on unconfirm
 function planToggleConfirmedLeaving(id, fromKey){
   if(!plan2027) return;
   const arr = plan2027[fromKey];
   if(!arr) return;
   const chip = arr.find(s=>s.id===id);
   if(!chip) return;
-  chip.leaving = chip.leaving==='confirmed' ? 'Y' : 'confirmed';
+
+  if(chip.leaving==='confirmed'){
+    // Un-confirm: clear flag (chip stays where it is — user moves back manually)
+    chip.leaving = 'Y';
+    showToast('Confirmed leaving flag removed — chip stays in current slot');
+  } else {
+    // Confirm: flag + move to TBP
+    chip.leaving = 'confirmed';
+    const tbpKey = planTBPKeyFor(fromKey, chip);
+    if(tbpKey && tbpKey !== fromKey){
+      planMoveChip(chip, fromKey, tbpKey);
+      showToast(`${chip.first} marked confirmed leaving — moved to To Be Placed`);
+    } else {
+      showToast('Marked confirmed leaving — not counted');
+    }
+  }
   savePlan2027(true);
   renderPlan();
-  showToast(chip.leaving==='confirmed' ? 'Marked confirmed leaving — not counted' : 'Confirmed leaving flag removed');
 }
 
 // Remove a learner entirely from the 2027 plan
