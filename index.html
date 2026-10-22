@@ -1363,13 +1363,42 @@ function toggleMidYearRec(id){
   closeCtxMenu();
   const s=students.find(x=>x.id===id); if(!s||s.year!=='Reception') return;
   s.midYearRec = s.midYearRec ? undefined : true;
-  // Sync flag onto any existing plan chip for this learner
+
+  // Find and re-route the existing plan chip immediately
   if(plan2027){
     const ALL_PLAN_KEYS=[...PLAN_STRUCT.Madlurta.groups,'Kindy Entry 2027',...PLAN_STRUCT.Kurlana.groups,'__tobe_Kurlana',...PLAN_STRUCT.Warti.groups,'__tobe_Warti',...KARRA_ALL_KEYS,...PLAN_STRUCT.Wirra.groups];
-    ALL_PLAN_KEYS.forEach(k=>{ const p=(plan2027[k]||[]).find(x=>x.id===id); if(p) p.midYearRec=s.midYearRec||undefined; });
+    let chip=null, fromKey=null;
+    for(const k of ALL_PLAN_KEYS){
+      const idx=(plan2027[k]||[]).findIndex(x=>x.id===id);
+      if(idx!==-1){ chip=plan2027[k][idx]; fromKey=k; break; }
+    }
+    if(chip){
+      chip.midYearRec = s.midYearRec||undefined;
+      if(s.midYearRec){
+        // Flag ON: move to Madlurta same group, set year Reception
+        chip.year = 'Reception';
+        const destKey = s.group; // current Wardlirna group (e.g. Purli)
+        if(fromKey !== destKey){
+          plan2027[fromKey].splice(plan2027[fromKey].indexOf(chip),1);
+          plan2027[destKey] = plan2027[destKey]||[];
+          plan2027[destKey].push(chip);
+        }
+      } else {
+        // Flag OFF: move to Kurlana TBP, set year Year 1
+        chip.year = 'Year 1';
+        const destKey = '__tobe_Kurlana';
+        if(fromKey !== destKey){
+          plan2027[fromKey].splice(plan2027[fromKey].indexOf(chip),1);
+          plan2027[destKey] = plan2027[destKey]||[];
+          plan2027[destKey].push(chip);
+        }
+      }
+    }
+    savePlan2027(true);
+    renderPlan();
   }
   markUnsaved();
-  showToast(s.midYearRec ? `${s.first} marked mid-year Reception — will stay Reception in 2027 plan` : `${s.first} mid-year flag removed — will advance to Year 1 in 2027 plan`);
+  showToast(s.midYearRec ? `${s.first} marked mid-year Reception — moved to Madlurna in 2027 plan as Reception` : `${s.first} mid-year flag removed — moved to Kurlana To Be Placed as Year 1`);
 }
 
 function moveStudentTo(id,group){
