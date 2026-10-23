@@ -4599,25 +4599,27 @@ async function loadPlan2027(){
             }
           });
         });
-        // Re-position any mid-year Reception chips that ended up in the wrong bucket.
-        // This corrects chips that were placed before the flag existed, or that were
-        // moved back by a reload before this patch ran.
+        // Re-position any mid-year Reception chips that ended up in the wrong bucket,
+        // and ensure their year is set to Reception. This corrects chips placed before
+        // the flag existed or whose year/location got out of sync across reloads.
         const madlurtaGroups = PLAN_STRUCT.Madlurta.groups;
         planKeys.forEach(fromKey => {
           if(!plan2027[fromKey]) return;
           const toMove = [];
           plan2027[fromKey].forEach(chip => {
             if(!chip.midYearRec) return;
+            // Always correct the year, even if already in the right group
+            chip.year = 'Reception';
             const live = byId[chip.id];
             if(!live) return;
             const destKey = live.group; // Madlurta group (e.g. Purli)
+            // Move to correct Madlurta group if not already there
             if(destKey && destKey !== fromKey && madlurtaGroups.includes(destKey)){
               toMove.push({chip, destKey});
             }
           });
           toMove.forEach(({chip, destKey}) => {
             plan2027[fromKey] = plan2027[fromKey].filter(c=>c!==chip);
-            chip.year = 'Reception';
             plan2027[destKey] = plan2027[destKey]||[];
             plan2027[destKey].push(chip);
           });
